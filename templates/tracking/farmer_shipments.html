@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}My Shipments - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('farmer_dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">My Shipments</li>
+                </ol>
+            </nav>
+            <h2 class="mb-0">
+                <i class="fas fa-shipping-fast me-2 text-primary"></i>My Shipments
+            </h2>
+            <p class="text-muted">Track and manage all your order shipments</p>
+        </div>
+    </div>
+
+    <!-- Shipment Count Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Active</h6>
+                            <h2 class="fw-bold text-primary mb-0">{{ shipment_counts.active }}</h2>
+                        </div>
+                        <div class="text-primary">
+                            <i class="fas fa-box fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-info h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Shipped</h6>
+                            <h2 class="fw-bold text-info mb-0">{{ shipment_counts.shipped }}</h2>
+                        </div>
+                        <div class="text-info">
+                            <i class="fas fa-truck fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Delivered</h6>
+                            <h2 class="fw-bold text-success mb-0">{{ shipment_counts.delivered }}</h2>
+                        </div>
+                        <div class="text-success">
+                            <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-danger h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Failed</h6>
+                            <h2 class="fw-bold text-danger mb-0">{{ shipment_counts.failed }}</h2>
+                        </div>
+                        <div class="text-danger">
+                            <i class="fas fa-exclamation-triangle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('farmer_shipments') }}" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="status-filter" class="form-label">Filter by Status</label>
+                            <select class="form-select" id="status-filter" name="status">
+                                <option value="">All Statuses</option>
+                                <option value="packed" {% if request.args.get('status') == 'packed' %}selected{% endif %}>Packed</option>
+                                <option value="shipped" {% if request.args.get('status') == 'shipped' %}selected{% endif %}>Shipped</option>
+                                <option value="in_transit" {% if request.args.get('status') == 'in_transit' %}selected{% endif %}>In Transit</option>
+                                <option value="out_for_delivery" {% if request.args.get('status') == 'out_for_delivery' %}selected{% endif %}>Out for Delivery</option>
+                                <option value="delivered" {% if request.args.get('status') == 'delivered' %}selected{% endif %}>Delivered</option>
+                                <option value="failed" {% if request.args.get('status') == 'failed' %}selected{% endif %}>Failed</option>
+                                <option value="returned" {% if request.args.get('status') == 'returned' %}selected{% endif %}>Returned</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="search-input" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search-input" name="search" 
+                                   placeholder="Search by tracking number or buyer name..." 
+                                   value="{{ request.args.get('search', '') }}">
+                        </div>
+                        
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-2"></i>Search
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shipments List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>Shipment List
+                    </h5>
+                    <span class="badge bg-secondary">{{ shipments|length }} shipment{{ 's' if shipments|length != 1 else '' }}</span>
+                </div>
+                <div class="card-body p-0">
+                    {% if shipments %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Tracking Number</th>
+                                        <th>Buyer</th>
+                                        <th>Product</th>
+                                        <th>Status</th>
+                                        <th>Shipped Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in shipments %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('order_detail', order_id=order.id) }}" class="text-decoration-none fw-bold">
+                                                #{{ order.id }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="font-monospace text-primary">{{ order.tracking_number }}</span>
+                                            {% if order.courier_name %}
+                                                <br><small class="text-muted">{{ order.courier_name|title }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-circle me-2">
+                                                    {{ order.buyer.full_name[0]|upper }}
+                                                </div>
+                                                <div>
+                                                    <div>{{ order.buyer.full_name }}</div>
+                                                    <small class="text-muted">{{ order.buyer.location }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>{{ order.crop.name }}</div>
+                                            <small class="text-muted">{{ order.quantity_requested }} {{ order.crop.unit }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge {{ get_shipment_status_badge_class(order.shipment_status) }}">
+                                                {{ order.shipment_status|replace('_', ' ')|title if order.shipment_status else 'Pending' }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if order.shipment_created_at %}
+                                                {{ order.shipment_created_at.strftime('%b %d, %Y') }}
+                                                <br><small class="text-muted">{{ order.shipment_created_at.strftime('%I:%M %p') }}</small>
+                                            {% else %}
+                                                <span class="text-muted">Not shipped</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('order_detail', order_id=order.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if order.tracking_number %}
+                                                <a href="{{ url_for('track_order', order_id=order.id) }}" 
+                                                   class="btn btn-sm btn-outline-info" 
+                                                   title="Track">
+                                                    <i class="fas fa-map-marker-alt"></i>
+                                                </a>
+                                                {% endif %}
+                                                <a href="{{ url_for('inbox') }}" 
+                                                   class="btn btn-sm btn-outline-success" 
+                                                   title="Contact Buyer">
+                                                    <i class="fas fa-envelope"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-shipping-fast fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted">No shipments found</h5>
+                            <p class="text-muted">
+                                {% if request.args.get('status') or request.args.get('search') %}
+                                    Try adjusting your filters or search criteria.
+                                {% else %}
+                                    Your shipments will appear here once you start shipping orders.
+                                {% endif %}
+                            </p>
+                            {% if request.args.get('status') or request.args.get('search') %}
+                                <a href="{{ url_for('farmer_shipments') }}" class="btn btn-primary">
+                                    <i class="fas fa-times me-2"></i>Clear Filters
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Avatar Circle */
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+/* Status Badge Colors */
+.badge.bg-status-packed {
+    background-color: #17a2b8 !important;
+}
+
+.badge.bg-status-shipped,
+.badge.bg-status-in_transit {
+    background-color: #007bff !important;
+}
+
+.badge.bg-status-out_for_delivery {
+    background-color: #fd7e14 !important;
+}
+
+.badge.bg-status-delivered {
+    background-color: #28a745 !important;
+}
+
+.badge.bg-status-failed,
+.badge.bg-status-returned {
+    background-color: #dc3545 !important;
+}
+
+.badge.bg-status-pending {
+    background-color: #6c757d !important;
+}
+
+/* Card Hover Effect */
+.card {
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Table Row Hover */
+.table-hover tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Button Group Styling */
+.btn-group .btn {
+    border-radius: 0;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: 0.25rem;
+    border-bottom-left-radius: 0.25rem;
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+/* Responsive Table */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 14px;
+    }
+    
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 12px;
+    }
+    
+    .avatar-circle {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+}
+</style>
+{% endblock %}

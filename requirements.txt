@@ -1,0 +1,53 @@
+# Core Flask Dependencies
+flask
+flask-sqlalchemy
+flask-login
+flask-mail
+flask-wtf
+flask-limiter
+flask-socketio
+python-socketio
+eventlet
+wtforms
+python-dotenv
+gunicorn
+
+# Payment & External Services
+razorpay
+google-generativeai
+requests
+
+# Database - PostgreSQL
+psycopg2-binary
+
+# Security & Authentication
+cryptography>=41.0.0
+pyotp==2.9.0
+qrcode==7.4.2
+bleach
+
+# File Processing & Image Handling
+Pillow>=10.0.0
+werkzeug
+
+# File Security & Virus Scanning
+pyclamd==0.4.0
+python-magic-bin==0.4.14; platform_system == "Windows"
+python-magic==0.4.27; platform_system != "Windows"
+
+# Document Generation
+reportlab
+python-docx
+
+# Utilities
+setuptools<81
+pytz
+
+# Background Job Scheduling
+apscheduler>=3.10.0
+
+# SMS Notifications
+twilio>=8.10.0
+
+# Enhanced HTTP Requests with Retry Support
+requests[security]>=2.31.0

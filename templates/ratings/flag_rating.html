@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Report Review - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-flag"></i> Report Review
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if rating %}
+                    <!-- Review Being Reported -->
+                    <div class="alert alert-light border mb-4">
+                        <h5 class="alert-heading">Review Being Reported</h5>
+                        <div class="d-flex align-items-start mb-2">
+                            <div class="me-3">
+                                {% for i in range(rating.rating) %}
+                                <i class="fas fa-star text-warning"></i>
+                                {% endfor %}
+                                {% for i in range(5 - rating.rating) %}
+                                <i class="far fa-star text-warning"></i>
+                                {% endfor %}
+                            </div>
+                            <div>
+                                <strong>{{ rating.buyer.username }}</strong>
+                                <small class="text-muted">on {{ rating.created_at.strftime('%B %d, %Y') }}</small>
+                            </div>
+                        </div>
+                        {% if rating.review_text %}
+                        <p class="mb-0">{{ rating.review_text }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Information Notice -->
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Before you report:</strong> Please ensure this review violates our community guidelines. 
+                        False reports may result in action against your account.
+                    </div>
+
+                    <!-- Report Form -->
+                    <form method="POST" action="{{ url_for('rating.flag_rating', rating_id=rating.id) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Reason Selection -->
+                        <div class="form-group mb-4">
+                            {{ form.reason.label(class="form-label") }}
+                            {{ form.reason(class="form-select") }}
+                            {% if form.reason.errors %}
+                                <div class="text-danger mt-2">
+                                    {% for error in form.reason.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Additional Details -->
+                        <div class="form-group mb-4">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows="4", placeholder="Please provide additional details to help our moderation team understand the issue") }}
+                            <small class="form-text text-muted">
+                                Optional: Provide specific details about why you're reporting this review.
+                            </small>
+                            {% if form.description.errors %}
+                                <div class="text-danger mt-2">
+                                    {% for error in form.description.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        {{ form.rating_id }}
+
+                        <!-- Community Guidelines -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h6 class="card-title">Our Community Guidelines</h6>
+                                <ul class="mb-0 small">
+                                    <li>Reviews must be honest and based on actual experience</li>
+                                    <li>No spam, promotional content, or fake reviews</li>
+                                    <li>No offensive, abusive, or discriminatory language</li>
+                                    <li>No personal attacks or harassment</li>
+                                    <li>Reviews should be relevant to the product</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-warning btn-lg") }}
+                            <a href="{{ url_for('rating.view_product_ratings', product_id=rating.product_id) }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Responsive Design */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .alert {
+        font-size: 0.9rem;
+    }
+    
+    .card ul {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    h4 {
+        font-size: 1.3rem;
+    }
+    
+    h5 {
+        font-size: 1.1rem;
+    }
+    
+    .btn-lg {
+        font-size: 1rem;
+    }
+    
+    .form-select,
+    .form-control {
+        font-size: 0.9rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Character counter for description
+    const description = document.querySelector('textarea[name="description"]');
+    
+    if (description) {
+        const counterDiv = document.createElement('div');
+        counterDiv.className = 'text-muted small mt-1';
+        counterDiv.id = 'charCounter';
+        description.parentNode.insertBefore(counterDiv, description.nextSibling.nextSibling);
+        
+        function updateCounter() {
+            const length = description.value.length;
+            counterDiv.textContent = `${length} / 500 characters`;
+            
+            if (length > 500) {
+                counterDiv.classList.add('text-danger');
+                counterDiv.classList.remove('text-muted');
+            } else {
+                counterDiv.classList.remove('text-danger');
+                counterDiv.classList.add('text-muted');
+            }
+        }
+        
+        description.addEventListener('input', updateCounter);
+        updateCounter();
+    }
+    
+    // Form validation
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const reason = document.querySelector('select[name="reason"]');
+            if (!reason.value) {
+                e.preventDefault();
+                alert('Please select a reason for reporting this review.');
+                reason.focus();
+                return false;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

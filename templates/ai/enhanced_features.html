@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced AI Features - FarmLink AI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-green: #2d7a2d;
+            --secondary-green: #4a9a4a;
+            --accent-gold: #DAA520;
+            --background-light: #f8fdf8;
+            --text-dark: #2c5530;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--background-light) 0%, #e8f5e8 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(45, 122, 45, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 45px rgba(45, 122, 45, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: var(--primary-green);
+            margin-bottom: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-green) 0%, var(--secondary-green) 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(45, 122, 45, 0.3);
+        }
+
+        .test-area {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .loading {
+            display: none;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .result-area {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: rgba(42, 157, 43, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-green);
+        }
+    </style>
+</head>
+<body>
+    <div class="hero-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h1 class="display-4 fw-bold mb-3">
+                        <i class="fas fa-robot me-3"></i>Enhanced AI Features
+                    </h1>
+                    <p class="lead">Powered exclusively by FarmLink AI </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6 col-md-12">
+                <div class="feature-card">
+                    <div class="text-center">
+                        <i class="fas fa-seedling feature-icon"></i>
+                        <h3>Fertilizer Recommendations</h3>
+                        <p>Get AI-powered fertilizer recommendations based on crop type and soil conditions.</p>
+                        <button class="btn btn-primary" onclick="testFertilizerAPI()">
+                            <i class="fas fa-flask me-2"></i>Test API
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 col-md-12">
+                <div class="feature-card">
+                    <div class="text-center">
+                        <i class="fas fa-tint feature-icon"></i>
+                        <h3>Irrigation Scheduling</h3>
+                        <p>Receive intelligent irrigation schedules based on crop needs and climate data.</p>
+                        <button class="btn btn-primary" onclick="testIrrigationAPI()">
+                            <i class="fas fa-calendar-alt me-2"></i>Test API
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 col-md-12">
+                <div class="feature-card">
+                    <div class="text-center">
+                        <i class="fas fa-chart-line feature-icon"></i>
+                        <h3>Yield Prediction</h3>
+                        <p>Predict crop yields using advanced AI analysis of farming conditions.</p>
+                        <button class="btn btn-primary" onclick="testYieldAPI()">
+                            <i class="fas fa-calculator me-2"></i>Test API
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 col-md-12">
+                <div class="feature-card">
+                    <div class="text-center">
+                        <i class="fas fa-calendar feature-icon"></i>
+                        <h3>Seasonal Recommendations</h3>
+                        <p>Get season-specific crop recommendations for optimal farming decisions.</p>
+                        <button class="btn btn-primary" onclick="testSeasonalAPI()">
+                            <i class="fas fa-leaf me-2"></i>Test API
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="test-area">
+                    <h4><i class="fas fa-vial me-2"></i>API Test Results</h4>
+                    <div class="loading">
+                        <div class="text-center">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Connecting to FarmLink AI...</p>
+                        </div>
+                    </div>
+                    <div id="result-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="feature-card">
+                    <h4><i class="fas fa-check-circle me-2"></i>Verification Status</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>Enhanced crop suggestion system</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>Fertilizer & pesticide AI recommendations</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Irrigation schedule AI analysis</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Yield prediction AI models</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="/ai/crop-suggestions" class="btn btn-primary me-3">
+                            <i class="fas fa-seedling me-2"></i>Try Crop Suggestions
+                        </a>
+                        <a href="/" class="btn btn-outline-success">
+                            <i class="fas fa-home me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showLoading() {
+            document.querySelector('.loading').classList.add('show');
+            document.getElementById('result-container').innerHTML = '';
+        }
+
+        function hideLoading() {
+            document.querySelector('.loading').classList.remove('show');
+        }
+
+        function displayResult(title, data) {
+            hideLoading();
+            const resultHTML = `
+                <div class="result-area">
+                    <h5><i class="fas fa-robot me-2"></i>${title}</h5>
+                    <pre class="bg-light p-3 rounded mt-2" style="max-height: 400px; overflow-y: auto;">${JSON.stringify(data, null, 2)}</pre>
+                </div>
+            `;
+            document.getElementById('result-container').innerHTML = resultHTML;
+        }
+
+        function displayError(title, error) {
+            hideLoading();
+            const errorHTML = `
+                <div class="result-area border-danger">
+                    <h5 class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>${title} - Error</h5>
+                    <div class="alert alert-danger mt-2">${error}</div>
+                </div>
+            `;
+            document.getElementById('result-container').innerHTML = errorHTML;
+        }
+
+        async function testFertilizerAPI() {
+            showLoading();
+            try {
+                const response = await fetch('/ai/fertilizer-recommendations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        crop_name: 'Rice',
+                        soil_data: {
+                            soil_type: 'clay',
+                            soil_ph: 6.5,
+                            location: 'India'
+                        }
+                    })
+                });
+                const data = await response.json();
+                displayResult('Fertilizer Recommendations API Test', data);
+            } catch (error) {
+                displayError('Fertilizer API Test', error.message);
+            }
+        }
+
+        async function testIrrigationAPI() {
+            showLoading();
+            try {
+                const response = await fetch('/ai/irrigation-schedule', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        crop_name: 'Wheat',
+                        climate_data: {
+                            location: 'Punjab, India',
+                            season: 'winter',
+                            water_source: 'irrigated',
+                            soil_type: 'loamy'
+                        }
+                    })
+                });
+                const data = await response.json();
+                displayResult('Irrigation Schedule API Test', data);
+            } catch (error) {
+                displayError('Irrigation API Test', error.message);
+            }
+        }
+
+        async function testYieldAPI() {
+            showLoading();
+            try {
+                const response = await fetch('/ai/yield-prediction', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        crop_name: 'Cotton',
+                        farming_conditions: {
+                            location: 'Gujarat, India',
+                            soil_type: 'black',
+                            soil_ph: 7.2,
+                            water_source: 'irrigated',
+                            fertilizer_availability: 'mixed',
+                            season: 'kharif'
+                        }
+                    })
+                });
+                const data = await response.json();
+                displayResult('Yield Prediction API Test', data);
+            } catch (error) {
+                displayError('Yield Prediction API Test', error.message);
+            }
+        }
+
+        async function testSeasonalAPI() {
+            showLoading();
+            try {
+                const response = await fetch('/ai/seasonal-crops/kharif', {
+                    method: 'GET'
+                });
+                const data = await response.json();
+                displayResult('Seasonal Recommendations API Test', data);
+            } catch (error) {
+                displayError('Seasonal API Test', error.message);
+            }
+        }
+    </script>
+</body>
+</html>

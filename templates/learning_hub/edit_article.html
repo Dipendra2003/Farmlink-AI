@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Edit: {{ article.title }} - Learning Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('learning_hub') }}">Learning Hub</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('view_article', article_id=article.id) }}">{{ article.title|truncate(30) }}</a></li>
+            <li class="breadcrumb-item active">Edit</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-edit me-2"></i>Edit Article
+                        </h4>
+                        <div>
+                            <a href="{{ url_for('view_article', article_id=article.id) }}" class="btn btn-light btn-sm me-2">
+                                <i class="fas fa-eye me-1"></i>View
+                            </a>
+                            <a href="{{ url_for('learning_hub') }}" class="btn btn-light btn-sm">
+                                <i class="fas fa-arrow-left me-1"></i>Back
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('edit_article', article_id=article.id) }}">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="title" name="title" 
+                                       value="{{ article.title }}" required>
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label for="summary" class="form-label">Summary <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="summary" name="summary" rows="2" required>{{ article.summary }}</textarea>
+                                <small class="text-muted">This will be shown in article listings</small>
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="content" name="content" rows="12" required>{{ article.content }}</textarea>
+                                <small class="text-muted">Full article content (supports HTML)</small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="tips" {{ 'selected' if article.category == 'tips' }}>Farming Tips</option>
+                                    <option value="crop_management" {{ 'selected' if article.category == 'crop_management' }}>Crop Management</option>
+                                    <option value="pest_control" {{ 'selected' if article.category == 'pest_control' }}>Pest Control</option>
+                                    <option value="soil_health" {{ 'selected' if article.category == 'soil_health' }}>Soil Health</option>
+                                    <option value="irrigation" {{ 'selected' if article.category == 'irrigation' }}>Irrigation</option>
+                                    <option value="technology" {{ 'selected' if article.category == 'technology' }}>Technology</option>
+                                    <option value="market_trends" {{ 'selected' if article.category == 'market_trends' }}>Market Trends</option>
+                                    <option value="success_stories" {{ 'selected' if article.category == 'success_stories' }}>Success Stories</option>
+                                    <option value="general" {{ 'selected' if article.category == 'general' }}>General</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="difficulty_level" class="form-label">Difficulty Level</label>
+                                <select class="form-select" id="difficulty_level" name="difficulty_level">
+                                    <option value="beginner" {{ 'selected' if article.difficulty_level == 'beginner' }}>Beginner</option>
+                                    <option value="intermediate" {{ 'selected' if article.difficulty_level == 'intermediate' }}>Intermediate</option>
+                                    <option value="advanced" {{ 'selected' if article.difficulty_level == 'advanced' }}>Advanced</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="crop_type" class="form-label">Crop Type</label>
+                                <select class="form-select" id="crop_type" name="crop_type">
+                                    <option value="general" {{ 'selected' if article.crop_type == 'general' }}>General (All Crops)</option>
+                                    <option value="rice" {{ 'selected' if article.crop_type == 'rice' }}>Rice</option>
+                                    <option value="wheat" {{ 'selected' if article.crop_type == 'wheat' }}>Wheat</option>
+                                    <option value="maize" {{ 'selected' if article.crop_type == 'maize' }}>Maize</option>
+                                    <option value="tomato" {{ 'selected' if article.crop_type == 'tomato' }}>Tomato</option>
+                                    <option value="cotton" {{ 'selected' if article.crop_type == 'cotton' }}>Cotton</option>
+                                    <option value="sugarcane" {{ 'selected' if article.crop_type == 'sugarcane' }}>Sugarcane</option>
+                                    <option value="vegetables" {{ 'selected' if article.crop_type == 'vegetables' }}>Vegetables</option>
+                                    <option value="fruits" {{ 'selected' if article.crop_type == 'fruits' }}>Fruits</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="reading_time" class="form-label">Reading Time (minutes)</label>
+                                <input type="number" class="form-control" id="reading_time" name="reading_time" 
+                                       value="{{ article.reading_time or 5 }}" min="1" max="60">
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label for="featured_image" class="form-label">Featured Image URL</label>
+                                <input type="url" class="form-control" id="featured_image" name="featured_image" 
+                                       value="{{ article.featured_image or '' }}" placeholder="https://example.com/image.jpg">
+                                <small class="text-muted">Optional: URL to article cover image</small>
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label for="tags" class="form-label">Tags</label>
+                                <input type="text" class="form-control" id="tags" name="tags" 
+                                       value="{{ article.tags or '' }}" placeholder="farming, organic, irrigation">
+                                <small class="text-muted">Comma-separated tags for better searchability</small>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-danger" onclick="deleteArticle({{ article.id }})">
+                                <i class="fas fa-trash me-1"></i>Delete Article
+                            </button>
+                            <div>
+                                <a href="{{ url_for('view_article', article_id=article.id) }}" class="btn btn-secondary me-2">
+                                    <i class="fas fa-times me-1"></i>Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>Update Article
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function deleteArticle(articleId) {
+    if (confirm('Are you sure you want to delete this article? This action cannot be undone.')) {
+        fetch(`/learning-hub/article/${articleId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = '{{ url_for("learning_hub") }}';
+            } else {
+                alert('Error deleting article: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error deleting article. Please try again.');
+        });
+    }
+}
+</script>
+{% endblock %}

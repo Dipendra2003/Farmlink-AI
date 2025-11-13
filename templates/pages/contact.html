@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Us - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="text-center mb-5">
+                <h1 class="display-5 fw-bold text-success">Contact Us</h1>
+                <p class="lead text-muted">
+                    Get in touch with our team. We're here to help you succeed in agriculture.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Contact Form -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h3 class="text-success mb-4">
+                        <i class="fas fa-envelope me-2"></i>Send us a Message
+                    </h3>
+                    
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.name.label(class="form-label") }}
+                                {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                                {% for error in form.name.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.email.label(class="form-label") }}
+                                {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                                {% for error in form.email.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.subject.label(class="form-label") }}
+                            {{ form.subject(class="form-control" + (" is-invalid" if form.subject.errors else "")) }}
+                            {% for error in form.subject.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mb-4">
+                            {{ form.message.label(class="form-label") }}
+                            {{ form.message(class="form-control" + (" is-invalid" if form.message.errors else ""), rows="6") }}
+                            {% for error in form.message.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-success btn-lg") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contact Information -->
+        <div class="col-lg-4">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body p-4">
+                    <h4 class="mb-4">
+                        <i class="fas fa-map-marker-alt me-2"></i>Get in Touch
+                    </h4>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-envelope me-2"></i>Email</h6>
+                        <p class="mb-0">farmlink76@gmail.com</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-phone me-2"></i>Phone</h6>
+                        <p class="mb-0">+91 7644868038</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-map-marker-alt me-2"></i>Address</h6>
+                        <p class="mb-0">
+                            FarmLink AI Technologies<br>
+                            Innovation Hub, MMDU (mullana) <br>
+                            Ambala, Haryana 133202<br>
+                            India
+                        </p>
+                    </div>
+                    
+                    <div class="mb-0">
+                        <h6><i class="fas fa-clock me-2"></i>Support Hours</h6>
+                        <p class="mb-0">
+                            Mon - Sat: 9:00 AM - 6:00 PM<br>
+                            Sunday: 10:00 AM - 4:00 PM
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- FAQ Section -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="text-success mb-3">
+                        <i class="fas fa-question-circle me-2"></i>Quick Answers
+                    </h5>
+                    
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                    How do I register as a farmer?
+                                </button>
+                            </h2>
+                            <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Click on "Register" and select "Farmer" as your role. Fill in your details including location and phone number to get started.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    How does AI pest detection work?
+                                </button>
+                            </h2>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Our AI analyzes crop images and symptoms to help detect pests and diseases early for better crop protection.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                    Is the platform free to use?
+                                </button>
+                            </h2>
+                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    Yes! FarmLink AI is completely free for farmers and buyers. We aim to support the agricultural community.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Social Media & Resources -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card bg-light">
+                <div class="card-body text-center py-4">
+                    <h4 class="text-success mb-3">Follow Us & Stay Updated</h4>
+                    <div class="d-flex justify-content-center gap-3 mb-3">
+                        <a href="#" class="btn btn-outline-success rounded-circle" style="width: 50px; height: 50px;">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="btn btn-outline-success rounded-circle" style="width: 50px; height: 50px;">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="btn btn-outline-success rounded-circle" style="width: 50px; height: 50px;">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="btn btn-outline-success rounded-circle" style="width: 50px; height: 50px;">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        <a href="#" class="btn btn-outline-success rounded-circle" style="width: 50px; height: 50px;">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                    <p class="text-muted mb-0">
+                        Join our community for the latest updates, farming tips, and success stories.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

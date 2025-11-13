@@ -1,0 +1,1326 @@
+{% extends "base.html" %}
+
+{% block title %}{{ crop.name }} - FarmLink AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .seller-link:hover img {
+        transform: scale(1.1);
+    }
+
+    .seller-link:hover .fw-bold {
+        color: #28a745 !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-decoration-none">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('marketplace') }}"
+                    class="text-decoration-none">Marketplace</a></li>
+            <li class="breadcrumb-item active">{{ crop.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Product Images and Info -->
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="row g-0">
+                    <div class="col-md-6">
+                        <img src="{{ url_for('static', filename='uploads/crops/' + crop.image_url.split('/')[-1]) if crop.image_url else 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' }}"
+                            class="img-fluid rounded-start w-100" alt="{{ crop.name }}"
+                            style="height: 400px; object-fit: cover;">
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h2 class="card-title fw-bold">{{ crop.name }}</h2>
+                                <span class="badge bg-success fs-6">{{ crop.category.title() }}</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <a href="{{ url_for('view_seller_profile', seller_id=crop.farmer_id) }}"
+                                        class="seller-link text-decoration-none d-flex align-items-center flex-grow-1"
+                                        title="View {{ crop.farmer.full_name }}'s profile">
+                                        <img src="{% if crop.farmer.profile_image and crop.farmer.profile_image != 'default.jpg' %}{{ url_for('static', filename=crop.farmer.profile_image) }}{% else %}https://ui-avatars.com/api/?name={{ crop.farmer.full_name }}&background=28a745&color=fff&size=40{% endif %}"
+                                            class="rounded-circle me-2" width="40" height="40" alt="Farmer"
+                                            style="transition: transform 0.2s;"
+                                            onerror="this.src='https://ui-avatars.com/api/?name={{ crop.farmer.full_name }}&background=28a745&color=fff&size=40'">
+                                        <div class="flex-grow-1">
+                                            <div class="fw-bold text-dark" style="transition: color 0.2s;">{{
+                                                crop.farmer.full_name }}
+                                                {% set seller = crop.farmer %}
+                                                {% include 'components/kyc_badge.html' %}
+                                            </div>
+                                            <small class="text-muted">Farmer</small>
+                                        </div>
+                                    </a>
+                                    <a href="{{ url_for('rating.view_seller_reputation', seller_id=crop.farmer_id) }}"
+                                        class="btn btn-sm btn-outline-warning ms-2" title="View Seller Reputation">
+                                        <i class="fas fa-star"></i>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <p class="text-muted mb-1">
+                                    <i class="fas fa-map-marker-alt me-2"></i>{{ crop.location }}
+                                </p>
+                                {% if crop.harvest_date %}
+                                <p class="text-muted mb-1">
+                                    <i class="fas fa-calendar me-2"></i>Harvested: {{ crop.harvest_date.strftime('%B %d,
+                                    %Y') }}
+                                </p>
+                                {% endif %}
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-clock me-2"></i>Listed: {{ crop.created_at.strftime('%B %d, %Y') }}
+                                </p>
+                            </div>
+
+                            <div class="bg-light rounded p-3 mb-3">
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="text-muted small">Available Quantity</div>
+                                        <div class="fw-bold h5 text-success">{{ crop.quantity }} {{ crop.unit }}</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="text-muted small">Price per {{ crop.unit }}</div>
+                                        <div class="fw-bold h5 text-primary">{{ format_currency(crop.price_per_unit) }}
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="text-muted small">Total Value</div>
+                                        <div class="fw-bold h5 text-dark">{{ format_currency(crop.total_value) }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if crop.description %}
+                            <div class="mb-3">
+                                <h6 class="fw-bold">Description</h6>
+                                <p class="text-muted">{{ crop.description }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Form and Actions -->
+        <div class="col-lg-4">
+            {% if current_user.is_authenticated and crop.farmer_id != current_user.id %}
+            <!-- Allow both buyers and farmers to purchase, but not their own products -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shopping-cart me-2"></i>Purchase Options
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Quantity ({{ crop.unit }})</label>
+                        <input type="number" id="product-quantity" class="form-control" min="0.1"
+                            max="{{ crop.quantity }}" step="0.1" value="1" placeholder="Enter quantity"
+                            data-crop-id="{{ crop.id }}">
+                        <div class="form-text">Maximum available: {{ crop.quantity }} {{ crop.unit }}</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                            <span class="fw-semibold">Estimated Total:</span>
+                            <span class="h5 mb-0 text-success" id="estimated-total">{{
+                                format_currency(crop.price_per_unit) }}</span>
+                        </div>
+                    </div>
+
+                    {% if current_user.role == 'farmer' %}
+                    <div class="alert alert-info small mb-3">
+                        <i class="fas fa-info-circle me-1"></i>
+                        You're purchasing as a farmer. This order will be tracked separately from your sales.
+                    </div>
+                    {% endif %}
+
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-success btn-lg add-to-cart-btn" id="add-to-cart-btn"
+                            data-crop-id="{{ crop.id }}">
+                            <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                        </button>
+                        <button type="button" class="btn btn-outline-success btn-lg buy-now-btn" id="buy-now-btn"
+                            data-crop-id="{{ crop.id }}">
+                            <i class="fas fa-bolt me-2"></i>Buy Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% elif not current_user.is_authenticated %}
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body text-center">
+                    <i class="fas fa-sign-in-alt fa-3x text-muted mb-3"></i>
+                    <h5>Login Required</h5>
+                    <p class="text-muted">Please login to place orders.</p>
+                    <a href="{{ url_for('login') }}" class="btn btn-success">
+                        <i class="fas fa-sign-in-alt me-2"></i>Login
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <!-- User is viewing their own product -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body text-center">
+                    <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                    <h5>Your Own Product</h5>
+                    <p class="text-muted">You cannot purchase your own products.</p>
+                    <a href="{{ url_for('edit_crop', crop_id=crop.id) }}" class="btn btn-warning">
+                        <i class="fas fa-edit me-2"></i>Edit Product
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Contact Farmer -->
+            {% if current_user.is_authenticated and current_user.id != crop.farmer_id %}
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-envelope me-2"></i>Contact Farmer
+                    </h6>
+                    <p class="text-muted small">Have questions about this crop?</p>
+                    <a href="{{ url_for('send_message', user_id=crop.farmer.id) }}"
+                        class="btn btn-outline-primary w-100">
+                        <i class="fas fa-paper-plane me-2"></i>Send Message
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Crop Status -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <h6 class="card-title">Crop Status</h6>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Availability:</span>
+                        <span
+                            class="badge bg-{{ 'success' if crop.status == 'available' else 'danger' if crop.status == 'sold' else 'warning' }}">
+                            {{ crop.status.title() }}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Active Orders:</span>
+                        <span class="badge bg-info">{{ crop.orders|length }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Ratings Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-star me-2"></i>Customer Ratings & Reviews
+                    </h4>
+                    {% if current_user.is_authenticated and current_user.role == 'buyer' %}
+                    <!-- Check if user has completed order for this product -->
+                    {% set user_completed_orders = current_user.orders_placed|selectattr('crop_id', 'equalto',
+                    crop.id)|selectattr('status', 'equalto', 'completed')|list %}
+                    {% if user_completed_orders %}
+                    {% set unrated_orders = [] %}
+                    {% for order in user_completed_orders %}
+                    {% if not order.product_rating %}
+                    {% set _ = unrated_orders.append(order) %}
+                    {% endif %}
+                    {% endfor %}
+                    {% if unrated_orders %}
+                    <a href="{{ url_for('rating.rate_product', order_id=unrated_orders[0].id) }}"
+                        class="btn btn-success">
+                        <i class="fas fa-star me-2"></i>Rate this Product
+                    </a>
+                    {% endif %}
+                    {% endif %}
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if product_ratings and product_ratings.items %}
+                    <!-- Rating Summary -->
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center border-end">
+                            <div class="display-4 fw-bold text-warning">{{ "%.1f"|format(average_rating) }}</div>
+                            <div class="rating-stars mb-2" style="color: #ffc107; font-size: 1.5rem;">
+                                {% for i in range(average_rating|int) %}
+                                <i class="fas fa-star"></i>
+                                {% endfor %}
+                                {% if average_rating % 1 >= 0.5 %}
+                                <i class="fas fa-star-half-alt"></i>
+                                {% endif %}
+                                {% for i in range(5 - (average_rating|int) - (1 if average_rating % 1 >= 0.5 else 0)) %}
+                                <i class="far fa-star"></i>
+                                {% endfor %}
+                            </div>
+                            <p class="text-muted mb-0">{{ total_ratings }} rating{{ 's' if total_ratings != 1 else '' }}
+                            </p>
+                        </div>
+                        <div class="col-md-8">
+                            <h6 class="fw-bold mb-3">Rating Distribution</h6>
+                            {% for star in [5, 4, 3, 2, 1] %}
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="me-2" style="width: 60px;">{{ star }} <i
+                                        class="fas fa-star text-warning"></i></span>
+                                <div class="progress flex-grow-1" style="height: 20px;">
+                                    {% set star_count = rating_distribution.get(star, 0) %}
+                                    {% set percentage = (star_count / total_ratings * 100) if total_ratings > 0 else 0
+                                    %}
+                                    <div class="progress-bar bg-warning" style="width: {{ percentage }}%">
+                                        {{ star_count }}
+                                    </div>
+                                </div>
+                                <span class="ms-2 text-muted" style="width: 50px;">{{ "%.0f"|format(percentage)
+                                    }}%</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Recent Ratings -->
+                    <h5 class="fw-bold mb-3">Recent Reviews</h5>
+                    {% for rating in product_ratings.items[:3] %}
+                    {% set show_product = False %}
+                    {% set show_actions = False %}
+                    {% include 'ratings/_rating_card.html' %}
+                    {% endfor %}
+
+                    <!-- View All Ratings Link -->
+                    {% if total_ratings > 0 %}
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('rating.view_product_ratings', product_id=crop.id) }}"
+                            class="btn btn-outline-warning">
+                            <i class="fas fa-list me-2"></i>View All {{ total_ratings }} Rating{{ 's' if total_ratings != 1 else '' }}
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No ratings yet</h5>
+                        <p class="text-muted">Be the first to rate this product!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Crop Health Trends Section -->
+    {% if current_user.is_authenticated and current_user.id == crop.farmer_id and health_trends and
+    health_trends.has_data %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>Crop Health Trends
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Health Score Overview -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h2
+                                    class="mb-0 text-{{ 'success' if health_trends.health_score >= 80 else 'warning' if health_trends.health_score >= 60 else 'danger' }}">
+                                    {{ health_trends.health_score }}
+                                </h2>
+                                <p class="text-muted mb-0">Health Score</p>
+                                <small
+                                    class="badge bg-{{ 'success' if health_trends.health_score >= 80 else 'warning' if health_trends.health_score >= 60 else 'danger' }}">
+                                    {{ health_trends.health_status }}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h2 class="mb-0 text-primary">{{ health_trends.total_analyses }}</h2>
+                                <p class="text-muted mb-0">Total Analyses</p>
+                                <small class="text-muted">{{ health_trends.analysis_period.days }} days</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h2 class="mb-0 text-warning">{{ health_trends.recurring_issues|length }}</h2>
+                                <p class="text-muted mb-0">Recurring Issues</p>
+                                <small class="text-muted">Need attention</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h2 class="mb-0 text-danger">{{ health_trends.severity_distribution.get('critical', 0) +
+                                    health_trends.severity_distribution.get('high', 0) }}</h2>
+                                <p class="text-muted mb-0">High Severity</p>
+                                <small class="text-muted">Critical + High</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recurring Issues -->
+                    {% if health_trends.recurring_issues %}
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-exclamation-triangle text-warning me-2"></i>Recurring Issues
+                        </h5>
+                        <div class="list-group">
+                            {% for issue in health_trends.recurring_issues[:3] %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ issue.issue }}</strong>
+                                        <br>
+                                        <small class="text-muted">Occurred {{ issue.occurrences }} times ({{
+                                            issue.frequency }})</small>
+                                    </div>
+                                    <span class="badge bg-warning">{{ issue.occurrences }}x</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Issue Type Distribution -->
+                    {% if health_trends.issue_type_distribution %}
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-chart-pie me-2"></i>Issue Type Distribution
+                        </h5>
+                        <div class="row">
+                            {% for issue_type, count in health_trends.issue_type_distribution.items() %}
+                            <div class="col-md-4 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span>{{ issue_type|title }}</span>
+                                            <span class="text-muted">{{ count }}</span>
+                                        </div>
+                                        <div class="progress" style="height: 10px;">
+                                            <div class="progress-bar bg-{{ 'danger' if issue_type == 'pest' else 'warning' if issue_type == 'disease' else 'info' }}"
+                                                style="width: {{ (count / health_trends.total_analyses * 100)|round }}%">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Recommendations -->
+                    {% if health_trends.recommendations %}
+                    <div class="mb-3">
+                        <h5 class="fw-bold mb-3">
+                            <i class="fas fa-lightbulb text-warning me-2"></i>Recommendations
+                        </h5>
+                        {% for rec in health_trends.recommendations %}
+                        <div
+                            class="alert alert-{{ 'danger' if rec.priority == 'critical' else 'warning' if rec.priority == 'high' else 'info' }} mb-2">
+                            <i
+                                class="fas fa-{{ 'exclamation-circle' if rec.priority == 'critical' else 'exclamation-triangle' if rec.priority == 'high' else 'info-circle' }} me-2"></i>
+                            <strong>{{ rec.priority|title }} Priority:</strong> {{ rec.message }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Pest & Disease History Section -->
+    {% if current_user.is_authenticated and current_user.id == crop.farmer_id and pest_analyses %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="fas fa-bug me-2"></i>Pest & Disease History
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">Recent pest and disease analyses for this crop</p>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Issue Identified</th>
+                                    <th>Severity</th>
+                                    <th>Confidence</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for analysis in pest_analyses %}
+                                <tr>
+                                    <td>{{ analysis.created_at.strftime('%b %d, %Y') }}</td>
+                                    <td>
+                                        <strong>{{ analysis.identified_issue or 'Unknown Issue' }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ analysis.issue_type|title if analysis.issue_type
+                                            else 'N/A' }}</small>
+                                    </td>
+                                    <td>
+                                        {% if analysis.severity_level %}
+                                        <span
+                                            class="badge bg-{{ 'danger' if analysis.severity_level == 'critical' else 'warning' if analysis.severity_level == 'high' else 'info' if analysis.severity_level == 'medium' else 'success' }}">
+                                            {{ analysis.severity_level|title }}
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if analysis.confidence_score %}
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-{{ 'success' if analysis.confidence_score >= 70 else 'warning' if analysis.confidence_score >= 50 else 'danger' }}"
+                                                role="progressbar" style="width: {{ analysis.confidence_score }}%"
+                                                aria-valuenow="{{ analysis.confidence_score }}" aria-valuemin="0"
+                                                aria-valuemax="100">
+                                                {{ "%.1f"|format(analysis.confidence_score) }}%
+                                            </div>
+                                        </div>
+                                        {% else %}
+                                        <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('view_pest_analysis', analysis_id=analysis.id) }}"
+                                            class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye me-1"></i>View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <a href="{{ url_for('pest_disease_analysis') }}?crop_id={{ crop.id }}" class="btn btn-warning">
+                            <i class="fas fa-plus me-2"></i>Analyze This Crop
+                        </a>
+                        <a href="{{ url_for('pest_analysis_history') }}" class="btn btn-outline-secondary ms-2">
+                            <i class="fas fa-history me-2"></i>View All Analyses
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Other Crops from Same Farmer -->
+    {% if other_crops %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <h4 class="fw-bold mb-4">
+                <i class="fas fa-user me-2"></i>More from {{ crop.farmer.full_name }}
+            </h4>
+            <div class="row g-4">
+                {% for other_crop in other_crops %}
+                <div class="col-lg-3 col-md-6">
+                    <div class="card crop-card h-100 shadow-sm border-0">
+                        <img src="{{ url_for('static', filename=other_crop.image_url) if other_crop.image_url else url_for('static', filename='uploads/crops/default-crop.jpg') }}"
+                            class="card-img-top" alt="{{ other_crop.name }}" style="height: 180px; object-fit: cover;">
+                        <div class="card-body">
+                            <h6 class="card-title fw-bold">{{ other_crop.name }}</h6>
+                            <p class="text-muted small mb-2">{{ other_crop.category.title() }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-success fw-bold">{{ format_currency(other_crop.price_per_unit) }}/{{
+                                    other_crop.unit }}</span>
+                                <small class="text-muted">{{ other_crop.quantity }} {{ other_crop.unit }}</small>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-transparent border-0">
+                            <a href="{{ url_for('product_detail', crop_id=other_crop.id) }}"
+                                class="btn btn-outline-success btn-sm w-100">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('DOM Content Loaded - Starting cart functionality initialization');
+
+        // Get DOM elements
+        const quantityInput = document.getElementById('product-quantity');
+        const estimatedTotal = document.getElementById('estimated-total');
+        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        const buyNowBtn = document.getElementById('buy-now-btn');
+
+        // Get crop data safely
+        const pricePerUnit = parseFloat('{{ crop.price_per_unit }}') || 0;
+        const cropId = parseInt('{{ crop.id }}') || 0;
+        const maxQuantity = parseFloat('{{ crop.quantity }}') || 0;
+
+        console.log('Cart elements initialized:', {
+            quantityInput: !!quantityInput,
+            estimatedTotal: !!estimatedTotal,
+            addToCartBtn: !!addToCartBtn,
+            buyNowBtn: !!buyNowBtn,
+            cropId: cropId,
+            pricePerUnit: pricePerUnit,
+            maxQuantity: maxQuantity
+        });
+
+        // Check if we have the required elements
+        if (!quantityInput) {
+            console.error('Quantity input not found - cart functionality disabled');
+            return;
+        }
+
+        if (!addToCartBtn && !buyNowBtn) {
+            console.log('No cart buttons found - user may not be logged in or viewing own product');
+            return;
+        }
+
+        // Enhanced quantity input validation and real-time feedback
+        if (quantityInput && estimatedTotal) {
+            quantityInput.addEventListener('input', function () {
+                const quantity = parseFloat(this.value) || 0;
+                const total = quantity * pricePerUnit;
+                
+                // Update estimated total with proper formatting
+                estimatedTotal.textContent = '₹' + new Intl.NumberFormat('en-IN', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }).format(total);
+                
+                // Visual feedback for quantity validation
+                this.classList.remove('is-invalid', 'is-valid');
+                
+                if (quantity <= 0) {
+                    this.classList.add('is-invalid');
+                    this.setCustomValidity('Quantity must be greater than 0');
+                } else if (quantity > maxQuantity) {
+                    this.classList.add('is-invalid');
+                    this.setCustomValidity(`Maximum available: ${maxQuantity}`);
+                } else {
+                    this.classList.add('is-valid');
+                    this.setCustomValidity('');
+                }
+            });
+            
+            // Trigger initial validation
+            quantityInput.dispatchEvent(new Event('input'));
+        }
+
+        // Enhanced Add to Cart functionality
+        if (addToCartBtn) {
+            console.log('Add to Cart button found, attaching enhanced event listener');
+            
+            // Prevent double-click submissions
+            let isProcessing = false;
+            
+            addToCartBtn.addEventListener('click', function (e) {
+                console.log('Add to Cart button clicked!');
+                e.preventDefault();
+                
+                // Prevent double submissions
+                if (isProcessing) {
+                    console.log('Add to cart already in progress, ignoring click');
+                    return;
+                }
+
+                // Store button reference
+                const button = this;
+
+                // Get and validate quantity with enhanced validation
+                const quantityValue = quantityInput.value.trim();
+                console.log('Quantity input value:', quantityValue);
+
+                if (!quantityValue) {
+                    showMessage('Please enter a quantity', 'error');
+                    quantityInput.focus();
+                    return;
+                }
+
+                const quantity = parseFloat(quantityValue);
+                console.log('Parsed quantity:', quantity);
+
+                // Enhanced quantity validation
+                if (isNaN(quantity) || quantity <= 0) {
+                    showMessage('Please enter a valid quantity greater than 0', 'error');
+                    quantityInput.focus();
+                    quantityInput.select();
+                    return;
+                }
+
+                if (quantity > maxQuantity) {
+                    showMessage(`Only ${maxQuantity} units available in stock`, 'error');
+                    quantityInput.focus();
+                    quantityInput.select();
+                    return;
+                }
+
+                // Get CSRF token with enhanced error handling
+                const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+                if (!csrfTokenMeta) {
+                    console.error('CSRF token meta tag not found');
+                    showMessage('Security token missing. Please refresh the page.', 'error');
+                    return;
+                }
+
+                const csrfToken = csrfTokenMeta.content;
+                if (!csrfToken) {
+                    console.error('CSRF token is empty');
+                    showMessage('Security token invalid. Please refresh the page.', 'error');
+                    return;
+                }
+
+                console.log('CSRF token found:', csrfToken.substring(0, 10) + '...');
+
+                // Set processing flag and store original button state
+                isProcessing = true;
+                const originalText = button.innerHTML;
+                const originalClasses = button.className;
+
+                // Enhanced loading state with animation
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding to Cart...';
+                button.classList.add('btn-loading');
+                button.style.minWidth = button.offsetWidth + 'px'; // Prevent button resize
+
+                // Disable quantity input during processing
+                quantityInput.disabled = true;
+
+                // Prepare request URL and data
+                const requestUrl = `/cart/add/${cropId}`;
+                const requestData = { quantity: quantity };
+
+                console.log('Sending add to cart request to:', requestUrl);
+                console.log('Request data:', requestData);
+
+                // Send AJAX request with timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+                fetch(requestUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(requestData),
+                    signal: controller.signal
+                })
+                    .then(response => {
+                        clearTimeout(timeoutId);
+                        console.log('Add to cart response status:', response.status);
+                        console.log('Add to cart response ok:', response.ok);
+
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                console.error('Server error response:', data);
+                                throw new Error(data.error || `Server error: ${response.status}`);
+                            }).catch(jsonError => {
+                                console.error('Failed to parse error response:', jsonError);
+                                throw new Error(`Server error: ${response.status}`);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Add to cart success response:', data);
+
+                        if (data.success) {
+                            // Update cart count immediately
+                            updateCartCount();
+
+                            // Enhanced success state with animation
+                            button.innerHTML = '<i class="fas fa-check me-2"></i>Added to Cart!';
+                            button.classList.remove('btn-success', 'btn-loading');
+                            button.classList.add('btn-outline-success');
+
+                            // Show enhanced success message
+                            const message = data.updated ? 
+                                'Cart updated! Quantity increased.' : 
+                                'Item added to cart successfully!';
+                            showMessage(message, 'success');
+
+                            // Reset button after 3 seconds with smooth transition
+                            setTimeout(() => {
+                                button.innerHTML = originalText;
+                                button.className = originalClasses;
+                                button.disabled = false;
+                                button.style.minWidth = '';
+                                quantityInput.disabled = false;
+                                isProcessing = false;
+                            }, 3000);
+                        } else {
+                            // Handle unexpected success:false response
+                            console.error('Unexpected success:false response:', data);
+                            showMessage(data.error || 'Failed to add item to cart', 'error');
+                            resetButton();
+                        }
+                    })
+                    .catch(error => {
+                        clearTimeout(timeoutId);
+                        console.error('Error adding to cart:', error);
+
+                        // Enhanced error handling with specific messages
+                        let errorMessage = error.message;
+                        if (error.name === 'AbortError') {
+                            errorMessage = 'Request timed out. Please try again.';
+                        } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+                            errorMessage = 'Network error. Please check your connection and try again.';
+                        } else if (errorMessage.includes('CSRF')) {
+                            errorMessage = 'Security token error. Please refresh the page and try again.';
+                        } else if (!errorMessage || errorMessage === 'undefined') {
+                            errorMessage = 'An unexpected error occurred. Please try again.';
+                        }
+
+                        showMessage(errorMessage, 'error');
+                        resetButton();
+                    });
+
+                // Helper function to reset button state
+                function resetButton() {
+                    button.innerHTML = originalText;
+                    button.className = originalClasses;
+                    button.disabled = false;
+                    button.style.minWidth = '';
+                    quantityInput.disabled = false;
+                    isProcessing = false;
+                }
+            });
+        }
+
+        // Enhanced Buy Now functionality - add to cart and redirect to checkout
+        if (buyNowBtn) {
+            console.log('Buy Now button found, attaching enhanced event listener');
+            
+            // Prevent double-click submissions
+            let isBuyNowProcessing = false;
+            
+            buyNowBtn.addEventListener('click', function (e) {
+                console.log('Buy Now button clicked!');
+                e.preventDefault();
+                
+                // Prevent double submissions
+                if (isBuyNowProcessing) {
+                    console.log('Buy now already in progress, ignoring click');
+                    return;
+                }
+
+                // Store button reference
+                const button = this;
+
+                // Get and validate quantity with enhanced validation
+                const quantityValue = quantityInput.value.trim();
+                console.log('Buy Now - Quantity input value:', quantityValue);
+
+                if (!quantityValue) {
+                    showMessage('Please enter a quantity', 'error');
+                    quantityInput.focus();
+                    return;
+                }
+
+                const quantity = parseFloat(quantityValue);
+                console.log('Buy Now - Parsed quantity:', quantity);
+
+                // Enhanced quantity validation
+                if (isNaN(quantity) || quantity <= 0) {
+                    showMessage('Please enter a valid quantity greater than 0', 'error');
+                    quantityInput.focus();
+                    quantityInput.select();
+                    return;
+                }
+
+                if (quantity > maxQuantity) {
+                    showMessage(`Only ${maxQuantity} units available in stock`, 'error');
+                    quantityInput.focus();
+                    quantityInput.select();
+                    return;
+                }
+
+                // Get CSRF token with enhanced error handling
+                const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+                if (!csrfTokenMeta) {
+                    console.error('CSRF token meta tag not found');
+                    showMessage('Security token missing. Please refresh the page.', 'error');
+                    return;
+                }
+
+                const csrfToken = csrfTokenMeta.content;
+                if (!csrfToken) {
+                    console.error('CSRF token is empty');
+                    showMessage('Security token invalid. Please refresh the page.', 'error');
+                    return;
+                }
+
+                console.log('Buy Now - CSRF token found:', csrfToken.substring(0, 10) + '...');
+
+                // Set processing flag and store original button state
+                isBuyNowProcessing = true;
+                const originalText = button.innerHTML;
+                const originalClasses = button.className;
+
+                // Enhanced loading state with animation
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing Purchase...';
+                button.classList.add('btn-loading');
+                button.style.minWidth = button.offsetWidth + 'px'; // Prevent button resize
+
+                // Disable both buttons and quantity input during processing
+                quantityInput.disabled = true;
+                if (addToCartBtn) addToCartBtn.disabled = true;
+
+                // Prepare request URL and data for buy now
+                const requestUrl = `/cart/buy-now/${cropId}`;
+                const requestData = { quantity: quantity };
+
+                console.log('Buy Now - Sending request to:', requestUrl);
+                console.log('Buy Now - Request data:', requestData);
+
+                // Send AJAX request for buy now with timeout
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+                fetch(requestUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(requestData),
+                    signal: controller.signal
+                })
+                    .then(response => {
+                        clearTimeout(timeoutId);
+                        console.log('Buy Now - Response status:', response.status);
+                        console.log('Buy Now - Response ok:', response.ok);
+
+                        if (!response.ok) {
+                            return response.json().then(data => {
+                                console.error('Buy Now - Server error response:', data);
+                                throw new Error(data.error || `Server error: ${response.status}`);
+                            }).catch(jsonError => {
+                                console.error('Buy Now - Failed to parse error response:', jsonError);
+                                throw new Error(`Server error: ${response.status}`);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Buy Now - Success response:', data);
+
+                        if (data.success) {
+                            // Update cart count immediately
+                            updateCartCount();
+
+                            // Enhanced success state with animation
+                            button.innerHTML = '<i class="fas fa-check me-2"></i>Purchase Successful!';
+                            button.classList.remove('btn-outline-success', 'btn-loading');
+                            button.classList.add('btn-success');
+
+                            // Show enhanced success message
+                            showMessage('Item added to cart! Redirecting to checkout...', 'success');
+
+                            // Redirect to checkout using the URL from response or default
+                            setTimeout(() => {
+                                console.log('Buy Now - Redirecting to checkout...');
+                                const redirectUrl = data.redirect_url || '/checkout';
+                                
+                                // Show loading indicator during redirect
+                                button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Redirecting...';
+                                
+                                // Perform redirect
+                                window.location.href = redirectUrl;
+                            }, 1500);
+                        } else {
+                            // Handle unexpected success:false response
+                            console.error('Buy Now - Unexpected success:false response:', data);
+                            showMessage(data.error || 'Failed to process purchase', 'error');
+                            resetBuyNowButton();
+                        }
+                    })
+                    .catch(error => {
+                        clearTimeout(timeoutId);
+                        console.error('Error with Buy Now:', error);
+
+                        // Enhanced error handling with specific messages
+                        let errorMessage = error.message;
+                        if (error.name === 'AbortError') {
+                            errorMessage = 'Request timed out. Please try again.';
+                        } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+                            errorMessage = 'Network error. Please check your connection and try again.';
+                        } else if (errorMessage.includes('CSRF')) {
+                            errorMessage = 'Security token error. Please refresh the page and try again.';
+                        } else if (!errorMessage || errorMessage === 'undefined') {
+                            errorMessage = 'An unexpected error occurred. Please try again.';
+                        }
+
+                        showMessage(errorMessage, 'error');
+                        resetBuyNowButton();
+                    });
+
+                // Helper function to reset buy now button state
+                function resetBuyNowButton() {
+                    button.innerHTML = originalText;
+                    button.className = originalClasses;
+                    button.disabled = false;
+                    button.style.minWidth = '';
+                    quantityInput.disabled = false;
+                    if (addToCartBtn) addToCartBtn.disabled = false;
+                    isBuyNowProcessing = false;
+                }
+            });
+        }
+
+        // Enhanced function to update cart count with better error handling
+        function updateCartCount() {
+            console.log('Updating cart count...');
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            
+            fetch('/cart/count', {
+                signal: controller.signal,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => {
+                    clearTimeout(timeoutId);
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch cart count: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Cart count response:', data);
+                    
+                    if (data.success) {
+                        // Find all cart count elements with multiple selectors
+                        const cartElements = document.querySelectorAll(
+                            '.cart-count, .cart-count-badge, .badge.cart-badge, [data-cart-count]'
+                        );
+
+                        // Update all cart count badges with animation
+                        cartElements.forEach(badge => {
+                            if (data.count > 0) {
+                                // Animate count change if different
+                                const currentCount = parseInt(badge.textContent) || 0;
+                                if (currentCount !== data.count) {
+                                    badge.style.transform = 'scale(1.2)';
+                                    setTimeout(() => {
+                                        badge.style.transform = 'scale(1)';
+                                    }, 200);
+                                }
+                                
+                                badge.textContent = data.count;
+                                badge.style.display = 'inline-block';
+                                badge.classList.add('visible');
+                            } else {
+                                badge.style.display = 'none';
+                                badge.classList.remove('visible');
+                            }
+                        });
+                        
+                        console.log(`Cart count updated to: ${data.count}`);
+                    } else {
+                        console.error('Cart count update failed:', data.error);
+                    }
+                })
+                .catch(error => {
+                    clearTimeout(timeoutId);
+                    if (error.name === 'AbortError') {
+                        console.error('Cart count update timed out');
+                    } else {
+                        console.error('Error updating cart count:', error);
+                    }
+                });
+        }
+
+        // Enhanced function to show messages with better UX
+        function showMessage(message, type) {
+            console.log(`Showing ${type} message:`, message);
+            
+            // Remove any existing messages with animation
+            const existingMessages = document.querySelectorAll('.cart-message');
+            existingMessages.forEach(msg => {
+                msg.classList.remove('show');
+                setTimeout(() => {
+                    if (msg.parentNode) {
+                        msg.remove();
+                    }
+                }, 150);
+            });
+
+            // Create enhanced message element
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade cart-message`;
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 320px;
+                max-width: 450px;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                border: none;
+                border-radius: 8px;
+                font-weight: 500;
+                backdrop-filter: blur(10px);
+                transform: translateX(100%);
+                transition: all 0.3s ease-out;
+            `;
+            messageDiv.setAttribute('role', 'alert');
+            messageDiv.setAttribute('aria-live', 'polite');
+
+            // Enhanced message content with better icons and styling
+            const iconClass = type === 'success' ? 'check-circle' : 
+                             type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle';
+            const iconColor = type === 'success' ? '#28a745' : 
+                             type === 'warning' ? '#ffc107' : '#dc3545';
+
+            messageDiv.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-${iconClass} me-3" style="color: ${iconColor}; font-size: 1.2em;"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-bold mb-1">${type === 'success' ? 'Success!' : type === 'warning' ? 'Warning!' : 'Error!'}</div>
+                        <div>${message}</div>
+                    </div>
+                    <button type="button" class="btn-close ms-3" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+
+            document.body.appendChild(messageDiv);
+
+            // Animate in
+            setTimeout(() => {
+                messageDiv.style.transform = 'translateX(0)';
+                messageDiv.classList.add('show');
+            }, 10);
+
+            // Enhanced auto-remove with user interaction tracking
+            let autoRemoveTimeout;
+            let isUserInteracting = false;
+
+            // Pause auto-remove on hover
+            messageDiv.addEventListener('mouseenter', () => {
+                isUserInteracting = true;
+                clearTimeout(autoRemoveTimeout);
+            });
+
+            messageDiv.addEventListener('mouseleave', () => {
+                isUserInteracting = false;
+                scheduleRemoval();
+            });
+
+            // Handle manual close
+            const closeBtn = messageDiv.querySelector('.btn-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    removeMessage();
+                });
+            }
+
+            // Schedule automatic removal
+            function scheduleRemoval() {
+                if (!isUserInteracting) {
+                    autoRemoveTimeout = setTimeout(() => {
+                        removeMessage();
+                    }, type === 'success' ? 4000 : 6000); // Success messages disappear faster
+                }
+            }
+
+            // Remove message with animation
+            function removeMessage() {
+                clearTimeout(autoRemoveTimeout);
+                if (messageDiv.parentNode) {
+                    messageDiv.style.transform = 'translateX(100%)';
+                    messageDiv.classList.remove('show');
+                    setTimeout(() => {
+                        if (messageDiv.parentNode) {
+                            messageDiv.remove();
+                        }
+                    }, 300);
+                }
+            }
+
+            // Start auto-removal timer
+            scheduleRemoval();
+
+            // Add accessibility announcement
+            if (window.speechSynthesis && type === 'error') {
+                const utterance = new SpeechSynthesisUtterance(message);
+                utterance.volume = 0.1;
+                utterance.rate = 1.2;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Initialize cart functionality on page load
+        updateCartCount();
+        
+        // Add keyboard shortcuts for better accessibility
+        document.addEventListener('keydown', function(e) {
+            // Alt + A for Add to Cart
+            if (e.altKey && e.key === 'a' && addToCartBtn && !addToCartBtn.disabled) {
+                e.preventDefault();
+                addToCartBtn.click();
+            }
+            
+            // Alt + B for Buy Now
+            if (e.altKey && e.key === 'b' && buyNowBtn && !buyNowBtn.disabled) {
+                e.preventDefault();
+                buyNowBtn.click();
+            }
+        });
+        
+        console.log('Cart functionality initialization complete');
+    });
+</script>
+
+<style>
+    /* Enhanced cart functionality styles */
+    .btn-loading {
+        position: relative;
+        pointer-events: none;
+    }
+    
+    .btn-loading::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: inherit;
+    }
+    
+    /* Quantity input validation styles */
+    #product-quantity.is-valid {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    
+    #product-quantity.is-invalid {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        animation: shake 0.5s ease-in-out;
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+    
+    /* Cart count badge animation */
+    .cart-count, .cart-count-badge {
+        transition: all 0.3s ease;
+    }
+    
+    .cart-count.visible, .cart-count-badge.visible {
+        animation: pulse 0.6s ease-in-out;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    /* Button hover effects */
+    #add-to-cart-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    }
+    
+    #buy-now-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.2);
+    }
+    
+    /* Loading spinner enhancement */
+    .fa-spinner.fa-spin {
+        animation: fa-spin 1s infinite linear;
+    }
+    
+    /* Message container enhancements */
+    .cart-message {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        letter-spacing: 0.025em;
+    }
+    
+    .cart-message .btn-close {
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+    }
+    
+    .cart-message .btn-close:hover {
+        opacity: 1;
+    }
+    
+    /* Accessibility improvements */
+    @media (prefers-reduced-motion: reduce) {
+        .cart-message,
+        .btn-loading::after,
+        .cart-count,
+        .cart-count-badge,
+        #add-to-cart-btn,
+        #buy-now-btn {
+            transition: none !important;
+            animation: none !important;
+        }
+    }
+    
+    /* Focus indicators for better accessibility */
+    #add-to-cart-btn:focus,
+    #buy-now-btn:focus,
+    #product-quantity:focus {
+        outline: 2px solid #007bff;
+        outline-offset: 2px;
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+        .cart-message {
+            left: 10px;
+            right: 10px;
+            min-width: auto;
+            max-width: none;
+        }
+        
+        #add-to-cart-btn,
+        #buy-now-btn {
+            font-size: 0.9rem;
+            padding: 0.6rem 1rem;
+        }
+    }
+</style>
+{% endblock %}

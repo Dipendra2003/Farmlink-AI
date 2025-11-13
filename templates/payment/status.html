@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Status - Order #{{ order.id }} - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6 fw-bold {% if payment.status == 'completed' %}text-success{% else %}text-danger{% endif %}">
+                {% if payment.status == 'completed' %}
+                    <i class="fas fa-check-circle me-2"></i>Payment Successful
+                {% else %}
+                    <i class="fas fa-times-circle me-2"></i>Payment Failed
+                {% endif %}
+            </h1>
+            <p class="lead text-muted">Order #{{ order.id }}</p>
+        </div>
+    </div>
+
+    <!-- Payment Status Card -->
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        {% if payment.status == 'completed' %}
+                            <div class="display-1 text-success mb-3">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <h4 class="mb-3">Thank you for your payment!</h4>
+                            <p class="text-muted">Your payment has been processed successfully.</p>
+                        {% else %}
+                            <div class="display-1 text-danger mb-3">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <h4 class="mb-3">Payment Failed</h4>
+                            <p class="text-muted">There was an issue processing your payment. Please try again.</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Order ID:</strong> #{{ order.id }}</p>
+                            <p class="mb-1"><strong>Date:</strong> {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                            <p class="mb-1"><strong>Amount:</strong> ₹{{ "%.2f"|format(payment.amount) }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Payment ID:</strong> {{ payment.razorpay_payment_id }}</p>
+                            <p class="mb-1"><strong>Status:</strong> 
+                                <span class="badge {% if payment.status == 'completed' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ payment.status|title }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        {% if payment.status == 'completed' %}
+                            <a href="{{ url_for('my_orders') }}" class="btn btn-success">
+                                <i class="fas fa-shopping-bag me-2"></i>View My Orders
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('process_payment', order_id=order.id) }}" class="btn btn-primary">
+                                <i class="fas fa-redo me-2"></i>Try Again
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">What's Next?</h5>
+                    {% if payment.status == 'completed' %}
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Your order has been confirmed
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-envelope text-success me-2"></i>
+                                A confirmation email has been sent to your registered email address
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-truck text-success me-2"></i>
+                                The farmer will be notified to process your order
+                            </li>
+                        </ul>
+                    {% else %}
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-info-circle text-primary me-2"></i>
+                                Your order is still pending payment
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-redo text-primary me-2"></i>
+                                You can try the payment again
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-question-circle text-primary me-2"></i>
+                                If you need help, please contact our support team
+                            </li>
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

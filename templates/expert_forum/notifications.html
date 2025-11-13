@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}Forum Notifications - FarmLink AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notification-card {
+        border-left: 4px solid #28a745;
+        transition: all 0.3s ease;
+    }
+    .notification-card:hover {
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .notification-card.unread {
+        background-color: #f8f9fa;
+        border-left-color: #007bff;
+    }
+    .notification-card.read {
+        border-left-color: #6c757d;
+    }
+    .notification-type {
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .notification-time {
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+    .notification-actions {
+        display: none;
+    }
+    .notification-card:hover .notification-actions {
+        display: block;
+    }
+    .notification-filters .btn {
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+    .mark-all-read {
+        position: sticky;
+        top: 20px;
+        z-index: 100;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-bell"></i> Forum Notifications</h2>
+                <div class="mark-all-read">
+                    {% if unread_count > 0 %}
+                    <button id="markAllReadBtn" class="btn btn-outline-primary">
+                        <i class="fas fa-check-double"></i> Mark All Read ({{ unread_count }})
+                    </button>
+                    {% endif %}
+                    <a href="{{ url_for('notification_preferences') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="notification-filters mb-4">
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="filter" id="all" value="all" checked>
+                    <label class="btn btn-outline-primary" for="all">All</label>
+
+                    <input type="radio" class="btn-check" name="filter" id="unread" value="unread">
+                    <label class="btn btn-outline-primary" for="unread">Unread ({{ unread_count }})</label>
+
+                    <input type="radio" class="btn-check" name="filter" id="read" value="read">
+                    <label class="btn btn-outline-primary" for="read">Read</label>
+                </div>
+
+                <div class="btn-group ms-3" role="group">
+                    <input type="radio" class="btn-check" name="type-filter" id="all-types" value="all" checked>
+                    <label class="btn btn-outline-secondary" for="all-types">All Types</label>
+
+                    <input type="radio" class="btn-check" name="type-filter" id="votes" value="vote">
+                    <label class="btn btn-outline-secondary" for="votes">Votes</label>
+
+                    <input type="radio" class="btn-check" name="type-filter" id="replies" value="reply">
+                    <label class="btn btn-outline-secondary" for="replies">Replies</label>
+
+                    <input type="radio" class="btn-check" name="type-filter" id="follows" value="follow">
+                    <label class="btn btn-outline-secondary" for="follows">Follows</label>
+
+                    <input type="radio" class="btn-check" name="type-filter" id="mentions" value="mention">
+                    <label class="btn btn-outline-secondary" for="mentions">Mentions</label>
+                </div>
+            </div>
+
+            <!-- Notifications List -->
+            <div id="notificationsList">
+                {% if notifications %}
+                    {% for notification in notifications %}
+                    <div class="card notification-card mb-3 {{ 'unread' if not notification.is_read else 'read' }}" 
+                         data-notification-id="{{ notification.id }}" 
+                         data-type="{{ notification.notification_type }}"
+                         data-read="{{ notification.is_read|lower }}">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-1">
+                                    <!-- Notification Icon -->
+                                    {% if notification.notification_type == 'post_vote' %}
+                                        <i class="fas fa-thumbs-up text-success"></i>
+                                    {% elif notification.notification_type == 'reply_vote' %}
+                                        <i class="fas fa-thumbs-up text-info"></i>
+                                    {% elif notification.notification_type == 'new_reply' %}
+                                        <i class="fas fa-reply text-primary"></i>
+                                    {% elif notification.notification_type == 'new_follower' %}
+                                        <i class="fas fa-user-plus text-warning"></i>
+                                    {% elif notification.notification_type == 'mention' %}
+                                        <i class="fas fa-at text-danger"></i>
+                                    {% elif notification.notification_type == 'post_featured' %}
+                                        <i class="fas fa-star text-gold"></i>
+                                    {% else %}
+                                        <i class="fas fa-bell text-secondary"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="col-9">
+                                    <div class="notification-type text-uppercase">
+                                        {{ notification.notification_type.replace('_', ' ') }}
+                                    </div>
+                                    <h6 class="mb-1">{{ notification.title }}</h6>
+                                    <p class="mb-2">{{ notification.message }}</p>
+                                    <div class="notification-time">
+                                        <i class="fas fa-clock"></i> {{ notification.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                        {% if notification.sender %}
+                                            • by <strong>{{ notification.sender.full_name }}</strong>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-2 text-end">
+                                    <div class="notification-actions">
+                                        {% if not notification.is_read %}
+                                        <button class="btn btn-sm btn-outline-primary mark-read-btn" 
+                                                data-id="{{ notification.id }}">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        {% endif %}
+                                        <div class="dropdown d-inline">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                    type="button" data-bs-toggle="dropdown">
+                                                <i class="fas fa-ellipsis-v"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                {% if notification.post_id %}
+                                                <li><a class="dropdown-item" href="{{ url_for('expert_post_detail', post_id=notification.post_id) }}">
+                                                    <i class="fas fa-external-link-alt"></i> View Post
+                                                </a></li>
+                                                {% endif %}
+                                                {% if notification.sender_id and notification.sender_id != current_user.id %}
+                                                <li><a class="dropdown-item" href="{{ url_for('expert_user_profile', user_id=notification.sender_id) }}">
+                                                    <i class="fas fa-user"></i> View Profile
+                                                </a></li>
+                                                {% endif %}
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger delete-notification" 
+                                                       href="#" data-id="{{ notification.id }}">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    {% if not notification.is_read %}
+                                    <span class="badge bg-primary">New</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <!-- Pagination -->
+                    {% if notifications.pages > 1 %}
+                    <nav aria-label="Notifications pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if notifications.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('expert_notifications', page=notifications.prev_num) }}">Previous</a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for page_num in notifications.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != notifications.page %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('expert_notifications', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                    {% else %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page_num }}</span>
+                                    </li>
+                                    {% endif %}
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">…</span>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if notifications.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('expert_notifications', page=notifications.next_num) }}">Next</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                        <h4>No notifications yet</h4>
+                        <p class="text-muted">When you receive votes, replies, or follows, they'll appear here.</p>
+                        <a href="{{ url_for('expert_forum') }}" class="btn btn-primary">
+                            <i class="fas fa-comments"></i> Visit Forum
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Filter notifications
+    $('input[name="filter"]').change(function() {
+        const filter = $(this).val();
+        filterNotifications();
+    });
+
+    $('input[name="type-filter"]').change(function() {
+        const filter = $(this).val();
+        filterNotifications();
+    });
+
+    function filterNotifications() {
+        const readFilter = $('input[name="filter"]:checked').val();
+        const typeFilter = $('input[name="type-filter"]:checked').val();
+        
+        $('.notification-card').each(function() {
+            const card = $(this);
+            const isRead = card.data('read');
+            const type = card.data('type');
+            
+            let showCard = true;
+            
+            // Apply read/unread filter
+            if (readFilter === 'read' && !isRead) showCard = false;
+            if (readFilter === 'unread' && isRead) showCard = false;
+            
+            // Apply type filter
+            if (typeFilter !== 'all' && !type.includes(typeFilter)) showCard = false;
+            
+            if (showCard) {
+                card.show();
+            } else {
+                card.hide();
+            }
+        });
+    }
+
+    // Mark individual notification as read
+    $('.mark-read-btn').click(function() {
+        const notificationId = $(this).data('id');
+        const button = $(this);
+        
+        $.post('/expert-forum/notifications/' + notificationId + '/mark-read', {
+            _token: '{{ csrf_token() }}'
+        })
+        .done(function(response) {
+            if (response.success) {
+                button.closest('.notification-card')
+                      .removeClass('unread')
+                      .addClass('read')
+                      .find('.badge').remove();
+                button.remove();
+                updateUnreadCount();
+            }
+        })
+        .fail(function() {
+            alert('Failed to mark notification as read');
+        });
+    });
+
+    // Mark all notifications as read
+    $('#markAllReadBtn').click(function() {
+        if (confirm('Mark all notifications as read?')) {
+            $.post('/expert-forum/notifications/mark-all-read', {
+                _token: '{{ csrf_token() }}'
+            })
+            .done(function(response) {
+                if (response.success) {
+                    $('.notification-card').removeClass('unread').addClass('read');
+                    $('.badge').remove();
+                    $('.mark-read-btn').remove();
+                    $('#markAllReadBtn').hide();
+                    location.reload();
+                }
+            })
+            .fail(function() {
+                alert('Failed to mark all notifications as read');
+            });
+        }
+    });
+
+    // Delete notification
+    $('.delete-notification').click(function(e) {
+        e.preventDefault();
+        const notificationId = $(this).data('id');
+        const card = $(this).closest('.notification-card');
+        
+        if (confirm('Delete this notification?')) {
+            $.ajax({
+                url: '/expert-forum/notifications/' + notificationId,
+                method: 'DELETE',
+                data: { _token: '{{ csrf_token() }}' }
+            })
+            .done(function(response) {
+                if (response.success) {
+                    card.fadeOut(300, function() {
+                        $(this).remove();
+                        updateUnreadCount();
+                    });
+                }
+            })
+            .fail(function() {
+                alert('Failed to delete notification');
+            });
+        }
+    });
+
+    function updateUnreadCount() {
+        const unreadCount = $('.notification-card.unread').length;
+        if (unreadCount === 0) {
+            $('#markAllReadBtn').hide();
+        }
+    }
+
+    // Auto-refresh notifications every 30 seconds
+    setInterval(function() {
+        // You can implement auto-refresh here if needed
+        // location.reload();
+    }, 30000);
+});
+</script>
+{% endblock %}

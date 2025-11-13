@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Engagement Metrics - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_analytics_dashboard') }}">Analytics</a></li>
+                    <li class="breadcrumb-item active">Engagement Metrics</li>
+                </ol>
+            </nav>
+            <h2><i class="fas fa-fire me-2"></i>Platform Engagement Metrics</h2>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-comments fa-2x text-primary mb-2"></i>
+                    <h6 class="text-muted mb-2">Forum Posts</h6>
+                    <h2 class="mb-0">{{ metrics.forum.total_posts }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <h6 class="text-muted mb-2">Answered Questions</h6>
+                    <h2 class="mb-0">{{ metrics.forum.answered_questions }}</h2>
+                    <small class="text-muted">{{ "%.1f"|format(metrics.forum.answer_rate) }}% rate</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-book fa-2x text-info mb-2"></i>
+                    <h6 class="text-muted mb-2">Published Articles</h6>
+                    <h2 class="mb-0">{{ metrics.learning_hub.total_articles }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-eye fa-2x text-warning mb-2"></i>
+                    <h6 class="text-muted mb-2">Total Views</h6>
+                    <h2 class="mb-0">{{ metrics.learning_hub.total_views }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-3 mb-4">
+        <!-- Forum Activity -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Expert Forum Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Total Posts</span>
+                            <strong>{{ metrics.forum.total_posts }}</strong>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-primary" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Answered Questions</span>
+                            <strong>{{ metrics.forum.answered_questions }}</strong>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-success" style="width: {{ metrics.forum.answer_rate }}%"></div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <p class="text-muted mb-0">Answer Rate</p>
+                        <h3 class="text-success">{{ "%.1f"|format(metrics.forum.answer_rate) }}%</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Learning Hub Stats -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Learning Hub Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Total Articles</span>
+                            <strong>{{ metrics.learning_hub.total_articles }}</strong>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-info" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Total Likes</span>
+                            <strong>{{ metrics.learning_hub.total_likes }}</strong>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-danger" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <p class="text-muted mb-0">Avg Views per Article</p>
+                        <h3 class="text-info">{{ "%.1f"|format(metrics.learning_hub.avg_views_per_article) }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Articles -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Most Viewed Articles</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Title</th>
+                            <th>Views</th>
+                            <th>Likes</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for article in metrics.top_articles %}
+                        <tr>
+                            <td><strong>#{{ loop.index }}</strong></td>
+                            <td>{{ article.title }}</td>
+                            <td><i class="fas fa-eye text-muted me-1"></i>{{ article.views }}</td>
+                            <td><i class="fas fa-heart text-danger me-1"></i>{{ article.likes }}</td>
+                            <td>
+                                <a href="{{ url_for('view_article', article_id=article.id) }}" 
+                                   class="btn btn-sm btn-outline-primary" target="_blank">
+                                    View Article
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Most Active Forum Users -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Most Active Forum Contributors</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>User</th>
+                            <th>Post Count</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in metrics.active_users %}
+                        <tr>
+                            <td><strong>#{{ loop.index }}</strong></td>
+                            <td>{{ user.name }}</td>
+                            <td>{{ user.post_count }}</td>
+                            <td>
+                                <a href="{{ url_for('admin_user_analytics', user_id=user.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    View Profile
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

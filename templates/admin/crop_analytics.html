@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Crop Analytics - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_analytics_dashboard') }}">Analytics</a></li>
+                    <li class="breadcrumb-item active">Crop Analytics</li>
+                </ol>
+            </nav>
+            <h2><i class="fas fa-leaf me-2"></i>Crop Analytics</h2>
+        </div>
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fas fa-download me-1"></i>Export
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ url_for('export_crop_analytics', format='csv') }}">
+                    <i class="fas fa-file-csv me-2"></i>CSV
+                </a></li>
+                <li><a class="dropdown-item" href="{{ url_for('export_crop_analytics', format='json') }}">
+                    <i class="fas fa-file-code me-2"></i>JSON
+                </a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-3 mb-4">
+        <!-- Category Distribution -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Crops by Category</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Distribution -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Crop Status Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Statistics Table -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Category Statistics</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Count</th>
+                            <th>Total Quantity</th>
+                            <th>Avg Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in analytics.categories %}
+                        <tr>
+                            <td><strong>{{ cat.category }}</strong></td>
+                            <td>{{ cat.count }}</td>
+                            <td>{{ "%.2f"|format(cat.total_quantity) }}</td>
+                            <td>₹{{ "%.2f"|format(cat.avg_price) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Price Trends -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Price Trends by Category</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="priceTrendsChart" height="80"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Farmers -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Top Farmers by Crop Count</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Farmer</th>
+                            <th>Crop Count</th>
+                            <th>Total Value</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for farmer in analytics.top_farmers %}
+                        <tr>
+                            <td><strong>#{{ loop.index }}</strong></td>
+                            <td>{{ farmer.name }}</td>
+                            <td>{{ farmer.crop_count }}</td>
+                            <td>₹{{ "%.2f"|format(farmer.total_value) }}</td>
+                            <td>
+                                <a href="{{ url_for('admin_user_analytics', user_id=farmer.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    View Profile
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+// Category Distribution Chart
+const categoryAnalytics = {{ analytics.categories | tojson }};
+const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+
+new Chart(categoryCtx, {
+    type: 'pie',
+    data: {
+        labels: categoryAnalytics.map(c => c.category),
+        datasets: [{
+            data: categoryAnalytics.map(c => c.count),
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(153, 102, 255, 0.6)',
+                'rgba(255, 159, 64, 0.6)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Status Distribution Chart
+const statusAnalytics = {{ analytics.status | tojson }};
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+
+new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: statusAnalytics.map(s => s.status),
+        datasets: [{
+            data: statusAnalytics.map(s => s.count),
+            backgroundColor: [
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(255, 206, 86, 0.6)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Price Trends Chart
+const priceAnalytics = {{ analytics.price_trends | tojson }};
+const priceCtx = document.getElementById('priceTrendsChart').getContext('2d');
+
+new Chart(priceCtx, {
+    type: 'bar',
+    data: {
+        labels: priceAnalytics.map(p => p.category),
+        datasets: [
+            {
+                label: 'Min Price',
+                data: priceAnalytics.map(p => p.min_price),
+                backgroundColor: 'rgba(255, 99, 132, 0.6)'
+            },
+            {
+                label: 'Avg Price',
+                data: priceAnalytics.map(p => p.avg_price),
+                backgroundColor: 'rgba(54, 162, 235, 0.6)'
+            },
+            {
+                label: 'Max Price',
+                data: priceAnalytics.map(p => p.max_price),
+                backgroundColor: 'rgba(75, 192, 192, 0.6)'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Price (₹)'
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

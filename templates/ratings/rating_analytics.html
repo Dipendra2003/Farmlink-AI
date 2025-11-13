@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Rating Analytics - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-chart-line"></i> Rating System Analytics</h2>
+                <div>
+                    <a href="{{ url_for('rating.moderation_queue') }}" class="btn btn-warning">
+                        <i class="fas fa-shield-alt"></i> Moderation Queue
+                    </a>
+                </div>
+            </div>
+
+            <!-- Time Period Filter -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" class="form-inline">
+                        <label class="mr-2">Time Period:</label>
+                        <select name="period" class="form-control mr-2" onchange="this.form.submit()">
+                            <option value="7" {% if period == '7' %}selected{% endif %}>Last 7 Days</option>
+                            <option value="30" {% if period == '30' %}selected{% endif %}>Last 30 Days</option>
+                            <option value="90" {% if period == '90' %}selected{% endif %}>Last 90 Days</option>
+                            <option value="365" {% if period == '365' %}selected{% endif %}>Last Year</option>
+                            <option value="all" {% if period == 'all' %}selected{% endif %}>All Time</option>
+                        </select>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Overview Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Total Ratings</h5>
+                            <h2>{{ total_ratings }}</h2>
+                            <small>{{ visible_ratings }} visible, {{ hidden_ratings }} hidden</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Platform Average</h5>
+                            <h2>{{ "%.2f"|format(platform_avg_rating) }} <i class="fas fa-star"></i></h2>
+                            <small>Across all products</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Response Rate</h5>
+                            <h2>{{ "%.1f"|format(response_rate) }}%</h2>
+                            <small>Sellers responding to ratings</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Flagged Ratings</h5>
+                            <h2>{{ flagged_ratings }}</h2>
+                            <small>Requiring moderation</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rating Distribution -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Rating Distribution</h5>
+                        </div>
+                        <div class="card-body">
+                            {% for stars in [5, 4, 3, 2, 1] %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span>
+                                        {{ stars }} <i class="fas fa-star text-warning"></i>
+                                    </span>
+                                    <span class="badge badge-primary">{{ rating_distribution[stars] }}</span>
+                                </div>
+                                <div class="progress">
+                                    {% set percentage = (rating_distribution[stars] / visible_ratings * 100) if visible_ratings > 0 else 0 %}
+                                    <div class="progress-bar bg-{% if stars >= 4 %}success{% elif stars == 3 %}warning{% else %}danger{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ percentage }}%"
+                                         aria-valuenow="{{ percentage }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        {{ "%.1f"|format(percentage) }}%
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-comment"></i> Review Statistics</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-4">
+                                <h6>Ratings with Reviews</h6>
+                                <div class="progress mb-2" style="height: 30px;">
+                                    {% set with_review_pct = (with_reviews / total_ratings * 100) if total_ratings > 0 else 0 %}
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         style="width: {{ with_review_pct }}%">
+                                        {{ with_reviews }} ({{ "%.1f"|format(with_review_pct) }}%)
+                                    </div>
+                                    <div class="progress-bar bg-secondary" role="progressbar" 
+                                         style="width: {{ 100 - with_review_pct }}%">
+                                        {{ without_reviews }} ({{ "%.1f"|format(100 - with_review_pct) }}%)
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    <span class="badge badge-success">With Review</span>
+                                    <span class="badge badge-secondary">Without Review</span>
+                                </small>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6>Helpful Votes</h6>
+                                <p class="mb-1">
+                                    <strong>Total:</strong> {{ total_helpful_votes }}
+                                </p>
+                                <p class="mb-0">
+                                    <strong>Average per Rating:</strong> {{ "%.2f"|format(avg_helpful_per_rating) }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity Chart -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0"><i class="fas fa-calendar-alt"></i> Recent Activity (Last 7 Days)</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_activity %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Ratings Submitted</th>
+                                            <th>Visual</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for activity in recent_activity %}
+                                        <tr>
+                                            <td>{{ activity.date }}</td>
+                                            <td>{{ activity.count }}</td>
+                                            <td>
+                                                <div class="progress" style="height: 20px;">
+                                                    {% set max_count = recent_activity|map(attribute='count')|max %}
+                                                    {% set pct = (activity.count / max_count * 100) if max_count > 0 else 0 %}
+                                                    <div class="progress-bar bg-success" role="progressbar" 
+                                                         style="width: {{ pct }}%">
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted">No activity in the last 7 days</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Sellers -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-warning text-white">
+                            <h5 class="mb-0"><i class="fas fa-trophy"></i> Top Rated Sellers</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if top_sellers %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Seller</th>
+                                            <th>Avg Rating</th>
+                                            <th>Total Ratings</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for reputation, seller in top_sellers %}
+                                        <tr>
+                                            <td>{{ loop.index }}</td>
+                                            <td>
+                                                <a href="{{ url_for('rating.view_seller_reputation', seller_id=seller.id) }}" target="_blank">
+                                                    {{ seller.full_name or seller.username }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                {{ "%.2f"|format(reputation.average_rating) }} <i class="fas fa-star text-warning"></i>
+                                            </td>
+                                            <td>{{ reputation.total_ratings }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted">No sellers with sufficient ratings yet</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="fas fa-fire"></i> Most Rated Products</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if top_products %}
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Product</th>
+                                            <th>Avg Rating</th>
+                                            <th>Total Ratings</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for product, rating_count, avg_rating in top_products %}
+                                        <tr>
+                                            <td>{{ loop.index }}</td>
+                                            <td>
+                                                <a href="{{ url_for('rating.view_product_ratings', product_id=product.id) }}" target="_blank">
+                                                    {{ product.name }}
+                                                </a>
+                                            </td>
+                                            <td>
+                                                {{ "%.2f"|format(avg_rating) }} <i class="fas fa-star text-warning"></i>
+                                            </td>
+                                            <td>{{ rating_count }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-muted">No product ratings yet</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Moderation Statistics -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0"><i class="fas fa-flag"></i> Moderation Statistics</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Flag Status</h6>
+                                    <ul class="list-group">
+                                        {% for status, count in moderation_stats.status_counts.items() %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            {{ status|title }}
+                                            <span class="badge badge-{% if status == 'pending' %}warning{% elif status == 'resolved' %}success{% else %}secondary{% endif %} badge-pill">
+                                                {{ count }}
+                                            </span>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Flag Reasons (Pending)</h6>
+                                    {% if moderation_stats.reason_counts %}
+                                    <ul class="list-group">
+                                        {% for reason, count in moderation_stats.reason_counts.items() %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            {{ reason|replace('_', ' ')|title }}
+                                            <span class="badge badge-warning badge-pill">{{ count }}</span>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                    {% else %}
+                                    <p class="text-muted">No pending flags</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

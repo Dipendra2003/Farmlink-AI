@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block title %}Messages - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-envelope me-2"></i>Messages
+                <span class="badge bg-danger message-badge d-none">0</span>
+            </h1>
+            <p class="lead text-muted">Communicate with farmers, buyers, and experts.</p>
+            <div class="alert alert-info mb-3" role="alert">
+                <i class="fas fa-info-circle me-2"></i>Quick Tips:
+                <ul class="mb-0 mt-2">
+                    <li>Use clear and concise communication</li>
+                    <li>Respond promptly to messages (within 24 hours)</li>
+                    <li>Include relevant details about crops or orders</li>
+                    <li>Be professional and courteous</li>
+                </ul>
+            </div>
+            <div class="typing-indicator text-muted d-none fst-italic">
+                <small><i class="fas fa-pen-alt me-2"></i><span></span></small>
+            </div>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#newMessageModal">
+                <i class="fas fa-plus-circle me-2"></i>New Message
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Received Messages -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-inbox me-2"></i>Received Messages
+                        {% if received_messages|selectattr('is_read', 'equalto', false)|list|length > 0 %}
+                            <span class="badge bg-warning">{{ received_messages|selectattr('is_read', 'equalto', false)|list|length }} unread</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if received_messages %}
+                        {% for message in received_messages %}
+                            <div class="message-item p-3 border-bottom {{ 'bg-light' if not message.is_read else '' }}" 
+                                 data-message-id="{{ message.id }}"
+                                 data-sender-id="{{ message.sender_id }}"
+                                 data-is-read="{{ 'true' if message.is_read else 'false' }}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <img src="https://ui-avatars.com/api/?name={{ message.sender.full_name }}&background=28a745&color=fff&size=32" 
+                                                 class="rounded-circle me-2" width="32" height="32" alt="Sender">
+                                            <div>
+                                                <div class="fw-bold">{{ message.sender.full_name }}</div>
+                                                <small class="text-muted">{{ message.sender.role.title() }}</small>
+                                            </div>
+                                            {% if not message.is_read %}
+                                                <span class="badge bg-warning ms-2 unread-badge">New</span>
+                                            {% endif %}
+                                        </div>
+                                        <h6 class="fw-bold mb-1">{{ message.subject }}</h6>
+                                        <p class="text-muted mb-2 message-preview">{{ message.content[:100] }}{% if message.content|length > 100 %}...{% endif %}</p>
+                                        <div class="d-flex align-items-center">
+                                            <small class="text-muted message-time me-2">{{ format_datetime(message.created_at) }}</small>
+                                            {% if message.is_read %}
+                                                <small class="text-success message-status">
+                                                    <i class="fas fa-check-double"></i> Read {{ format_datetime(message.read_at, '%b %d, %I:%M %p') }}
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            {% if not message.is_read %}
+                                                <li>
+                                                    <button type="button" class="dropdown-item" onclick="markAsRead({{ message.id }})">
+                                                        <i class="fas fa-eye me-2"></i>Mark as Read
+                                                    </button>
+                                                </li>
+                                            {% endif %}
+                                            <li>
+                                                <button class="dropdown-item" onclick="replyToMessage('{{ message.sender.id }}', '{{ message.sender.full_name }}', 'Re: {{ message.subject }}', '{{ message.id }}')">
+                                                    <i class="fas fa-reply me-2"></i>Reply
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <!-- Expandable Message Content -->
+                                <div class="collapse" id="messageContent{{ message.id }}">
+                                    <div class="mt-3 p-3 bg-white rounded border">
+                                        <p class="mb-0">{{ message.content }}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm btn-outline-primary flex-grow-1" type="button" data-bs-toggle="collapse" data-bs-target="#messageContent{{ message.id }}">
+                                            <i class="fas fa-eye me-1"></i>View Full Message
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success flex-grow-1" onclick="replyToMessage('{{ message.sender.id }}', '{{ message.sender.full_name }}', 'Re: {{ message.subject }}', '{{ message.id }}')">
+                                            <i class="fas fa-reply me-1"></i>Reply
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No messages received</h5>
+                            <p class="text-muted">When others send you messages, they'll appear here.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sent Messages -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-paper-plane me-2"></i>Sent Messages
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if sent_messages %}
+                        {% for message in sent_messages %}
+                            <div class="message-item p-3 border-bottom">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <img src="https://ui-avatars.com/api/?name={{ message.recipient.full_name }}&background=dc3545&color=fff&size=32" 
+                                                 class="rounded-circle me-2" width="32" height="32" alt="Recipient">
+                                            <div>
+                                                <div class="fw-bold">{{ message.recipient.full_name }}</div>
+                                                <small class="text-muted">{{ message.recipient.role.title() }}</small>
+                                            </div>
+                                        </div>
+                                        <h6 class="fw-bold mb-1">{{ message.subject }}</h6>
+                                        <p class="text-muted mb-2">{{ message.content[:100] }}{% if message.content|length > 100 %}...{% endif %}</p>
+                                        <small class="text-muted">{{ format_datetime(message.created_at) }}</small>
+                                    </div>
+                                </div>
+                                
+                                <!-- Expandable Message Content -->
+                                <div class="collapse" id="sentMessageContent{{ message.id }}">
+                                    <div class="mt-3 p-3 bg-white rounded border">
+                                        <p class="mb-0">{{ message.content }}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-2">
+                                    <div class="d-flex">
+                                        <button class="btn btn-sm btn-outline-primary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#sentMessageContent{{ message.id }}">
+                                            <i class="fas fa-eye me-1"></i>View Full Message
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-paper-plane fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No messages sent</h5>
+                            <p class="text-muted">Your sent messages will appear here.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Message Modal -->
+<div class="modal fade" id="newMessageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-envelope me-2"></i>Send New Message
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('send_message', user_id=recipient.id if recipient else 0) }}" id="messageForm">
+                <div class="modal-body">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">To:</label>
+                        <div class="recipient-info p-2 bg-light rounded">
+                            {% if recipient %}
+                                <div class="d-flex align-items-center">
+                                    <img src="https://ui-avatars.com/api/?name={{ recipient.full_name }}&background=28a745&color=fff&size=32" 
+                                         class="rounded-circle me-2" width="32" height="32" alt="Recipient">
+                                    <div>
+                                        <div class="fw-bold">{{ recipient.full_name }}</div>
+                                        <small class="text-muted">{{ recipient.role.title() }}</small>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {{ form.recipient_id(class_="d-none") }}
+                    
+                    <div class="mb-3">
+                        {{ form.subject.label(class="form-label fw-semibold") }}
+                        {{ form.subject(class="form-control") }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.content.label(class="form-label fw-semibold") }}
+                        {{ form.content(class="form-control", rows="6") }}
+                    </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-paper-plane me-2"></i>Send Message
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize message UI elements
+    initializeMessageElements();
+    
+    // Add click handlers for message actions
+    initializeMessageActions();
+});
+
+// Handle message read status updates
+function updateMessageStatus(messageId) {
+    fetch(`/messages/read/${messageId}`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            if (response.status === 400) {
+                throw new Error('CSRF token error. Please refresh the page and try again.');
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            updateMessageUI(messageId, data.message);
+            updateUnreadCount();
+        } else {
+            throw new Error(data.message || 'Failed to mark message as read');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating message status:', error);
+        
+        // For CSRF errors, offer alternative
+        if (error.message.includes('CSRF')) {
+            if (confirm('There was a security token error. Would you like to mark this message as read by redirecting to it?')) {
+                window.location.href = `/messages/read/${messageId}`;
+                return;
+            }
+        }
+        
+        // Show user-friendly error message
+        alert('Failed to mark message as read: ' + error.message);
+    });
+}
+
+// Update message UI elements when read
+function updateMessageUI(messageId, messageData) {
+    const messageElement = document.querySelector(`.message-item[data-message-id="${messageId}"]`);
+    if (!messageElement) return;
+    
+    // Update read status display
+    const statusElement = messageElement.querySelector('.message-status');
+    if (statusElement) {
+        // Convert UTC to local time
+        const utcDate = new Date(messageData.read_at);
+        const indianTime = new Date(utcDate.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+        const readTime = indianTime.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+        statusElement.innerHTML = `<i class="fas fa-check-double"></i> Read ${readTime}`;
+        statusElement.classList.remove('d-none');
+    }
+    
+    // Update message styling
+    messageElement.classList.remove('bg-light');
+    messageElement.dataset.isRead = 'true';
+    
+    // Remove unread badge
+    const unreadBadge = messageElement.querySelector('.unread-badge');
+    if (unreadBadge) {
+        unreadBadge.remove();
+    }
+}
+
+// Mark a specific message as read
+function markAsRead(messageId) {
+    updateMessageStatus(messageId);
+}
+
+// Update the unread message count in the header
+function updateUnreadCount() {
+    const headerBadge = document.querySelector('.message-badge');
+    if (!headerBadge) return;
+    
+    const currentCount = parseInt(headerBadge.textContent || '0');
+    if (currentCount > 0) {
+        const newCount = currentCount - 1;
+        headerBadge.textContent = newCount;
+        
+        if (newCount === 0) {
+            headerBadge.classList.add('d-none');
+        }
+    }
+}
+
+// Initialize message UI elements
+function initializeMessageElements() {
+    // Show unread message count badge if there are unread messages
+    const headerBadge = document.querySelector('.message-badge');
+    const unreadCount = document.querySelectorAll('.message-item[data-is-read="false"]').length;
+    
+    if (headerBadge && unreadCount > 0) {
+        headerBadge.textContent = unreadCount;
+        headerBadge.classList.remove('d-none');
+    }
+}
+
+// Initialize message action handlers
+function initializeMessageActions() {
+    // Add click handlers to message expand buttons
+    document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(button => {
+        button.addEventListener('click', function() {
+            const messageItem = this.closest('.message-item');
+            if (!messageItem) return;
+            
+            const messageId = messageItem.dataset.messageId;
+            const isRead = messageItem.dataset.isRead === 'true';
+            
+            if (!isRead) {
+                updateMessageStatus(messageId);
+            }
+        });
+    });
+}
+
+// Handle replying to messages
+function replyToMessage(recipientId, recipientName, subject, messageId) {
+    const modal = document.getElementById('newMessageModal');
+    if (!modal) return;
+    
+    const form = modal.querySelector('form');
+    if (!form) return;
+    
+    // Update form action and fields
+    form.action = `/messages/reply/${messageId}`;
+    
+    // Update recipient display
+    const recipientInfo = modal.querySelector('.recipient-info');
+    if (recipientInfo) {
+        recipientInfo.innerHTML = `
+            <div class="d-flex align-items-center p-2 bg-light rounded">
+                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(recipientName)}&background=28a745&color=fff&size=32" 
+                     class="rounded-circle me-2" width="32" height="32" alt="Recipient">
+                <div>
+                    <div class="fw-bold">${recipientName}</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Update form fields
+    const recipientField = form.querySelector('input[name="recipient_id"]');
+    const subjectField = form.querySelector('input[name="subject"]');
+    const contentField = form.querySelector('textarea[name="content"]');
+    
+    if (recipientField) {
+        recipientField.value = recipientId;
+    }
+    
+    if (subjectField) {
+        subjectField.value = subject;
+    }
+    
+    if (contentField) {
+        contentField.value = '';
+    }
+    
+    // Update modal title
+    const modalTitle = modal.querySelector('.modal-title');
+    if (modalTitle) {
+        modalTitle.innerHTML = '<i class="fas fa-reply me-2"></i>Reply to Message';
+    }
+    
+    // Show modal
+    const modalInstance = new bootstrap.Modal(modal);
+    modalInstance.show();
+    
+    // Focus on content field
+    modal.addEventListener('shown.bs.modal', function () {
+        if (contentField) {
+            contentField.focus();
+        }
+    }, { once: true });
+}
+</script>
+{% endblock %}

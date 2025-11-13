@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Delivery Information - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="display-4 text-success mb-4">Delivery Information</h1>
+            <p class="lead text-muted mb-5">Learn about our delivery process and options.</p>
+
+            <div class="card shadow-sm mb-5">
+                <div class="card-body">
+                    <h2 class="h4 mb-4">Delivery Options</h2>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-truck text-success fa-2x"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h3 class="h5">Standard Delivery</h3>
+                                    <p class="text-muted mb-0">
+                                        - 3-5 business days<br>
+                                        - Available for all locations<br>
+                                        - Track your delivery
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-truck-fast text-success fa-2x"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h3 class="h5">Express Delivery</h3>
+                                    <p class="text-muted mb-0">
+                                        - 1-2 business days<br>
+                                        - Available in select areas<br>
+                                        - Priority handling
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-5">
+                <div class="card-body">
+                    <h2 class="h4 mb-4">Shipping Policy</h2>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h3 class="h5">Delivery Areas</h3>
+                            <p class="text-muted">We deliver to all major cities and rural areas. Enter your pincode during checkout to check availability.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h3 class="h5">Delivery Charges</h3>
+                            <p class="text-muted">Charges are calculated based on distance and order volume. Free delivery available on bulk orders.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h3 class="h5">Order Tracking</h3>
+                            <p class="text-muted">Track your order in real-time through our website or mobile app.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h3 class="h5">Safe Handling</h3>
+                            <p class="text-muted">All products are carefully packaged to ensure they reach you in perfect condition.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-5">
+                <div class="card-body">
+                    <h2 class="h4 mb-4">Frequently Asked Questions</h2>
+                    <div class="accordion" id="deliveryFAQ">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                    How can I track my delivery?
+                                </button>
+                            </h2>
+                            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#deliveryFAQ">
+                                <div class="accordion-body">
+                                    You can track your delivery through your account dashboard or using the tracking ID provided in your order confirmation email.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    What if I'm not available during delivery?
+                                </button>
+                            </h2>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#deliveryFAQ">
+                                <div class="accordion-body">
+                                    Our delivery partner will attempt delivery up to 3 times. You can also reschedule the delivery through your account dashboard.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <p class="text-muted mb-4">Still have questions about delivery?</p>
+                <a href="{{ url_for('contact') }}" class="btn btn-success">
+                    <i class="fas fa-envelope me-2"></i>Contact Us
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

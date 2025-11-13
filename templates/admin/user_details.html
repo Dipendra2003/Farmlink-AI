@@ -1,0 +1,552 @@
+{% extends "base.html" %}
+
+{% block title %}User Details - {{ user.full_name or user.username }} - Admin - FarmLink AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 60px 0 40px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .user-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at top left, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+
+    .user-profile-img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 5px solid white;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        object-fit: cover;
+    }
+
+    .user-role-badge {
+        padding: 10px 24px;
+        font-size: 0.95rem;
+        border-radius: 50px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .glass-card {
+        background: white;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .section-title {
+        color: #2d3748;
+        font-weight: 700;
+        font-size: 1.1rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        border-bottom: 3px solid #667eea;
+        padding-bottom: 8px;
+        display: inline-block;
+        margin-bottom: 20px;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px;
+        border-radius: 12px;
+        background: #f8f9fa;
+        margin-bottom: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .info-item:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+    }
+
+    .info-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .info-content label {
+        display: block;
+        font-size: 0.75rem;
+        color: #718096;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+
+    .info-content p {
+        margin: 0;
+        color: #2d3748;
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+
+    .stat-card {
+        padding: 24px;
+        border-radius: 16px;
+        color: white;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at top right, rgba(255,255,255,0.15) 0%, transparent 70%);
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 12px;
+        opacity: 0.9;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        opacity: 0.95;
+        font-weight: 500;
+    }
+
+    .activity-item {
+        display: flex;
+        gap: 16px;
+        padding: 16px;
+        border-bottom: 1px solid #f1f3f5;
+        border-radius: 8px;
+        transition: background 0.3s ease;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-item:hover {
+        background: #f8f9fa;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 1rem;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .activity-crop-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        object-fit: cover;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border: 2px solid #e2e8f0;
+    }
+
+    .activity-title {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 4px;
+    }
+
+    .activity-description {
+        color: #718096;
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+    }
+
+    .activity-time {
+        color: #a0aec0;
+        font-size: 0.75rem;
+    }
+
+    .action-btn {
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 10;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .back-button-container {
+        position: relative;
+        z-index: 100;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- User Header -->
+<div class="user-header">
+    <div class="container">
+        <!-- Back Button Row -->
+        <div class="row mb-3 back-button-container">
+            <div class="col-12 text-end">
+                <a href="{{ url_for('admin_users') }}" class="btn btn-light action-btn" style="min-width: 160px;">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Users
+                </a>
+            </div>
+        </div>
+        
+        <!-- User Profile Row -->
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <img src="{{ url_for('static', filename=user.profile_image) if user.profile_image and user.profile_image != 'default.jpg' else 'https://ui-avatars.com/api/?name=' + (user.full_name or user.username or 'User') + '&background=28a745&color=fff&size=120' }}"
+                    class="user-profile-img" alt="{{ user.full_name or user.username }}">
+            </div>
+            <div class="col">
+                <h1 class="display-5 fw-bold mb-2">{{ user.full_name or user.username }}</h1>
+                <p class="lead mb-3">@{{ user.username }}</p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <span class="user-role-badge bg-{{ 
+                        'success' if user.role == 'farmer' 
+                        else 'info' if user.role == 'buyer' 
+                        else 'warning' if user.role == 'admin'
+                        else 'primary' if user.role.startswith('manager_')
+                        else 'secondary' }}">
+                        <i class="fas fa-{{ 
+                            'tractor' if user.role == 'farmer' 
+                            else 'shopping-cart' if user.role == 'buyer' 
+                            else 'shield-alt' if user.role == 'admin'
+                            else 'user-tie' if user.role.startswith('manager_')
+                            else 'user' }} me-2"></i>
+                        {% if user.role == 'manager_farmer' %}
+                        Farmer Manager
+                        {% elif user.role == 'manager_buyer' %}
+                        Buyer Manager
+                        {% elif user.role == 'manager_crop' %}
+                        Crop Manager
+                        {% else %}
+                        {{ user.role.title() }}
+                        {% endif %}
+                    </span>
+                    <span class="badge bg-{{ 'success' if user.is_active else 'danger' }} user-role-badge">
+                        <i class="fas fa-{{ 'check-circle' if user.is_active else 'times-circle' }} me-2"></i>
+                        {{ 'Active' if user.is_active else 'Inactive' }}
+                    </span>
+                    {% if user.email_verified %}
+                    <span class="badge bg-primary user-role-badge">
+                        <i class="fas fa-check-circle me-2"></i>Email Verified
+                    </span>
+                    {% endif %}
+                    {% if user.two_factor_enabled %}
+                    <span class="badge bg-info user-role-badge">
+                        <i class="fas fa-lock me-2"></i>2FA Enabled
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <!-- Statistics Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                <div class="stat-icon"><i class="fas fa-seedling"></i></div>
+                <div class="stat-value">{{ user.crops|length if user.role == 'farmer' else 0 }}</div>
+                <div class="stat-label">Crops Listed</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
+                <div class="stat-value">{{ user.orders_placed|length if user.role == 'buyer' else user.orders_received|length }}</div>
+                <div class="stat-label">{{ 'Orders Placed' if user.role == 'buyer' else 'Orders Received' }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                <div class="stat-icon"><i class="fas fa-envelope"></i></div>
+                <div class="stat-value">{{ user.sent_messages|length + user.received_messages|length }}</div>
+                <div class="stat-label">Messages</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">
+                <div class="stat-icon"><i class="fas fa-sign-in-alt"></i></div>
+                <div class="stat-value">{{ user.login_count or 0 }}</div>
+                <div class="stat-label">Total Logins</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Left Column -->
+        <div class="col-lg-6">
+            <!-- Personal Information -->
+            <div class="glass-card mb-4">
+                <div class="card-body p-4">
+                    <h5 class="section-title">
+                        <i class="fas fa-user me-2"></i>Personal Information
+                    </h5>
+                    
+                    <div class="info-item">
+                        <div class="info-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <i class="fas fa-id-card"></i>
+                        </div>
+                        <div class="info-content">
+                            <label>User ID</label>
+                            <p>#{{ user.id }}</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="info-content">
+                            <label>Full Name</label>
+                            <p>{{ user.full_name or 'Not provided' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                            <i class="fas fa-envelope"></i>
+                        </div>
+                        <div class="info-content">
+                            <label>Email Address</label>
+                            <p>{{ user.email }}</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">
+                            <i class="fas fa-phone"></i>
+                        </div>
+                        <div class="info-content">
+                            <label>Phone Number</label>
+                            <p>{{ user.phone or 'Not provided' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="info-content">
+                            <label>Location</label>
+                            <p>{{ user.location or 'Not specified' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Information -->
+            <div class="glass-card mb-4">
+                <div class="card-body p-4">
+                    <h5 class="section-title">
+                        <i class="fas fa-cog me-2"></i>Account Information
+                    </h5>
+                    
+                    <div class="info-item">
+                        <div class="info-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <i class="fas fa-calendar-plus"></i>
+                        </div>
+                        <div class="info-content">
+                            <label>Account Created</label>
+                            <p>{{ user.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="info-content">
+                            <label>Last Login</label>
+                            <p>{{ user.last_login.strftime('%B %d, %Y at %I:%M %p') if user.last_login else 'Never' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="info-content">
+                            <label>Email Verification</label>
+                            <p>
+                                <span class="badge bg-{{ 'success' if user.email_verified else 'warning' }}">
+                                    {{ 'Verified' if user.email_verified else 'Not Verified' }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-icon" style="background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="info-content">
+                            <label>Two-Factor Authentication</label>
+                            <p>
+                                <span class="badge bg-{{ 'success' if user.two_factor_enabled else 'secondary' }}">
+                                    {{ 'Enabled' if user.two_factor_enabled else 'Disabled' }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+
+                    {% if user.api_token %}
+                    <div class="info-item">
+                        <div class="info-icon" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <div class="info-content">
+                            <label>API Token</label>
+                            <p>Active (Created: {{ user.api_token_created.strftime('%B %d, %Y') if user.api_token_created else 'Unknown' }})</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-6">
+            <!-- Recent Activity -->
+            <div class="glass-card mb-4">
+                <div class="card-body p-4">
+                    <h5 class="section-title">
+                        <i class="fas fa-history me-2"></i>Recent Activity
+                    </h5>
+                    
+                    <div class="activity-timeline">
+                        {% if user.role == 'farmer' and user.crops %}
+                        {% for crop in user.crops[:5] %}
+                        <div class="activity-item">
+                            <img src="{{ url_for('static', filename=crop.image_url) if crop.image_url else 'https://via.placeholder.com/60x60/28a745/ffffff?text=' + crop.name[0] }}" 
+                                 class="activity-crop-img" 
+                                 alt="{{ crop.name }}"
+                                 onerror="this.src='https://via.placeholder.com/60x60/28a745/ffffff?text={{ crop.name[0] }}'">
+                            <div class="activity-content flex-grow-1">
+                                <div class="activity-title">Listed Crop: {{ crop.name }}</div>
+                                <div class="activity-description">{{ crop.quantity }} {{ crop.unit }} at ₹{{ crop.price_per_unit }}/{{ crop.unit }}</div>
+                                <div class="activity-time">{{ crop.created_at.strftime('%B %d, %Y') }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% elif user.role == 'buyer' and user.orders_placed %}
+                        {% for order in user.orders_placed[:5] %}
+                        <div class="activity-item">
+                            <img src="{{ url_for('static', filename=order.crop.image_url) if order.crop.image_url else 'https://via.placeholder.com/60x60/667eea/ffffff?text=' + order.crop.name[0] }}" 
+                                 class="activity-crop-img" 
+                                 alt="{{ order.crop.name }}"
+                                 onerror="this.src='https://via.placeholder.com/60x60/667eea/ffffff?text={{ order.crop.name[0] }}'">
+                            <div class="activity-content flex-grow-1">
+                                <div class="activity-title">Placed Order #{{ order.id }}</div>
+                                <div class="activity-description">{{ order.crop.name }} - ₹{{ order.total_amount }}</div>
+                                <div class="activity-time">{{ order.created_at.strftime('%B %d, %Y') }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No recent activity</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="glass-card">
+                <div class="card-body p-4">
+                    <h5 class="section-title">
+                        <i class="fas fa-tools me-2"></i>Admin Actions
+                    </h5>
+                    
+                    <div class="d-grid gap-3">
+                        {% if user.role != 'admin' %}
+                        {% set action_text = 'deactivate' if user.is_active else 'activate' %}
+                        {% set btn_color = 'danger' if user.is_active else 'success' %}
+                        {% set icon_name = 'ban' if user.is_active else 'check' %}
+                        {% set button_text = 'Deactivate Account' if user.is_active else 'Activate Account' %}
+                        <a href="{{ url_for('toggle_user_status', user_id=user.id) }}" 
+                           class="btn btn-{{ btn_color }} action-btn"
+                           onclick="return confirm('Are you sure you want to {{ action_text }} this user?')">
+                            <i class="fas fa-{{ icon_name }} me-2"></i>
+                            {{ button_text }}
+                        </a>
+                        {% endif %}
+
+                        {% if current_user.id != user.id %}
+                        <a href="{{ url_for('send_message', user_id=user.id) }}" class="btn btn-primary action-btn">
+                            <i class="fas fa-envelope me-2"></i>Send Message
+                        </a>
+                        {% endif %}
+
+                        {% if user.role == 'farmer' %}
+                        <a href="{{ url_for('admin_crops') }}?farmer_id={{ user.id }}" class="btn btn-success action-btn">
+                            <i class="fas fa-seedling me-2"></i>View Crops
+                        </a>
+                        {% endif %}
+
+                        {% if user.role == 'buyer' or user.role == 'farmer' %}
+                        <a href="{{ url_for('admin_orders') }}?user_id={{ user.id }}" class="btn btn-info action-btn">
+                            <i class="fas fa-shopping-bag me-2"></i>View Orders
+                        </a>
+                        {% endif %}
+
+                        <a href="{{ url_for('admin_users') }}" class="btn btn-outline-secondary action-btn">
+                            <i class="fas fa-arrow-left me-2"></i>Back to User List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

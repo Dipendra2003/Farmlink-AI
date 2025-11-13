@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Learning Preferences - Learning Hub{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('learning_hub') }}">Learning Hub</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('my_reading_progress') }}">My Progress</a></li>
+            <li class="breadcrumb-item active">Preferences</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white">
+                <div class="card-body text-center py-4">
+                    <h1 class="display-5 mb-0">
+                        <i class="fas fa-cog me-3"></i>Learning Preferences
+                    </h1>
+                    <p class="lead mb-0">Customize your learning experience</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preferences Form -->
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-sliders-h me-2"></i>Personalization Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('learning_preferences') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <!-- Skill Level -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-chart-line me-2"></i>Your Skill Level
+                            </label>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="skill_level" 
+                                               id="skill_beginner" value="beginner" 
+                                               {% if preferences.skill_level == 'beginner' %}checked{% endif %}>
+                                        <label class="form-check-label" for="skill_beginner">
+                                            <strong>Beginner</strong>
+                                            <br><small class="text-muted">Just starting out</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="skill_level" 
+                                               id="skill_intermediate" value="intermediate"
+                                               {% if preferences.skill_level == 'intermediate' %}checked{% endif %}>
+                                        <label class="form-check-label" for="skill_intermediate">
+                                            <strong>Intermediate</strong>
+                                            <br><small class="text-muted">Some experience</small>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="skill_level" 
+                                               id="skill_advanced" value="advanced"
+                                               {% if preferences.skill_level == 'advanced' %}checked{% endif %}>
+                                        <label class="form-check-label" for="skill_advanced">
+                                            <strong>Advanced</strong>
+                                            <br><small class="text-muted">Expert level</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Preferred Reading Time -->
+                        <div class="mb-4">
+                            <label for="preferred_reading_time" class="form-label fw-bold">
+                                <i class="fas fa-clock me-2"></i>Preferred Article Length
+                            </label>
+                            <select class="form-select" id="preferred_reading_time" name="preferred_reading_time">
+                                <option value="5" {% if preferences.preferred_reading_time == 5 %}selected{% endif %}>
+                                    Quick reads (5 min or less)
+                                </option>
+                                <option value="10" {% if preferences.preferred_reading_time == 10 %}selected{% endif %}>
+                                    Medium reads (10 min)
+                                </option>
+                                <option value="15" {% if preferences.preferred_reading_time == 15 %}selected{% endif %}>
+                                    Long reads (15+ min)
+                                </option>
+                                <option value="20" {% if preferences.preferred_reading_time == 20 %}selected{% endif %}>
+                                    In-depth articles (20+ min)
+                                </option>
+                            </select>
+                        </div>
+
+                        <hr>
+
+                        <!-- Preferred Categories -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-folder me-2"></i>Interested Categories
+                            </label>
+                            <p class="text-muted small">Select topics you want to learn about</p>
+                            <div class="row">
+                                {% set categories = [
+                                    ('farming-basics', 'Farming Basics', 'seedling'),
+                                    ('crop-cultivation', 'Crop Cultivation', 'leaf'),
+                                    ('pest-management', 'Pest Management', 'bug'),
+                                    ('soil-science', 'Soil Science', 'mountain'),
+                                    ('irrigation-techniques', 'Irrigation', 'tint'),
+                                    ('sustainable-farming', 'Sustainable Farming', 'recycle'),
+                                    ('agricultural-technology', 'Agri-Tech', 'microchip'),
+                                    ('market-trends', 'Market Trends', 'chart-line')
+                                ] %}
+                                {% for cat_value, cat_label, cat_icon in categories %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="categories" 
+                                               value="{{ cat_value }}" id="cat_{{ cat_value }}"
+                                               {% if cat_value in preferred_categories %}checked{% endif %}>
+                                        <label class="form-check-label" for="cat_{{ cat_value }}">
+                                            <i class="fas fa-{{ cat_icon }} me-1"></i>{{ cat_label }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Specific Interests -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-star me-2"></i>Specific Interests
+                            </label>
+                            <p class="text-muted small">Select crops or topics you're most interested in</p>
+                            <div class="row">
+                                {% set interests_list = [
+                                    ('wheat', 'Wheat'),
+                                    ('rice', 'Rice'),
+                                    ('tomato', 'Tomato'),
+                                    ('potato', 'Potato'),
+                                    ('cotton', 'Cotton'),
+                                    ('sugarcane', 'Sugarcane'),
+                                    ('vegetables', 'Vegetables'),
+                                    ('fruits', 'Fruits'),
+                                    ('organic', 'Organic Farming'),
+                                    ('hydroponics', 'Hydroponics'),
+                                    ('greenhouse', 'Greenhouse'),
+                                    ('iot', 'IoT & Smart Farming')
+                                ] %}
+                                {% for interest_value, interest_label in interests_list %}
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="interests" 
+                                               value="{{ interest_value }}" id="interest_{{ interest_value }}"
+                                               {% if interest_value in interests %}checked{% endif %}>
+                                        <label class="form-check-label" for="interest_{{ interest_value }}">
+                                            {{ interest_label }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Learning Goals -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-bullseye me-2"></i>Learning Goals
+                            </label>
+                            <p class="text-muted small">What do you want to achieve?</p>
+                            <div class="row">
+                                {% set goals_list = [
+                                    ('increase_yield', 'Increase Crop Yield'),
+                                    ('reduce_costs', 'Reduce Farming Costs'),
+                                    ('learn_organic', 'Learn Organic Methods'),
+                                    ('pest_control', 'Better Pest Control'),
+                                    ('water_management', 'Improve Water Management'),
+                                    ('new_crops', 'Try New Crops'),
+                                    ('technology', 'Adopt New Technology'),
+                                    ('market_knowledge', 'Understand Markets')
+                                ] %}
+                                {% for goal_value, goal_label in goals_list %}
+                                <div class="col-md-6 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="goals" 
+                                               value="{{ goal_value }}" id="goal_{{ goal_value }}"
+                                               {% if goal_value in learning_goals %}checked{% endif %}>
+                                        <label class="form-check-label" for="goal_{{ goal_value }}">
+                                            {{ goal_label }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('my_reading_progress') }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Save Preferences
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Info Card -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-info-circle me-2 text-info"></i>How Recommendations Work
+                    </h6>
+                    <ul class="mb-0">
+                        <li>We analyze your reading history and preferences</li>
+                        <li>Articles are matched to your skill level and interests</li>
+                        <li>Recommendations update automatically as you read more</li>
+                        <li>You can refresh recommendations anytime from your progress page</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.form-check-label {
+    cursor: pointer;
+}
+</style>
+{% endblock %}

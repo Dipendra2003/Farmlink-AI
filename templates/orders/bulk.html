@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Orders - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-boxes me-2"></i>Bulk Orders
+            </h1>
+            <p class="lead text-muted">Place large quantity orders directly with farmers.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Benefits Card -->
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h4 mb-4">Bulk Order Benefits</h2>
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-percentage text-success fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="h6">Volume Discounts</h3>
+                            <p class="text-muted small mb-0">Get better prices for larger quantities.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-truck text-success fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="h6">Free Delivery</h3>
+                            <p class="text-muted small mb-0">Free shipping on bulk orders above threshold.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-handshake text-success fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="h6">Direct Relations</h3>
+                            <p class="text-muted small mb-0">Build long-term relationships with farmers.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-certificate text-success fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="h6">Quality Assured</h3>
+                            <p class="text-muted small mb-0">All products pass our quality checks.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bulk Order Form -->
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h4 mb-4">Submit Bulk Order Request</h2>
+                    <form>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Product Category</label>
+                                <select class="form-select" required>
+                                    <option value="">Select Category</option>
+                                    <option>Grains</option>
+                                    <option>Vegetables</option>
+                                    <option>Fruits</option>
+                                    <option>Pulses</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Specific Product</label>
+                                <input type="text" class="form-control" placeholder="e.g., Wheat, Rice" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Quantity Required</label>
+                                <input type="number" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Unit</label>
+                                <select class="form-select" required>
+                                    <option value="">Select Unit</option>
+                                    <option>Kg</option>
+                                    <option>Tonnes</option>
+                                    <option>Quintals</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Delivery Location</label>
+                                <input type="text" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Required By Date</label>
+                                <input type="date" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Additional Requirements</label>
+                                <textarea class="form-control" rows="3" placeholder="Any specific quality parameters, packaging requirements, etc."></textarea>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-paper-plane me-2"></i>Submit Request
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Bulk Orders -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h4 mb-4">Recent Bulk Orders</h2>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Wheat</td>
+                                    <td>100 Tonnes</td>
+                                    <td>North Region</td>
+                                    <td><span class="badge bg-warning">Pending</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-success">View Details</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Rice</td>
+                                    <td>50 Tonnes</td>
+                                    <td>South Region</td>
+                                    <td><span class="badge bg-success">Completed</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-success">View Details</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

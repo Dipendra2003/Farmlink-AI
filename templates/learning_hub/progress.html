@@ -1,0 +1,549 @@
+{% extends "base.html" %}
+
+{% block title %}My Learning Progress - Learning Hub{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('learning_hub') }}">Learning Hub</a></li>
+            <li class="breadcrumb-item active">My Progress</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white">
+                <div class="card-body text-center py-4">
+                    <h1 class="display-5 mb-0">
+                        <i class="fas fa-chart-line me-3"></i>My Learning Progress
+                    </h1>
+                    <p class="lead mb-0">Track your learning journey</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4 g-3">
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body p-3">
+                    <i class="fas fa-book fa-2x text-primary mb-2"></i>
+                    <h3 class="mb-0 fs-4">{{ stats.total }}</h3>
+                    <p class="text-muted mb-0 small">Total Articles</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body p-3">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <h3 class="mb-0 fs-4">{{ stats.completed }}</h3>
+                    <p class="text-muted mb-0 small">Completed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body p-3">
+                    <i class="fas fa-spinner fa-2x text-warning mb-2"></i>
+                    <h3 class="mb-0 fs-4">{{ stats.in_progress }}</h3>
+                    <p class="text-muted mb-0 small">In Progress</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="card text-center h-100">
+                <div class="card-body p-3">
+                    <i class="fas fa-percentage fa-2x text-info mb-2"></i>
+                    <h3 class="mb-0 fs-4">{{ stats.completion_rate }}%</h3>
+                    <p class="text-muted mb-0 small">Completion Rate</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Reading History</h5>
+                </div>
+                <div class="card-body">
+                    {% if progress_items %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Article</th>
+                                    <th>Category</th>
+                                    <th>Progress</th>
+                                    <th>Status</th>
+                                    <th>Last Read</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for progress in progress_items %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ progress.article.title }}</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>{{ progress.article.reading_time or 5 }} min read
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">
+                                            {{ progress.article.category|replace('_', ' ')|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar bg-{{ 'success' if progress.completed else 'info' }}" 
+                                                 role="progressbar" 
+                                                 style="width: {{ progress.progress_percentage }}%"
+                                                 aria-valuenow="{{ progress.progress_percentage }}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                                {{ progress.progress_percentage }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if progress.completed %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Completed
+                                        </span>
+                                        {% elif progress.progress_percentage > 0 %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-spinner me-1"></i>In Progress
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-circle me-1"></i>Not Started
+                                        </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ progress.last_read_at.strftime('%b %d, %Y') if progress.last_read_at else 'N/A' }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('view_article', article_id=progress.article.id) }}" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-book-open me-1"></i>
+                                            {% if progress.completed %}Review{% else %}Continue{% endif %}
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-book-reader fa-3x text-muted mb-3"></i>
+                        <h4>No Reading History Yet</h4>
+                        <p class="text-muted">Start reading articles to track your progress.</p>
+                        <a href="{{ url_for('learning_hub') }}" class="btn btn-primary">
+                            <i class="fas fa-book me-1"></i>Browse Articles
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personalized Recommendations -->
+    {% if recommendations %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+                        <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Recommended for You</h5>
+                        <button class="btn btn-sm btn-light" onclick="refreshRecommendations()">
+                            <i class="fas fa-sync-alt me-1"></i><span class="d-none d-sm-inline">Refresh</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for rec in recommendations[:6] %}
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="card h-100 recommendation-card" data-rec-id="{{ rec.id }}">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="badge bg-{{ 'success' if rec.article.difficulty_level == 'beginner' else 'warning' if rec.article.difficulty_level == 'intermediate' else 'danger' }}">
+                                            {{ rec.article.difficulty_level|title }}
+                                        </span>
+                                        <button class="btn btn-sm btn-link text-muted p-0" onclick="dismissRecommendation({{ rec.id }})" title="Dismiss">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <h6 class="card-title">
+                                        <a href="{{ url_for('view_article', article_id=rec.article.id) }}" class="text-decoration-none">
+                                            {{ rec.article.title }}
+                                        </a>
+                                    </h6>
+                                    <p class="card-text small text-muted mb-2">
+                                        <i class="fas fa-info-circle me-1"></i>{{ rec.recommendation_reason }}
+                                    </p>
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>{{ rec.article.reading_time or 5 }} min
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-eye me-1"></i>{{ rec.article.views or 0 }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('learning_preferences') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-cog me-1"></i>Customize Preferences
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Continue Reading -->
+    {% if continue_reading %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-book-reader me-2"></i>Continue Reading</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for progress in continue_reading %}
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="card h-100">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title small">{{ progress.article.title }}</h6>
+                                    <div class="progress mb-2" style="height: 20px;">
+                                        <div class="progress-bar bg-info" 
+                                             role="progressbar" 
+                                             style="width: {{ progress.progress_percentage }}%">
+                                            {{ progress.progress_percentage }}%
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">
+                                        Last read: {{ progress.last_read_at.strftime('%b %d') }}
+                                    </small>
+                                    <div class="mt-2">
+                                        <a href="{{ url_for('view_article', article_id=progress.article.id) }}" 
+                                           class="btn btn-sm btn-info w-100">
+                                            <i class="fas fa-play me-1"></i>Continue
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Trending Articles -->
+    {% if trending %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-fire me-2"></i>Trending Now</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for article in trending %}
+                        <div class="col-6 col-md-3">
+                            <div class="card h-100">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title small">
+                                        <a href="{{ url_for('view_article', article_id=article.id) }}" class="text-decoration-none">
+                                            {{ article.title }}
+                                        </a>
+                                    </h6>
+                                    <div class="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-1">
+                                        <small class="text-muted">
+                                            <i class="fas fa-eye me-1"></i>{{ article.views or 0 }}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-heart me-1"></i>{{ article.get_like_count() }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- New Achievement Notifications -->
+    {% if newly_earned %}
+    <div class="row mt-4">
+        <div class="col-12">
+            {% for achievement in newly_earned %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <h5 class="alert-heading">
+                    <i class="fas fa-trophy me-2"></i>Achievement Unlocked!
+                </h5>
+                <hr>
+                <p class="mb-0">
+                    <i class="fas {{ achievement.icon }} me-2"></i>
+                    <strong>{{ achievement.name }}</strong> - {{ achievement.description }}
+                </p>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Achievements Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-gradient-gold text-dark">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-trophy me-2"></i>Achievements & Milestones</h5>
+                        <span class="badge bg-dark">
+                            {{ achievements|selectattr('is_earned')|list|length }}/{{ achievements|length }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for achievement in achievements %}
+                        <div class="col-6 col-md-4 col-lg-3">
+                            <div class="achievement-badge {% if achievement.is_earned %}unlocked{% else %}locked{% endif %}" 
+                                 data-bs-toggle="tooltip" 
+                                 title="{{ achievement.description }}">
+                                <i class="fas {{ achievement.icon }} fa-2x"></i>
+                                <p class="mt-2 mb-1"><small><strong>{{ achievement.name }}</strong></small></p>
+                                <small class="text-muted d-none d-md-block">{{ achievement.description }}</small>
+                                
+                                {% if not achievement.is_earned %}
+                                <div class="progress mt-2" style="height: 5px;">
+                                    <div class="progress-bar bg-{{ achievement.color }}" 
+                                         role="progressbar" 
+                                         style="width: {{ achievement.progress }}%">
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-1">{{ achievement.progress_text }}</small>
+                                {% else %}
+                                <small class="text-success d-block mt-1">
+                                    <i class="fas fa-check-circle me-1"></i>Earned
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    {% if stats.reading_streak > 0 %}
+                    <div class="text-center mt-4">
+                        <div class="alert alert-success d-inline-block mb-0">
+                            <i class="fas fa-fire me-2"></i>
+                            <strong>{{ stats.reading_streak }} Day Streak!</strong> Keep it up!
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+function refreshRecommendations() {
+    fetch('{{ url_for("refresh_recommendations") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error refreshing recommendations');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error refreshing recommendations');
+    });
+}
+
+function dismissRecommendation(recId) {
+    if (!confirm('Dismiss this recommendation?')) return;
+    
+    fetch(`/learning-hub/recommendations/${recId}/dismiss`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const element = document.querySelector(`[data-rec-id="${recId}"]`);
+            if (element) {
+                element.closest('.col-12').remove();
+            }
+        } else {
+            alert('Error dismissing recommendation');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error dismissing recommendation');
+    });
+}
+</script>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.bg-gradient-gold {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+}
+
+.achievement-badge {
+    padding: 15px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.achievement-badge.unlocked {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #333;
+    box-shadow: 0 4px 8px rgba(255, 215, 0, 0.3);
+}
+
+.achievement-badge.locked {
+    background: #f8f9fa;
+    color: #ccc;
+}
+
+.achievement-badge i {
+    display: block;
+}
+
+.recommendation-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e0e0e0;
+}
+
+.recommendation-card .card-title a {
+    color: #333;
+    font-weight: 600;
+}
+
+.recommendation-card .card-title a:hover {
+    color: #007bff;
+}
+
+/* Mobile optimizations */
+@media (max-width: 767px) {
+    .display-5 {
+        font-size: 1.75rem;
+    }
+    
+    .lead {
+        font-size: 1rem;
+    }
+    
+    .achievement-badge {
+        padding: 10px;
+    }
+    
+    .achievement-badge i {
+        font-size: 1.5rem !important;
+    }
+    
+    .achievement-badge p {
+        font-size: 0.8rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .card-title {
+        font-size: 0.95rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+}
+
+/* Tablet optimizations */
+@media (min-width: 768px) and (max-width: 991px) {
+    .achievement-badge {
+        padding: 12px;
+    }
+    
+    .achievement-badge.unlocked {
+        transform: scale(1.02);
+    }
+}
+
+/* Desktop hover effects */
+@media (min-width: 992px) {
+    .recommendation-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .achievement-badge.unlocked {
+        transform: scale(1.05);
+    }
+}
+
+/* Improve touch targets */
+@media (max-width: 767px) {
+    .btn {
+        min-height: 38px;
+    }
+}
+</style>
+{% endblock %}

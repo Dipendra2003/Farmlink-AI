@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: farmlink-ai
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DATABASE_URL
+        fromDatabase:
+          name: farmlink-db
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: FLASK_APP
+        value: app.py
+      - key: FLASK_DEBUG
+        value: 0
+      - key: USE_JSON_LOGGING
+        value: true
+      # Add other environment variables in Render dashboard
+
+databases:
+  - name: farmlink-db
+    databaseName: farmlink_db
+    user: farmlink_user

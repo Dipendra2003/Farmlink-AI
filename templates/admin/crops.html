@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Crop Management - Admin - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-wheat-awn me-2"></i>Crop Management
+            </h1>
+            <p class="lead text-muted">Manage and approve crop listings on the platform.</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-wheat-awn fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ total_crops }}</h3>
+                    <p class="mb-0">Total Crops</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ pending_approval }}</h3>
+                    <p class="mb-0">Pending Approval</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ approved_crops }}</h3>
+                    <p class="mb-0">Approved</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-times-circle fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ rejected_crops }}</h3>
+                    <p class="mb-0">Rejected</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('admin_crops') }}" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Approval Status</label>
+                    <select name="approval" class="form-select">
+                        <option value="all" {% if approval_filter == 'all' %}selected{% endif %}>All</option>
+                        <option value="pending" {% if approval_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="approved" {% if approval_filter == 'approved' %}selected{% endif %}>Approved</option>
+                        <option value="rejected" {% if approval_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Listing Status</label>
+                    <select name="status" class="form-select">
+                        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+                        <option value="available" {% if status_filter == 'available' %}selected{% endif %}>Available</option>
+                        <option value="sold" {% if status_filter == 'sold' %}selected{% endif %}>Sold</option>
+                        <option value="reserved" {% if status_filter == 'reserved' %}selected{% endif %}>Reserved</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Search</label>
+                    <input type="text" name="search" class="form-control" placeholder="Search by name, category, location..." value="{{ search_query }}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i>Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="card mb-4" id="bulkActionsCard" style="display: none;">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <span id="selectedCount">0 crops selected</span>
+                <button type="button" class="btn btn-success" onclick="bulkApprove()">
+                    <i class="fas fa-check me-1"></i>Approve Selected
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Crops Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2"></i>Crop Listings
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            {% if crops.items %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="40">
+                                <input type="checkbox" id="selectAll" class="form-check-input">
+                            </th>
+                            <th>Image</th>
+                            <th>Crop Name</th>
+                            <th>Farmer</th>
+                            <th>Category</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Location</th>
+                            <th>Approval Status</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for crop in crops.items %}
+                        <tr>
+                            <td>
+                                {% if crop.approval_status == 'pending' %}
+                                <input type="checkbox" class="form-check-input crop-checkbox" value="{{ crop.id }}">
+                                {% endif %}
+                            </td>
+                            <td>
+                                <img src="{{ url_for('static', filename=crop.image_url or 'uploads/crops/default-crop.jpg') }}" 
+                                     alt="{{ crop.name }}" 
+                                     class="rounded" 
+                                     style="width: 50px; height: 50px; object-fit: cover;">
+                            </td>
+                            <td>
+                                <strong>{{ crop.name }}</strong>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin_user_analytics', user_id=crop.farmer_id) }}" class="text-decoration-none">
+                                    {{ crop.farmer.full_name or crop.farmer.username }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ crop.category }}</span>
+                            </td>
+                            <td>{{ crop.quantity }} {{ crop.unit }}</td>
+                            <td>₹{{ "%.2f"|format(crop.price_per_unit) }}/{{ crop.unit }}</td>
+                            <td>{{ crop.location }}</td>
+                            <td>
+                                {% if crop.approval_status == 'pending' %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-clock me-1"></i>Pending
+                                </span>
+                                {% elif crop.approval_status == 'approved' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>Approved
+                                </span>
+                                {% elif crop.approval_status == 'rejected' %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times-circle me-1"></i>Rejected
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>{{ crop.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('admin_crop_detail', crop_id=crop.id) }}" 
+                                       class="btn btn-outline-primary" 
+                                       title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if crop.approval_status == 'pending' %}
+                                    <form method="POST" action="{{ url_for('approve_crop', crop_id=crop.id) }}" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-outline-success" title="Approve">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if crops.pages > 1 %}
+            <div class="card-footer">
+                <nav>
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item {% if not crops.has_prev %}disabled{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin_crops', page=crops.prev_num, approval=approval_filter, status=status_filter, search=search_query) }}">
+                                Previous
+                            </a>
+                        </li>
+                        
+                        {% for page_num in crops.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                            {% if page_num %}
+                                <li class="page-item {% if page_num == crops.page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('admin_crops', page=page_num, approval=approval_filter, status=status_filter, search=search_query) }}">
+                                        {{ page_num }}
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <li class="page-item {% if not crops.has_next %}disabled{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin_crops', page=crops.next_num, approval=approval_filter, status=status_filter, search=search_query) }}">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-wheat-awn fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No crops found matching your criteria.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Select all checkbox functionality
+document.getElementById('selectAll').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.crop-checkbox');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+    updateBulkActions();
+});
+
+// Individual checkbox change
+document.querySelectorAll('.crop-checkbox').forEach(cb => {
+    cb.addEventListener('change', updateBulkActions);
+});
+
+function updateBulkActions() {
+    const selected = document.querySelectorAll('.crop-checkbox:checked');
+    const bulkCard = document.getElementById('bulkActionsCard');
+    const countSpan = document.getElementById('selectedCount');
+    
+    if (selected.length > 0) {
+        bulkCard.style.display = 'block';
+        countSpan.textContent = `${selected.length} crop(s) selected`;
+    } else {
+        bulkCard.style.display = 'none';
+    }
+}
+
+function bulkApprove() {
+    const selected = Array.from(document.querySelectorAll('.crop-checkbox:checked')).map(cb => cb.value);
+    
+    if (selected.length === 0) {
+        alert('Please select crops to approve');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to approve ${selected.length} crop(s)?`)) {
+        return;
+    }
+    
+    const formData = new FormData();
+    selected.forEach(id => formData.append('crop_ids[]', id));
+    formData.append('csrf_token', '{{ csrf_token() }}');
+    
+    fetch('{{ url_for("bulk_approve_crops") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('An error occurred: ' + error);
+    });
+}
+</script>
+{% endblock %}

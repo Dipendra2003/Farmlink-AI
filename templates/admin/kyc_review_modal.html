@@ -1,0 +1,127 @@
+<!-- Approve Modal -->
+<div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="approveModalLabel">
+                    <i class="fas fa-check-circle"></i> Approve KYC Verification
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin_kyc_approve', kyc_id=kyc.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Confirm Approval</strong>
+                    </div>
+                    <p>Are you sure you want to approve the KYC verification for <strong>{{ kyc.user.full_name }}</strong>?</p>
+                    <p class="mb-0">This action will:</p>
+                    <ul>
+                        <li>Mark the seller as verified</li>
+                        <li>Allow them to list products and receive payments</li>
+                        <li>Display a verification badge on their listings</li>
+                        <li>Send an approval notification email</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check"></i> Approve KYC
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="rejectModalLabel">
+                    <i class="fas fa-times-circle"></i> Reject KYC Verification
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin_kyc_reject', kyc_id=kyc.id) }}" id="rejectForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        <strong>Rejection Reason Required</strong>
+                    </div>
+                    <p>Please provide a clear reason for rejecting the KYC verification for <strong>{{ kyc.user.full_name }}</strong>.</p>
+                    
+                    <div class="mb-3">
+                        <label for="rejection_reason" class="form-label">Rejection Reason <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="rejection_reason" name="rejection_reason" 
+                                  rows="4" required minlength="10" maxlength="500"
+                                  placeholder="Explain why the KYC is being rejected (minimum 10 characters)"></textarea>
+                        <div class="form-text text-muted">
+                            Minimum 10 characters. Be specific about what needs to be corrected.
+                        </div>
+                        <div class="invalid-feedback">
+                            Please provide a rejection reason with at least 10 characters.
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mb-0">
+                        <small>
+                            <strong>Note:</strong> The seller will receive an email with this rejection reason 
+                            and will be able to resubmit their KYC documents.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-ban"></i> Reject KYC
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation for rejection reason
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var form = document.getElementById('rejectForm');
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                var rejectionReason = document.getElementById('rejection_reason').value.trim();
+                
+                if (rejectionReason.length < 10) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    
+                    var textarea = document.getElementById('rejection_reason');
+                    textarea.classList.add('is-invalid');
+                    
+                    return false;
+                }
+                
+                form.classList.add('was-validated');
+            }, false);
+            
+            // Remove invalid class on input
+            document.getElementById('rejection_reason').addEventListener('input', function() {
+                if (this.value.trim().length >= 10) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                }
+            });
+        }
+    }, false);
+})();
+</script>

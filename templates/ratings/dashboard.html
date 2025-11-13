@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+{% block title %}My Ratings - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="text-success mb-0">
+                    <i class="fas fa-star me-2"></i>My Ratings & Reviews
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                        <li class="breadcrumb-item active">My Ratings</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rating Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-star fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ "%.1f"|format(avg_rating) }}</h3>
+                    <p class="mb-0">Average Rating</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-thumbs-up fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ ratings_received|length }}</h3>
+                    <p class="mb-0">Reviews Received</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-edit fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ ratings_given|length }}</h3>
+                    <p class="mb-0">Reviews Given</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-trophy fa-2x mb-2"></i>
+                    <h3 class="fw-bold">
+                        {% if avg_rating >= 4.5 %}
+                            Excellent
+                        {% elif avg_rating >= 4.0 %}
+                            Very Good
+                        {% elif avg_rating >= 3.0 %}
+                            Good
+                        {% elif avg_rating >= 2.0 %}
+                            Fair
+                        {% else %}
+                            Needs Improvement
+                        {% endif %}
+                    </h3>
+                    <p class="mb-0">Rating Status</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rating Distribution -->
+    {% if ratings_received %}
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Rating Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for rating, count in rating_distribution.items() %}
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="me-2">{{ rating }}</span>
+                            {% for i in range(rating) %}
+                                <i class="fas fa-star text-warning me-1"></i>
+                            {% endfor %}
+                            <div class="progress flex-grow-1 mx-3" style="height: 10px;">
+                                <div class="progress-bar bg-warning" style="width: {{ (count * 100 / ratings_received|length) if ratings_received|length > 0 else 0 }}%"></div>
+                            </div>
+                            <span class="text-muted">{{ count }}</span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Rating Tips
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Maintain good communication with buyers/sellers
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Deliver orders on time
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Provide accurate product descriptions
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Respond promptly to messages
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Maintain quality standards
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tabs for Reviews -->
+    <div class="card">
+        <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="ratingTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="received-tab" data-bs-toggle="tab" data-bs-target="#received" type="button" role="tab">
+                        <i class="fas fa-star me-1"></i>Reviews Received ({{ ratings_received|length }})
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="given-tab" data-bs-toggle="tab" data-bs-target="#given" type="button" role="tab">
+                        <i class="fas fa-edit me-1"></i>Reviews Given ({{ ratings_given|length }})
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <div class="card-body">
+            <div class="tab-content" id="ratingTabsContent">
+                <!-- Reviews Received Tab -->
+                <div class="tab-pane fade show active" id="received" role="tabpanel">
+                    {% if ratings_received %}
+                        {% for rating in ratings_received %}
+                            <div class="border rounded p-3 mb-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://ui-avatars.com/api/?name={{ rating.rater.full_name }}&background=28a745&color=fff&size=40" 
+                                             class="rounded-circle me-3" width="40" height="40" alt="Profile">
+                                        <div>
+                                            <h6 class="mb-1">{{ rating.rater.full_name }}</h6>
+                                            <div class="text-warning mb-1">
+                                                {% for i in range(rating.rating) %}
+                                                    <i class="fas fa-star"></i>
+                                                {% endfor %}
+                                                {% for i in range(5 - rating.rating) %}
+                                                    <i class="far fa-star"></i>
+                                                {% endfor %}
+                                            </div>
+                                            <small class="text-muted">{{ rating.created_at.strftime('%b %d, %Y') }}</small>
+                                        </div>
+                                    </div>
+                                    {% if rating.order %}
+                                        <span class="badge bg-secondary">Order #{{ rating.order.id }}</span>
+                                    {% endif %}
+                                </div>
+                                {% if rating.review %}
+                                    <p class="mt-3 mb-0">{{ rating.review }}</p>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-star fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Reviews Yet</h5>
+                            <p class="text-muted">Complete more transactions to receive reviews.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Reviews Given Tab -->
+                <div class="tab-pane fade" id="given" role="tabpanel">
+                    {% if ratings_given %}
+                        {% for rating in ratings_given %}
+                            <div class="border rounded p-3 mb-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://ui-avatars.com/api/?name={{ rating.rated_user.full_name }}&background=28a745&color=fff&size=40" 
+                                             class="rounded-circle me-3" width="40" height="40" alt="Profile">
+                                        <div>
+                                            <h6 class="mb-1">{{ rating.rated_user.full_name }}</h6>
+                                            <div class="text-warning mb-1">
+                                                {% for i in range(rating.rating) %}
+                                                    <i class="fas fa-star"></i>
+                                                {% endfor %}
+                                                {% for i in range(5 - rating.rating) %}
+                                                    <i class="far fa-star"></i>
+                                                {% endfor %}
+                                            </div>
+                                            <small class="text-muted">{{ rating.created_at.strftime('%b %d, %Y') }}</small>
+                                        </div>
+                                    </div>
+                                    {% if rating.order %}
+                                        <span class="badge bg-secondary">Order #{{ rating.order.id }}</span>
+                                    {% endif %}
+                                </div>
+                                {% if rating.review %}
+                                    <p class="mt-3 mb-0">{{ rating.review }}</p>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-edit fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Reviews Given</h5>
+                            <p class="text-muted">Rate your completed transactions to help the community.</p>
+                            <a href="{{ url_for('my_orders') }}" class="btn btn-success">
+                                <i class="fas fa-shopping-cart me-1"></i>View My Orders
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Responsive Design */
+@media (max-width: 992px) {
+    .row .col-md-3,
+    .row .col-md-6 {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .card-body h3 {
+        font-size: 1.8rem;
+    }
+    
+    .card-body i {
+        font-size: 1.5rem !important;
+    }
+    
+    .border.rounded {
+        padding: 1rem !important;
+    }
+    
+    .nav-tabs .nav-link {
+        font-size: 0.9rem;
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    h2 {
+        font-size: 1.5rem;
+    }
+    
+    .card-body h3 {
+        font-size: 1.5rem;
+    }
+    
+    .card-body p {
+        font-size: 0.85rem;
+    }
+    
+    .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+    }
+    
+    .nav-tabs .nav-link {
+        white-space: nowrap;
+        font-size: 0.85rem;
+    }
+    
+    .border.rounded {
+        font-size: 0.9rem;
+    }
+    
+    img.rounded-circle {
+        width: 35px !important;
+        height: 35px !important;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate progress bars
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.transition = 'width 1s ease-in-out';
+            bar.style.width = width;
+        }, 100);
+    });
+    
+    // Animate stat cards
+    const statCards = document.querySelectorAll('.card h3');
+    statCards.forEach((stat, index) => {
+        stat.style.opacity = '0';
+        stat.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            stat.style.transition = 'all 0.5s ease';
+            stat.style.opacity = '1';
+            stat.style.transform = 'translateY(0)';
+        }, 100 * index);
+    });
+    
+    // Tab persistence
+    const tabs = document.querySelectorAll('#ratingTabs button[data-bs-toggle="tab"]');
+    tabs.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(e) {
+            localStorage.setItem('activeRatingTab', e.target.id);
+        });
+    });
+    
+    // Restore active tab
+    const activeTab = localStorage.getItem('activeRatingTab');
+    if (activeTab) {
+        const tab = document.getElementById(activeTab);
+        if (tab) {
+            const bsTab = new bootstrap.Tab(tab);
+            bsTab.show();
+        }
+    }
+});
+</script>
+{% endblock %}

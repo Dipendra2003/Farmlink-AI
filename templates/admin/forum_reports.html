@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Forum Reports - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        background: white;
+    }
+    .report-card.pending {
+        border-left: 4px solid #ffc107;
+    }
+    .report-card.resolved {
+        border-left: 4px solid #28a745;
+    }
+    .report-card.dismissed {
+        border-left: 4px solid #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-flag"></i> Content Reports</h2>
+        <a href="{{ url_for('admin_moderation') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Moderation
+        </a>
+    </div>
+
+    <!-- Filter Tabs -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link {% if current_status == 'pending' %}active{% endif %}" 
+               href="{{ url_for('admin_content_reports', status='pending') }}">
+                Pending
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_status == 'resolved' %}active{% endif %}" 
+               href="{{ url_for('admin_content_reports', status='resolved') }}">
+                Resolved
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_status == 'dismissed' %}active{% endif %}" 
+               href="{{ url_for('admin_content_reports', status='dismissed') }}">
+                Dismissed
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_status == 'all' %}active{% endif %}" 
+               href="{{ url_for('admin_content_reports', status='all') }}">
+                All
+            </a>
+        </li>
+    </ul>
+
+    <!-- Reports List -->
+    {% if reports.items %}
+        {% for report in reports.items %}
+        <div class="report-card {{ report.status }}">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h5>
+                        {{ report.content_type|title }} Report
+                        <span class="badge bg-{{ 'warning' if report.status == 'pending' else 'success' if report.status == 'resolved' else 'secondary' }}">
+                            {{ report.status|title }}
+                        </span>
+                    </h5>
+                    <p class="text-muted mb-2">
+                        <strong>Reason:</strong> {{ report.reason|title }}<br>
+                        <strong>Reported by:</strong> {{ report.reporter.full_name }}<br>
+                        <strong>Date:</strong> {{ report.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                    </p>
+                    {% if report.description %}
+                    <p><strong>Description:</strong> {{ report.description }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if report.status == 'pending' %}
+            <form method="POST" action="{{ url_for('moderate_content', report_id=report.id) }}" class="mt-3">
+                <div class="mb-3">
+                    <label class="form-label">Moderator Notes</label>
+                    <textarea name="reason" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" name="action" value="approve" class="btn btn-success">
+                        <i class="fas fa-check"></i> Approve
+                    </button>
+                    <button type="submit" name="action" value="hide" class="btn btn-warning">
+                        <i class="fas fa-eye-slash"></i> Hide
+                    </button>
+                    <button type="submit" name="action" value="delete" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                    <button type="submit" name="action" value="lock_post" class="btn btn-secondary">
+                        <i class="fas fa-lock"></i> Lock
+                    </button>
+                </div>
+            </form>
+            {% endif %}
+
+            {% if report.moderator_notes %}
+            <div class="mt-3 p-2 bg-light rounded">
+                <strong>Moderator Notes:</strong> {{ report.moderator_notes }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <!-- Pagination -->
+        {% if reports.pages > 1 %}
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if reports.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin_content_reports', status=current_status, page=reports.prev_num) }}">
+                        Previous
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in reports.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                    {% if page_num %}
+                        <li class="page-item {% if page_num == reports.page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin_content_reports', status=current_status, page=page_num) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if reports.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin_content_reports', status=current_status, page=reports.next_num) }}">
+                        Next
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+            <h4>No Reports Found</h4>
+            <p class="text-muted">There are no {{ current_status }} reports at this time.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

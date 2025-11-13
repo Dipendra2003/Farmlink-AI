@@ -1,0 +1,766 @@
+{% extends "base.html" %}
+
+{% block title %}AI Pest & Disease Detection - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mx-auto text-center">
+            <h1 class="display-5 fw-bold text-success mb-3">
+                <i class="fas fa-microscope me-2"></i>AI Pest & Disease Detection
+            </h1>
+            <p class="lead text-muted">
+                Advanced AI-powered plant health analysis using computer vision and machine learning
+            </p>
+            <div class="mt-3">
+                <a href="{{ url_for('pest_analysis_history') }}" class="btn btn-outline-success">
+                    <i class="fas fa-history me-2"></i>View Analysis History
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Form Section -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-leaf me-2"></i>Upload Plant Image for Analysis
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Form Validation Errors -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <h5 class="alert-heading"><i class="fas fa-exclamation-circle me-2"></i>Please fix the following errors:</h5>
+                        <ul class="mb-0">
+                            {% for field, errors in form.errors.items() %}
+                                {% for error in errors %}
+                                <li><strong>{{ form[field].label.text }}:</strong> {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Important Note -->
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> Please provide <strong>either a plant image OR symptom description</strong> (minimum 10 characters), or both for best results.
+                    </div>
+                    
+                    <form method="POST" enctype="multipart/form-data" id="pestAnalysisForm">
+                        {{ form.hidden_tag() }}
+
+                        <!-- Crop Selection -->
+                        {% if user_crops %}
+                        <div class="mb-4">
+                            <label for="crop_id" class="form-label fw-bold">
+                                <i class="fas fa-wheat-awn me-1"></i>Select Your Crop (Optional)
+                            </label>
+                            {{ form.crop_id(class="form-select", id="crop_id") }}
+                            <div class="form-text">
+                                Select from your registered crops to auto-fill crop type and location
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Image Upload Section -->
+                        <div class="mb-4">
+                            <label for="plant_image" class="form-label fw-bold">
+                                <i class="fas fa-camera me-1"></i>Plant Image 
+                                <span class="text-muted">(Required if no symptoms provided)</span>
+                            </label>
+                            <div class="image-upload-container border-2 border-dashed border-success rounded-3 p-4 text-center"
+                                id="imageUploadContainer">
+                                <div class="upload-placeholder" id="uploadPlaceholder">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-success mb-3"></i>
+                                    <h5>Drag & Drop or Click to Upload</h5>
+                                    <p class="text-muted">
+                                        Upload a clear image of the affected plant<br>
+                                        <small>Supported formats: JPG, PNG, WEBP (Max: 10MB)</small>
+                                    </p>
+                                </div>
+                                <div class="image-preview d-none" id="imagePreview">
+                                    <img id="previewImg" src="" alt="Preview" class="img-fluid rounded"
+                                        style="max-height: 300px;">
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" id="removeImage">
+                                            <i class="fas fa-trash me-1"></i>Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {{ form.plant_image(class="form-control d-none", id="plant_image") }}
+                            {% if form.plant_image.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.plant_image.errors %}
+                                <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <!-- Crop Type -->
+                            <div class="col-md-6 mb-3">
+                                <label for="crop_type" class="form-label fw-bold">
+                                    <i class="fas fa-seedling me-1"></i>Crop Type *
+                                </label>
+                                {{ form.crop_type(class="form-control", id="crop_type", placeholder="e.g., Tomato,
+                                Wheat, Rice") }}
+                                {% if form.crop_type.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.crop_type.errors %}
+                                    <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Plant Stage -->
+                            <div class="col-md-6 mb-3">
+                                <label for="plant_stage" class="form-label fw-bold">
+                                    <i class="fas fa-chart-line me-1"></i>Plant Stage *
+                                </label>
+                                {{ form.plant_stage(class="form-select", id="plant_stage") }}
+                                {% if form.plant_stage.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.plant_stage.errors %}
+                                    <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Location -->
+                            <div class="col-md-6 mb-3">
+                                <label for="location" class="form-label fw-bold">
+                                    <i class="fas fa-map-marker-alt me-1"></i>Location
+                                </label>
+                                {{ form.location(class="form-control", id="location", placeholder="e.g., Punjab,
+                                Ludhiana", value=current_user.location or '') }}
+                                {% if form.location.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.location.errors %}
+                                    <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Urgency Level -->
+                            <div class="col-md-6 mb-3">
+                                <label for="urgency" class="form-label fw-bold">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Urgency Level *
+                                </label>
+                                {{ form.urgency(class="form-select", id="urgency") }}
+                                {% if form.urgency.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.urgency.errors %}
+                                    <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Symptoms -->
+                        <div class="mb-4">
+                            <label for="symptoms_noticed" class="form-label fw-bold">
+                                <i class="fas fa-notes-medical me-1"></i>Symptoms Noticed 
+                                <span class="text-muted">(Required if no image - Min 10 characters)</span>
+                            </label>
+                            {{ form.symptoms_noticed(class="form-control", rows="4", id="symptoms_noticed",
+                            placeholder="Describe symptoms: yellowing leaves, brown spots, wilting, etc.") }}
+                            <div class="d-flex justify-content-between mt-1">
+                                <div class="form-text">
+                                    Describe any symptoms you've noticed (10-1000 characters)
+                                </div>
+                                <small class="text-muted" id="charCount">0 / 1000</small>
+                            </div>
+                            {% if form.symptoms_noticed.errors %}
+                            <div class="text-danger mt-1">
+                                {% for error in form.symptoms_noticed.errors %}
+                                <small>{{ error }}</small>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg" id="analyzeBtn">
+                                <i class="fas fa-microscope me-2"></i>Analyze Plant Health
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Analysis Results Section -->
+            {% if analysis and analysis.get('success') %}
+            <div class="card shadow-sm border-0 mt-4">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i>Analysis Results
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Identification Results -->
+                    <div class="mb-4">
+                        <h5 class="text-success mb-3">
+                            <i class="fas fa-search me-2"></i>Identified Issue
+                        </h5>
+                        {% set severity = analysis.get('severity_level', 'low') %}
+                        {% set confidence = analysis.get('confidence_score', 0) %}
+                        <div
+                            class="alert alert-{{ 'danger' if severity == 'critical' else 'warning' if severity == 'high' else 'info' if severity == 'medium' else 'success' }}">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h5 class="mb-1">{{ analysis.get('identified_issue', 'Unknown Issue') }}</h5>
+                                    <p class="mb-0">
+                                        <span class="badge bg-secondary me-2">{{ (analysis.get('issue_type', 'unknown')|title) }}</span>
+                                        <span
+                                            class="badge bg-{{ 'danger' if severity == 'critical' else 'warning' if severity == 'high' else 'info' if severity == 'medium' else 'success' }}">
+                                            {{ severity|title }} Severity
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fs-3 fw-bold">{{ confidence|round(1) }}%</div>
+                                    <small class="text-muted">Confidence</small>
+                                </div>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-{{ 'danger' if confidence < 50 else 'warning' if confidence < 75 else 'success' }}"
+                                    role="progressbar" style="width: {{ confidence }}%"
+                                    aria-valuenow="{{ confidence }}" aria-valuemin="0"
+                                    aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Treatment Recommendations Tabs -->
+                    {% set treatments = analysis.get('treatment_recommendations', {}) if analysis else {} %}
+                    {% if treatments %}
+                    <div class="mb-4">
+                        <h5 class="text-success mb-3">
+                            <i class="fas fa-prescription-bottle-alt me-2"></i>Treatment Recommendations
+                        </h5>
+                        <ul class="nav nav-tabs" id="treatmentTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="immediate-tab" data-bs-toggle="tab"
+                                    data-bs-target="#immediate" type="button" role="tab">
+                                    <i class="fas fa-bolt me-1"></i>Immediate Actions
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="organic-tab" data-bs-toggle="tab" data-bs-target="#organic"
+                                    type="button" role="tab">
+                                    <i class="fas fa-leaf me-1"></i>Organic Treatments
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="chemical-tab" data-bs-toggle="tab"
+                                    data-bs-target="#chemical" type="button" role="tab">
+                                    <i class="fas fa-flask me-1"></i>Chemical Treatments
+                                </button>
+                            </li>
+                        </ul>
+                        <div class="tab-content border border-top-0 p-3" id="treatmentTabContent">
+                            <!-- Immediate Actions -->
+                            <div class="tab-pane fade show active" id="immediate" role="tabpanel">
+                                {% set immediate_actions = treatments.get('immediate_actions', []) if treatments is mapping else [] %}
+                                {% if immediate_actions %}
+                                <ul class="list-group list-group-flush">
+                                    {% for action in immediate_actions %}
+                                    <li class="list-group-item">
+                                        <i class="fas fa-check-circle text-success me-2"></i>{{ action }}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                                {% else %}
+                                <p class="text-muted mb-0">No immediate actions required.</p>
+                                {% endif %}
+                            </div>
+                            <!-- Organic Treatments -->
+                            <div class="tab-pane fade" id="organic" role="tabpanel">
+                                {% set organic_treatments = treatments.get('organic_treatments', []) if treatments is mapping else [] %}
+                                {% if organic_treatments %}
+                                <div class="row g-3">
+                                    {% for treatment in organic_treatments %}
+                                    <div class="col-md-6">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-success">{{ treatment.get('name', 'Unknown Treatment') if treatment is mapping else 'Unknown Treatment' }}</h6>
+                                                <p class="card-text small mb-2">
+                                                    {% if treatment is mapping %}
+                                                    <strong>Application:</strong> {{ treatment.get('application', 'N/A') }}<br>
+                                                    <strong>Dosage:</strong> {{ treatment.get('dosage', 'N/A') }}<br>
+                                                    <strong>Timing:</strong> {{ treatment.get('timing', 'N/A') }}<br>
+                                                    <strong>Cost:</strong> {{ treatment.get('cost_estimate', 'N/A') }}
+                                                    {% else %}
+                                                    <strong>Details:</strong> N/A
+                                                    {% endif %}
+                                                </p>
+                                                {% if treatment is mapping and treatment.get('precautions') %}
+                                                <p class="card-text small text-muted mb-0">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>{{ treatment.get('precautions') }}
+                                                </p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <p class="text-muted mb-0">No organic treatments available.</p>
+                                {% endif %}
+                            </div>
+                            <!-- Chemical Treatments -->
+                            <div class="tab-pane fade" id="chemical" role="tabpanel">
+                                {% set chemical_treatments = treatments.get('chemical_treatments', []) if treatments is mapping else [] %}
+                                {% if chemical_treatments %}
+                                <div class="row g-3">
+                                    {% for treatment in chemical_treatments %}
+                                    <div class="col-md-6">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <h6 class="card-title text-primary">{{ treatment.get('name', 'Unknown Treatment') if treatment is mapping else 'Unknown Treatment' }}</h6>
+                                                <p class="card-text small mb-2">
+                                                    {% if treatment is mapping %}
+                                                    <strong>Application:</strong> {{ treatment.get('application', 'N/A') }}<br>
+                                                    <strong>Dosage:</strong> {{ treatment.get('dosage', 'N/A') }}<br>
+                                                    <strong>Timing:</strong> {{ treatment.get('timing', 'N/A') }}<br>
+                                                    <strong>Cost:</strong> {{ treatment.get('cost_estimate', 'N/A') }}
+                                                    {% else %}
+                                                    <strong>Details:</strong> N/A
+                                                    {% endif %}
+                                                </p>
+                                                {% if treatment is mapping and treatment.get('precautions') %}
+                                                <p class="card-text small text-danger mb-0">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>{{ treatment.get('precautions') }}
+                                                </p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <p class="text-muted mb-0">No chemical treatments available.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Preventive Measures -->
+                    {% set preventive_measures = treatments.get('preventive_measures', []) if treatments is mapping else [] %}
+                    {% if preventive_measures %}
+                    <div class="mb-4">
+                        <h5 class="text-success mb-3">
+                            <i class="fas fa-shield-alt me-2"></i>Preventive Measures
+                        </h5>
+                        <div class="list-group">
+                            {% for measure in preventive_measures %}
+                            <label class="list-group-item">
+                                <input class="form-check-input me-2" type="checkbox">
+                                {{ measure }}
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Alternative Diagnoses -->
+                    {% set alternative_diagnoses = analysis.get('alternative_diagnoses', []) if analysis else [] %}
+                    {% if alternative_diagnoses %}
+                    <div class="mb-4">
+                        <h5 class="text-success mb-3">
+                            <i class="fas fa-list-alt me-2"></i>Alternative Diagnoses
+                        </h5>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Issue</th>
+                                        <th>Confidence</th>
+                                        <th>Key Difference</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for diagnosis in alternative_diagnoses %}
+                                    <tr>
+                                        <td>{{ diagnosis.get('issue', 'Unknown') if diagnosis is mapping else 'Unknown' }}</td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ diagnosis.get('confidence', 0)|round(1) if diagnosis is mapping else 0 }}%</span>
+                                        </td>
+                                        <td><small>{{ diagnosis.get('key_difference', 'N/A') if diagnosis is mapping else 'N/A' }}</small></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex gap-2 flex-wrap">
+                        {% set analysis_id = analysis.get('analysis_id') if analysis else None %}
+                        {% if analysis_id %}
+                        <a href="{{ url_for('download_pest_analysis_pdf', analysis_id=analysis_id) }}"
+                            class="btn btn-primary">
+                            <i class="fas fa-download me-2"></i>Download PDF Report
+                        </a>
+                        <a href="{{ url_for('view_pest_analysis', analysis_id=analysis_id) }}"
+                            class="btn btn-outline-primary">
+                            <i class="fas fa-eye me-2"></i>View Full Details
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('pest_analysis_history') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-history me-2"></i>View History
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Analysis Tips -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2 text-warning"></i>Photography Tips
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Take photos in good natural light
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Focus on affected areas clearly
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Include both leaves and stems if possible
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Avoid blurry or dark images
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Multiple angles can help accuracy
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Supported Diseases -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-virus me-2 text-danger"></i>Detectable Conditions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-12">
+                            <span class="badge bg-success me-1 mb-1">Healthy Plants</span>
+                            <span class="badge bg-warning me-1 mb-1">Bacterial Spot</span>
+                            <span class="badge bg-warning me-1 mb-1">Early Blight</span>
+                            <span class="badge bg-danger me-1 mb-1">Late Blight</span>
+                            <span class="badge bg-warning me-1 mb-1">Leaf Mold</span>
+                            <span class="badge bg-warning me-1 mb-1">Septoria Leaf Spot</span>
+                            <span class="badge bg-info me-1 mb-1">Spider Mites</span>
+                            <span class="badge bg-warning me-1 mb-1">Target Spot</span>
+                            <span class="badge bg-danger me-1 mb-1">Yellow Leaf Curl Virus</span>
+                            <span class="badge bg-danger me-1 mb-1">Mosaic Virus</span>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            Our AI model can detect 10+ common plant diseases and pests with high accuracy.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Analyses -->
+            {% if recent_analyses and recent_analyses|length > 0 %}
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2 text-info"></i>Recent Analyses
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for analysis_item in recent_analyses %}
+                    <div
+                        class="d-flex justify-content-between align-items-center mb-2 pb-2 {% if not loop.last %}border-bottom{% endif %}">
+                        <div>
+                            <small class="fw-bold">
+                                {% if analysis_item.primary_prediction %}
+                                    {{ analysis_item.primary_prediction.replace('_', ' ').title() }}
+                                {% else %}
+                                    Unknown Issue
+                                {% endif %}
+                            </small><br>
+                            <small class="text-muted">
+                                {% if analysis_item.created_at %}
+                                    {{ analysis_item.created_at.strftime('%b %d, %Y') }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </small>
+                        </div>
+                        <div>
+                            {% set status = analysis_item.overall_status if analysis_item.overall_status else 'unknown' %}
+                            {% set confidence = analysis_item.primary_confidence if analysis_item.primary_confidence else 0 %}
+                            <span
+                                class="badge bg-{{ 'success' if status == 'healthy' else 'warning' if status == 'possible_issue' else 'danger' }}">
+                                {{ confidence|round(1) }}%
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <div class="mt-3">
+                        <a href="{{ url_for('pest_detection_history') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-list me-1"></i>View All
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="analysisModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="spinner-border text-success mb-3" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>Analyzing Plant Health...</h5>
+                <p class="text-muted mb-0">This may take a few moments</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .image-upload-container {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .image-upload-container:hover {
+        border-color: #198754 !important;
+        background-color: #f8f9fa;
+    }
+
+    .image-upload-container.drag-over {
+        border-color: #198754 !important;
+        background-color: #e8f5e8;
+    }
+
+    #previewImg {
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Get all DOM elements with null checks
+        const form = document.getElementById('pestAnalysisForm');
+        const fileInput = document.getElementById('plant_image');
+        const uploadContainer = document.getElementById('imageUploadContainer');
+        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = document.getElementById('previewImg');
+        const removeBtn = document.getElementById('removeImage');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const symptomsTextarea = document.getElementById('symptoms_noticed');
+        const charCount = document.getElementById('charCount');
+        const cropSelect = document.getElementById('crop_id');
+        const cropTypeInput = document.getElementById('crop_type');
+        const locationInput = document.getElementById('location');
+
+        // Character counter for symptoms
+        if (symptomsTextarea && charCount) {
+            const updateCharCount = function () {
+                const length = symptomsTextarea.value.length;
+                charCount.textContent = `${length} / 1000`;
+
+                if (length > 1000) {
+                    charCount.classList.add('text-danger');
+                    charCount.classList.remove('text-muted', 'text-warning');
+                } else if (length >= 900) {
+                    charCount.classList.add('text-warning');
+                    charCount.classList.remove('text-muted', 'text-danger');
+                } else {
+                    charCount.classList.add('text-muted');
+                    charCount.classList.remove('text-warning', 'text-danger');
+                }
+            };
+
+            symptomsTextarea.addEventListener('input', updateCharCount);
+            
+            // Initialize counter on page load
+            updateCharCount();
+        }
+
+        // Crop selection auto-fill
+        if (cropSelect && cropTypeInput) {
+            cropSelect.addEventListener('change', function () {
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption && this.value && this.value !== '0') {
+                    // Extract crop name from option text (format: "Name - Category")
+                    const cropText = selectedOption.text;
+                    if (cropText) {
+                        const cropName = cropText.split(' - ')[0];
+                        cropTypeInput.value = cropName;
+                    }
+                }
+            });
+        }
+
+        // File upload handling - only if all required elements exist
+        if (uploadContainer && fileInput && uploadPlaceholder && imagePreview && previewImg) {
+            // Click to upload
+            uploadContainer.addEventListener('click', function (e) {
+                if (!e.target.closest('#removeImage')) {
+                    fileInput.click();
+                }
+            });
+
+            // File input change
+            fileInput.addEventListener('change', function (e) {
+                if (e.target.files && e.target.files[0]) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+
+            // Drag and drop
+            uploadContainer.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                uploadContainer.classList.add('drag-over');
+            });
+
+            uploadContainer.addEventListener('dragleave', function (e) {
+                e.preventDefault();
+                uploadContainer.classList.remove('drag-over');
+            });
+
+            uploadContainer.addEventListener('drop', function (e) {
+                e.preventDefault();
+                uploadContainer.classList.remove('drag-over');
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    handleFileSelect(e.dataTransfer.files[0]);
+                }
+            });
+
+            function handleFileSelect(file) {
+                if (!file) return;
+
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Please select a valid image file (JPG, PNG, WEBP)');
+                    return;
+                }
+
+                // Validate file size (10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('File size must be less than 10MB');
+                    return;
+                }
+
+                // Preview image
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    if (e.target && e.target.result) {
+                        previewImg.src = e.target.result;
+                        uploadPlaceholder.classList.add('d-none');
+                        imagePreview.classList.remove('d-none');
+                    }
+                };
+                reader.onerror = function () {
+                    alert('Error reading file. Please try again.');
+                };
+                reader.readAsDataURL(file);
+
+                // Set file input
+                try {
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    fileInput.files = dt.files;
+                } catch (error) {
+                    console.error('Error setting file input:', error);
+                }
+            }
+
+            // Remove image button
+            if (removeBtn) {
+                removeBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    fileInput.value = '';
+                    uploadPlaceholder.classList.remove('d-none');
+                    imagePreview.classList.add('d-none');
+                    previewImg.src = '';
+                });
+            }
+        }
+
+        // Form submission
+        if (form && analyzeBtn) {
+            form.addEventListener('submit', function (e) {
+                const hasImage = fileInput && fileInput.files && fileInput.files.length > 0;
+                const hasSymptoms = symptomsTextarea && symptomsTextarea.value.trim().length >= 10;
+
+                if (!hasImage && !hasSymptoms) {
+                    e.preventDefault();
+                    alert('Please provide either an image or symptom description (minimum 10 characters) for analysis');
+                    return false;
+                }
+
+                // Show loading modal if available
+                const modalElement = document.getElementById('analysisModal');
+                if (modalElement && typeof bootstrap !== 'undefined') {
+                    try {
+                        const modal = new bootstrap.Modal(modalElement);
+                        modal.show();
+                    } catch (error) {
+                        console.error('Error showing modal:', error);
+                    }
+                }
+
+                // Disable submit button
+                analyzeBtn.disabled = true;
+                analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}Crop Details - Admin - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+      <!-- Header -->
+      <div class="row mb-4">
+            <div class="col">
+                  <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                              <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+                              <li class="breadcrumb-item"><a href="{{ url_for('admin_crops') }}">Crops</a></li>
+                              <li class="breadcrumb-item active">{{ crop.name }}</li>
+                        </ol>
+                  </nav>
+                  <h1 class="display-6 fw-bold text-success">
+                        <i class="fas fa-wheat-awn me-2"></i>{{ crop.name }}
+                  </h1>
+            </div>
+      </div>
+
+      <div class="row">
+            <!-- Crop Details -->
+            <div class="col-lg-8">
+                  <div class="card mb-4">
+                        <div class="card-header">
+                              <h5 class="card-title mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>Crop Information
+                              </h5>
+                        </div>
+                        <div class="card-body">
+                              <div class="row">
+                                    <div class="col-md-4 text-center mb-3">
+                                          <img src="{{ url_for('static', filename=crop.image_url or 'uploads/crops/default-crop.jpg') }}"
+                                                alt="{{ crop.name }}" class="img-fluid rounded shadow-sm"
+                                                style="max-height: 300px; object-fit: cover;">
+                                    </div>
+                                    <div class="col-md-8">
+                                          <table class="table table-borderless">
+                                                <tr>
+                                                      <th width="40%">Crop Name:</th>
+                                                      <td><strong>{{ crop.name }}</strong></td>
+                                                </tr>
+                                                <tr>
+                                                      <th>Category:</th>
+                                                      <td><span class="badge bg-secondary">{{ crop.category }}</span>
+                                                      </td>
+                                                </tr>
+                                                <tr>
+                                                      <th>Quantity:</th>
+                                                      <td>{{ crop.quantity }} {{ crop.unit }}</td>
+                                                </tr>
+                                                <tr>
+                                                      <th>Price per Unit:</th>
+                                                      <td><strong class="text-success">₹{{
+                                                                  "%.2f"|format(crop.price_per_unit) }}/{{ crop.unit
+                                                                  }}</strong></td>
+                                                </tr>
+                                                <tr>
+                                                      <th>Total Value:</th>
+                                                      <td><strong>₹{{ "%.2f"|format(crop.total_value) }}</strong></td>
+                                                </tr>
+                                                <tr>
+                                                      <th>Harvest Date:</th>
+                                                      <td>{{ crop.harvest_date.strftime('%B %d, %Y') if
+                                                            crop.harvest_date else 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                      <th>Location:</th>
+                                                      <td><i class="fas fa-map-marker-alt me-1"></i>{{ crop.location }}
+                                                      </td>
+                                                </tr>
+                                                <tr>
+                                                      <th>Status:</th>
+                                                      <td>
+                                                            {% if crop.status == 'available' %}
+                                                            <span class="badge bg-success">Available</span>
+                                                            {% elif crop.status == 'sold' %}
+                                                            <span class="badge bg-secondary">Sold</span>
+                                                            {% elif crop.status == 'reserved' %}
+                                                            <span class="badge bg-warning">Reserved</span>
+                                                            {% else %}
+                                                            <span class="badge bg-danger">{{ crop.status }}</span>
+                                                            {% endif %}
+                                                      </td>
+                                                </tr>
+                                          </table>
+                                    </div>
+                              </div>
+
+                              {% if crop.description %}
+                              <div class="mt-3">
+                                    <h6 class="fw-bold">Description:</h6>
+                                    <p class="text-muted">{{ crop.description }}</p>
+                              </div>
+                              {% endif %}
+                        </div>
+                  </div>
+
+                  <!-- Approval Status -->
+                  <div class="card mb-4">
+                        <div class="card-header">
+                              <h5 class="card-title mb-0">
+                                    <i class="fas fa-clipboard-check me-2"></i>Approval Status
+                              </h5>
+                        </div>
+                        <div class="card-body">
+                              <div class="row">
+                                    <div class="col-md-6">
+                                          <p><strong>Approval Status:</strong></p>
+                                          {% if crop.approval_status == 'pending' %}
+                                          <span class="badge bg-warning fs-6">
+                                                <i class="fas fa-clock me-1"></i>Pending Approval
+                                          </span>
+                                          {% elif crop.approval_status == 'approved' %}
+                                          <span class="badge bg-success fs-6">
+                                                <i class="fas fa-check-circle me-1"></i>Approved
+                                          </span>
+                                          {% elif crop.approval_status == 'rejected' %}
+                                          <span class="badge bg-danger fs-6">
+                                                <i class="fas fa-times-circle me-1"></i>Rejected
+                                          </span>
+                                          {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                          {% if crop.approved_at %}
+                                          <p><strong>Reviewed:</strong></p>
+                                          <p class="text-muted">{{ crop.approved_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                          </p>
+                                          {% if crop.approver %}
+                                          <p><strong>Reviewed by:</strong> {{ crop.approver.full_name or
+                                                crop.approver.username }}</p>
+                                          {% endif %}
+                                          {% endif %}
+                                    </div>
+                              </div>
+
+                              {% if crop.rejection_reason %}
+                              <div class="alert alert-danger mt-3">
+                                    <strong>Rejection Reason:</strong><br>
+                                    {{ crop.rejection_reason }}
+                              </div>
+                              {% endif %}
+                        </div>
+                  </div>
+
+                  <!-- Related Orders -->
+                  {% if orders %}
+                  <div class="card mb-4">
+                        <div class="card-header">
+                              <h5 class="card-title mb-0">
+                                    <i class="fas fa-shopping-cart me-2"></i>Related Orders ({{ orders|length }})
+                              </h5>
+                        </div>
+                        <div class="card-body p-0">
+                              <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                          <thead class="table-light">
+                                                <tr>
+                                                      <th>Order ID</th>
+                                                      <th>Buyer</th>
+                                                      <th>Quantity</th>
+                                                      <th>Amount</th>
+                                                      <th>Status</th>
+                                                      <th>Date</th>
+                                                </tr>
+                                          </thead>
+                                          <tbody>
+                                                {% for order in orders %}
+                                                <tr>
+                                                      <td>#{{ order.id }}</td>
+                                                      <td>{{ order.buyer.full_name or order.buyer.username }}</td>
+                                                      <td>{{ order.quantity_requested }} {{ crop.unit }}</td>
+                                                      <td>₹{{ "%.2f"|format(order.total_amount) }}</td>
+                                                      <td>
+                                                            <span
+                                                                  class="badge bg-{{ 'success' if order.status == 'completed' else 'warning' }}">
+                                                                  {{ order.status }}
+                                                            </span>
+                                                      </td>
+                                                      <td>{{ order.created_at.strftime('%Y-%m-%d') }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                          </tbody>
+                                    </table>
+                              </div>
+                        </div>
+                  </div>
+                  {% endif %}
+            </div>
+
+            <!-- Sidebar Actions -->
+            <div class="col-lg-4">
+                  <!-- Farmer Information -->
+                  <div class="card mb-4">
+                        <div class="card-header">
+                              <h5 class="card-title mb-0">
+                                    <i class="fas fa-user me-2"></i>Farmer Information
+                              </h5>
+                        </div>
+                        <div class="card-body">
+                              <div class="text-center mb-3">
+                                    <img src="{{ url_for('static', filename=crop.farmer.profile_image or 'images/default-avatar.png') }}"
+                                          alt="{{ crop.farmer.full_name }}" class="rounded-circle"
+                                          style="width: 80px; height: 80px; object-fit: cover;">
+                              </div>
+                              <p><strong>Name:</strong> {{ crop.farmer.full_name or crop.farmer.username }}</p>
+                              <p><strong>Email:</strong> {{ crop.farmer.email }}</p>
+                              <p><strong>Phone:</strong> {{ crop.farmer.phone or 'N/A' }}</p>
+                              <p><strong>Location:</strong> {{ crop.farmer.location or 'N/A' }}</p>
+                              <a href="{{ url_for('admin_user_analytics', user_id=crop.farmer_id) }}"
+                                    class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-chart-line me-1"></i>View Farmer Analytics
+                              </a>
+                        </div>
+                  </div>
+
+                  <!-- Admin Actions -->
+                  <div class="card mb-4">
+                        <div class="card-header">
+                              <h5 class="card-title mb-0">
+                                    <i class="fas fa-tools me-2"></i>Admin Actions
+                              </h5>
+                        </div>
+                        <div class="card-body">
+                              {% if crop.approval_status == 'pending' %}
+                              <!-- Approve Button -->
+                              <form method="POST" action="{{ url_for('approve_crop', crop_id=crop.id) }}" class="mb-2">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-success w-100 mb-2">
+                                          <i class="fas fa-check me-1"></i>Approve Crop
+                                    </button>
+                              </form>
+
+                              <!-- Reject Button -->
+                              <button type="button" class="btn btn-danger w-100 mb-2" data-bs-toggle="modal"
+                                    data-bs-target="#rejectModal">
+                                    <i class="fas fa-times me-1"></i>Reject Crop
+                              </button>
+                              {% elif crop.approval_status == 'rejected' %}
+                              <!-- Re-approve Button -->
+                              <form method="POST" action="{{ url_for('approve_crop', crop_id=crop.id) }}" class="mb-2">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-success w-100 mb-2">
+                                          <i class="fas fa-redo me-1"></i>Re-approve Crop
+                                    </button>
+                              </form>
+                              {% endif %}
+
+                              <!-- Edit Button -->
+                              <a href="{{ url_for('admin_edit_crop', crop_id=crop.id) }}"
+                                    class="btn btn-primary w-100 mb-2">
+                                    <i class="fas fa-edit me-1"></i>Edit Crop Details
+                              </a>
+
+                              <!-- Delete Button -->
+                              <button type="button" class="btn btn-outline-danger w-100" data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal">
+                                    <i class="fas fa-trash me-1"></i>Delete Crop
+                              </button>
+                        </div>
+                  </div>
+
+                  <!-- Timestamps -->
+                  <div class="card">
+                        <div class="card-header">
+                              <h5 class="card-title mb-0">
+                                    <i class="fas fa-clock me-2"></i>Timestamps
+                              </h5>
+                        </div>
+                        <div class="card-body">
+                              <p><strong>Created:</strong><br>{{ crop.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                              </p>
+                              <p><strong>Last Updated:</strong><br>{{ crop.updated_at.strftime('%B %d, %Y at %I:%M %p')
+                                    }}</p>
+                        </div>
+                  </div>
+            </div>
+      </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+      <div class="modal-dialog">
+            <div class="modal-content">
+                  <form method="POST" action="{{ url_for('reject_crop', crop_id=crop.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="modal-header">
+                              <h5 class="modal-title">Reject Crop Listing</h5>
+                              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                              <p>Please provide a reason for rejecting this crop listing. This will be sent to the
+                                    farmer.</p>
+                              <div class="mb-3">
+                                    <label for="rejection_reason" class="form-label">Rejection Reason *</label>
+                                    <textarea name="rejection_reason" id="rejection_reason" class="form-control"
+                                          rows="4" required
+                                          placeholder="e.g., Image quality is poor, pricing is unrealistic, description is incomplete..."></textarea>
+                              </div>
+                        </div>
+                        <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                              <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-times me-1"></i>Reject Crop
+                              </button>
+                        </div>
+                  </form>
+            </div>
+      </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+      <div class="modal-dialog">
+            <div class="modal-content">
+                  <form method="POST" action="{{ url_for('admin_delete_crop', crop_id=crop.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="modal-header bg-danger text-white">
+                              <h5 class="modal-title">Delete Crop Listing</h5>
+                              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                              <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Warning:</strong> This action cannot be undone!
+                              </div>
+                              <p>Are you sure you want to permanently delete this crop listing?</p>
+                              <p><strong>Crop:</strong> {{ crop.name }}</p>
+                              <p><strong>Farmer:</strong> {{ crop.farmer.full_name or crop.farmer.username }}</p>
+                        </div>
+                        <div class="modal-footer">
+                              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                              <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash me-1"></i>Delete Permanently
+                              </button>
+                        </div>
+                  </form>
+            </div>
+      </div>
+</div>
+{% endblock %}

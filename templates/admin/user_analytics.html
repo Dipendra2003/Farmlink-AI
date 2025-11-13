@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}User Analytics - Admin - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-2">
+                <a href="{{ url_for('admin_users') }}" class="text-decoration-none text-muted">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Users
+                </a>
+            </h1>
+            <h2 class="display-6 fw-bold text-success">
+                <i class="fas fa-chart-line me-2"></i>{{ user.full_name }}'s Analytics
+            </h2>
+            <p class="lead text-muted">Performance analytics and insights for this {{ user.role }}.</p>
+        </div>
+    </div>
+
+    {% if user.role == 'farmer' %}
+        <!-- Farmer Analytics -->
+        <div class="row g-4">
+            <!-- Key Metrics -->
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-pie me-2"></i>Key Metrics
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-sm-6">
+                                <div class="border rounded p-3 text-center">
+                                    <h3 class="text-success mb-1">{{ analytics.total_crops }}</h3>
+                                    <p class="text-muted mb-0">Total Crops</p>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="border rounded p-3 text-center">
+                                    <h3 class="text-success mb-1">{{ analytics.active_crops }}</h3>
+                                    <p class="text-muted mb-0">Active Crops</p>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="border rounded p-3 text-center">
+                                    <h3 class="text-success mb-1">{{ analytics.total_orders_received }}</h3>
+                                    <p class="text-muted mb-0">Orders Received</p>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="border rounded p-3 text-center">
+                                    <h3 class="text-success mb-1">{{ analytics.completed_orders }}</h3>
+                                    <p class="text-muted mb-0">Completed Orders</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Overview -->
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-money-bill-wave me-2"></i>Financial Overview
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h6 class="text-muted mb-2">Total Earnings</h6>
+                            <h2 class="display-6 fw-bold text-success mb-0">₹{{ "%.2f"|format(analytics.total_earnings) }}</h2>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="text-muted mb-2">Average Rating</h6>
+                            <div class="d-flex align-items-center">
+                                <h3 class="mb-0 me-2">{{ "%.1f"|format(analytics.avg_rating) }}</h3>
+                                <div class="text-warning">
+                                    {% for i in range(5) %}
+                                        <i class="fas fa-star{{ '' if i < analytics.avg_rating|int else '-half-alt' if i == analytics.avg_rating|int and analytics.avg_rating % 1 >= 0.5 else '-o' }}"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-0">
+                            <h6 class="text-muted mb-2">Order Completion Rate</h6>
+                            <div class="progress" style="height: 10px;">
+                                {% set completion_rate = (analytics.completed_orders / analytics.total_orders_received * 100) if analytics.total_orders_received > 0 else 0 %}
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {{ completion_rate }}%"
+                                     aria-valuenow="{{ completion_rate }}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                            <small class="text-muted">{{ "%.1f"|format(completion_rate) }}% orders completed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- Buyer Analytics -->
+        <div class="row g-4">
+            <!-- Purchase Metrics -->
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-shopping-basket me-2"></i>Purchase Metrics
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <div class="col-sm-6">
+                                <div class="border rounded p-3 text-center">
+                                    <h3 class="text-info mb-1">{{ analytics.total_orders }}</h3>
+                                    <p class="text-muted mb-0">Total Orders</p>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="border rounded p-3 text-center">
+                                    <h3 class="text-info mb-1">{{ analytics.completed_orders }}</h3>
+                                    <p class="text-muted mb-0">Completed Orders</p>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="border rounded p-3 text-center">
+                                    <h3 class="text-info mb-1">{{ analytics.unique_farmers }}</h3>
+                                    <p class="text-muted mb-0">Unique Farmers</p>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="border rounded p-3 text-center">
+                                    {% set completion_rate = (analytics.completed_orders / analytics.total_orders * 100) if analytics.total_orders > 0 else 0 %}
+                                    <h3 class="text-info mb-1">{{ "%.1f"|format(completion_rate) }}%</h3>
+                                    <p class="text-muted mb-0">Completion Rate</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Overview -->
+            <div class="col-md-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-money-bill-wave me-2"></i>Financial Overview
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <h6 class="text-muted mb-2">Total Spent</h6>
+                            <h2 class="display-6 fw-bold text-info mb-0">₹{{ "%.2f"|format(analytics.total_spent) }}</h2>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h6 class="text-muted mb-2">Average Order Value</h6>
+                            {% set avg_order_value = analytics.total_spent / analytics.completed_orders if analytics.completed_orders > 0 else 0 %}
+                            <h3 class="fw-bold text-info mb-0">₹{{ "%.2f"|format(avg_order_value) }}</h3>
+                        </div>
+
+                        <div class="mb-0">
+                            <h6 class="text-muted mb-2">Order Status Distribution</h6>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {{ (analytics.completed_orders / analytics.total_orders * 100) if analytics.total_orders > 0 else 0 }}%">
+                                    Completed
+                                </div>
+                                <div class="progress-bar bg-warning" role="progressbar" 
+                                     style="width: {{ ((analytics.total_orders - analytics.completed_orders) / analytics.total_orders * 100) if analytics.total_orders > 0 else 0 }}%">
+                                    Other
+                                </div>
+                            </div>
+                            <small class="text-muted mt-1 d-block">{{ analytics.completed_orders }} out of {{ analytics.total_orders }} orders completed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}Moderation Queue - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-shield-alt"></i> Rating Moderation Queue</h2>
+                <div>
+                    <a href="{{ url_for('rating.rating_analytics') }}" class="btn btn-info">
+                        <i class="fas fa-chart-bar"></i> View Analytics
+                    </a>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Pending Flags</h5>
+                            <h2>{{ stats.pending_flags }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Flagged Ratings</h5>
+                            <h2>{{ stats.flagged_ratings }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-secondary text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Hidden Ratings</h5>
+                            <h2>{{ stats.hidden_ratings }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5 class="card-title">Resolved</h5>
+                            <h2>{{ stats.status_counts.get('resolved', 0) }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <ul class="nav nav-tabs mb-4">
+                <li class="nav-item">
+                    <a class="nav-link {% if status == 'pending' %}active{% endif %}" 
+                       href="{{ url_for('rating.moderation_queue', status='pending') }}">
+                        Pending ({{ stats.status_counts.get('pending', 0) }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if status == 'resolved' %}active{% endif %}" 
+                       href="{{ url_for('rating.moderation_queue', status='resolved') }}">
+                        Resolved ({{ stats.status_counts.get('resolved', 0) }})
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if status == 'reviewed' %}active{% endif %}" 
+                       href="{{ url_for('rating.moderation_queue', status='reviewed') }}">
+                        Reviewed ({{ stats.status_counts.get('reviewed', 0) }})
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Flagged Ratings List -->
+            {% if flags %}
+                {% for flag in flags %}
+                <div class="card mb-3 border-{% if flag.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                    <div class="card-header bg-{% if flag.status == 'pending' %}warning{% else %}secondary{% endif %} text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Flag #{{ flag.flag_id }}</strong> - 
+                                <span class="badge badge-light text-dark">{{ flag.reason|replace('_', ' ')|title }}</span>
+                            </div>
+                            <small>Flagged {{ flag.created_at[:10] }}</small>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Rating Details -->
+                            <div class="col-md-8">
+                                <h5>Rating Details</h5>
+                                <div class="mb-3">
+                                    <strong>Product:</strong> 
+                                    <a href="{{ url_for('rating.view_product_ratings', product_id=flag.rating_details.product.id) }}" target="_blank">
+                                        {{ flag.rating_details.product.name }}
+                                    </a>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Rating:</strong> 
+                                    {% for i in range(1, 6) %}
+                                        {% if i <= flag.rating_details.rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-warning"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    ({{ flag.rating_details.rating }}/5)
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Review:</strong>
+                                    <div class="p-3 bg-light rounded">
+                                        {{ flag.rating_details.review_text or '<em>No review text</em>' }}
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Buyer:</strong> {{ flag.rating_details.buyer.full_name or flag.rating_details.buyer.username }}
+                                    <br>
+                                    <strong>Posted:</strong> {{ flag.rating_details.created_at[:10] }}
+                                    <br>
+                                    <strong>Helpful Votes:</strong> {{ flag.rating_details.helpful_count }}
+                                    <br>
+                                    <strong>Status:</strong> 
+                                    {% if flag.rating_details.is_hidden %}
+                                        <span class="badge badge-danger">Hidden</span>
+                                    {% else %}
+                                        <span class="badge badge-success">Visible</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Flag Details -->
+                            <div class="col-md-4">
+                                <h5>Flag Information</h5>
+                                <div class="mb-3">
+                                    <strong>Reason:</strong> 
+                                    <span class="badge badge-warning">{{ flag.reason|replace('_', ' ')|title }}</span>
+                                </div>
+                                {% if flag.description %}
+                                <div class="mb-3">
+                                    <strong>Description:</strong>
+                                    <div class="p-2 bg-light rounded small">
+                                        {{ flag.description }}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <div class="mb-3">
+                                    <strong>Reported by:</strong> {{ flag.flagger.full_name or flag.flagger.username }}
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Status:</strong> 
+                                    <span class="badge badge-{% if flag.status == 'pending' %}warning{% elif flag.status == 'resolved' %}success{% else %}secondary{% endif %}">
+                                        {{ flag.status|title }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Moderation Actions -->
+                        {% if flag.status == 'pending' %}
+                        <hr>
+                        <div class="row">
+                            <div class="col-12">
+                                <h5>Moderation Actions</h5>
+                                <form method="POST" action="{{ url_for('rating.moderate_rating', flag_id=flag.flag_id) }}" class="moderation-form">
+                                    <div class="form-group">
+                                        <label for="notes-{{ flag.flag_id }}">Moderator Notes (Optional)</label>
+                                        <textarea class="form-control" id="notes-{{ flag.flag_id }}" name="notes" rows="2" 
+                                                  placeholder="Add any notes about this moderation action..."></textarea>
+                                    </div>
+                                    <div class="btn-group" role="group">
+                                        <button type="submit" name="action" value="approve" class="btn btn-success" 
+                                                onclick="return confirm('Approve this rating and dismiss the flag?')">
+                                            <i class="fas fa-check"></i> Approve Rating
+                                        </button>
+                                        <button type="submit" name="action" value="hide" class="btn btn-warning" 
+                                                onclick="return confirm('Hide this rating from public view?')">
+                                            <i class="fas fa-eye-slash"></i> Hide Rating
+                                        </button>
+                                        <button type="submit" name="action" value="delete" class="btn btn-danger" 
+                                                onclick="return confirm('Permanently delete this rating? This action cannot be undone!')">
+                                            <i class="fas fa-trash"></i> Delete Rating
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Pagination -->
+                {% if pages > 1 %}
+                <nav aria-label="Moderation queue pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('rating.moderation_queue', status=status, page=page-1) }}">Previous</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Previous</span>
+                        </li>
+                        {% endif %}
+
+                        {% for p in range(1, pages + 1) %}
+                            {% if p == page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ p }}</span>
+                            </li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('rating.moderation_queue', status=status, page=p) }}">{{ p }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('rating.moderation_queue', status=status, page=page+1) }}">Next</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Next</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> No {{ status }} flags found.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.moderation-form {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+/* Responsive Design */
+@media (max-width: 992px) {
+    .row .col-md-8,
+    .row .col-md-4 {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .card-header .d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 10px;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.25rem !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    .card-body .row {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .card {
+        font-size: 0.9rem;
+    }
+    
+    h2 {
+        font-size: 1.5rem;
+    }
+    
+    h5 {
+        font-size: 1.1rem;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+    }
+    
+    .btn {
+        font-size: 0.85rem;
+        padding: 0.375rem 0.75rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Confirm moderation actions
+    const moderationForms = document.querySelectorAll('.moderation-form');
+    
+    moderationForms.forEach(form => {
+        const buttons = form.querySelectorAll('button[type="submit"]');
+        
+        buttons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                const action = this.value;
+                let message = '';
+                
+                switch(action) {
+                    case 'approve':
+                        message = 'Are you sure you want to approve this rating and dismiss the flag?';
+                        break;
+                    case 'hide':
+                        message = 'Are you sure you want to hide this rating from public view?';
+                        break;
+                    case 'delete':
+                        message = 'Are you sure you want to permanently delete this rating? This action cannot be undone!';
+                        break;
+                }
+                
+                if (!confirm(message)) {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        });
+    });
+    
+    // Auto-refresh notification for new flags
+    const pendingCount = {{ stats.pending_flags }};
+    if (pendingCount > 0) {
+        // Check for new flags every 5 minutes
+        setInterval(function() {
+            fetch('{{ url_for("rating.moderation_queue", status="pending") }}')
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newCount = doc.querySelector('.bg-warning h2');
+                    if (newCount && parseInt(newCount.textContent) > pendingCount) {
+                        if (confirm('New flags have been added. Would you like to refresh the page?')) {
+                            location.reload();
+                        }
+                    }
+                })
+                .catch(err => console.error('Error checking for new flags:', err));
+        }, 300000); // 5 minutes
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Cache Management - Admin - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_system_settings') }}">System Settings</a></li>
+                    <li class="breadcrumb-item active">Cache Management</li>
+                </ol>
+            </nav>
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-tachometer-alt me-2"></i>Cache Management
+            </h1>
+            <p class="lead text-muted">Monitor and manage application cache for optimal performance.</p>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'error' else category }} alert-dismissible fade show" role="

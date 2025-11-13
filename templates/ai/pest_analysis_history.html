@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+
+{% block title %}Pest Analysis History - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-lg-10 mx-auto">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h1 class="display-6 fw-bold text-success mb-2">
+                        <i class="fas fa-history me-2"></i>Pest & Disease Analysis History
+                    </h1>
+                    <p class="text-muted mb-0">View and manage your past plant health analyses</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('pest_disease_analysis') }}" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>New Analysis
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filter and Search Section -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('pest_analysis_history') }}" id="filterForm">
+                        <div class="row g-3">
+                            <!-- Search -->
+                            <div class="col-md-4">
+                                <label for="search" class="form-label small fw-bold">Search Issue</label>
+                                <input type="text" class="form-control" id="search" name="search"
+                                    placeholder="Search by issue name..." value="{{ request.args.get('search', '') }}">
+                            </div>
+
+                            <!-- Crop Type Filter -->
+                            <div class="col-md-3">
+                                <label for="crop_type" class="form-label small fw-bold">Crop Type</label>
+                                <select class="form-select" id="crop_type" name="crop_type">
+                                    <option value="">All Crops</option>
+                                    {% for crop in user_crops %}
+                                    <option value="{{ crop.name }}" {% if request.args.get('crop_type')==crop.name
+                                        %}selected{% endif %}>
+                                        {{ crop.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Severity Filter -->
+                            <div class="col-md-2">
+                                <label for="severity" class="form-label small fw-bold">Severity</label>
+                                <select class="form-select" id="severity" name="severity">
+                                    <option value="">All Levels</option>
+                                    <option value="low" {% if request.args.get('severity')=='low' %}selected{% endif %}>
+                                        Low</option>
+                                    <option value="medium" {% if request.args.get('severity')=='medium' %}selected{%
+                                        endif %}>Medium</option>
+                                    <option value="high" {% if request.args.get('severity')=='high' %}selected{% endif
+                                        %}>High</option>
+                                    <option value="critical" {% if request.args.get('severity')=='critical' %}selected{%
+                                        endif %}>Critical</option>
+                                </select>
+                            </div>
+
+                            <!-- Date Range -->
+                            <div class="col-md-3">
+                                <label for="date_range" class="form-label small fw-bold">Date Range</label>
+                                <select class="form-select" id="date_range" name="date_range">
+                                    <option value="">All Time</option>
+                                    <option value="7" {% if request.args.get('date_range')=='7' %}selected{% endif %}>
+                                        Last 7 Days</option>
+                                    <option value="30" {% if request.args.get('date_range')=='30' %}selected{% endif %}>
+                                        Last 30 Days</option>
+                                    <option value="90" {% if request.args.get('date_range')=='90' %}selected{% endif %}>
+                                        Last 3 Months</option>
+                                    <option value="365" {% if request.args.get('date_range')=='365' %}selected{% endif
+                                        %}>Last Year</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="fas fa-filter me-1"></i>Apply Filters
+                            </button>
+                            <a href="{{ url_for('pest_analysis_history') }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-redo me-1"></i>Reset
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Analysis List -->
+            {% if analyses %}
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <!-- Bulk Actions Bar -->
+                        <div id="bulkActionsBar" class="alert alert-info d-none mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>
+                                    <i class="fas fa-check-square me-2"></i>
+                                    <span id="selectedCount">0</span> selected
+                                </span>
+                                <button type="button" class="btn btn-danger btn-sm" onclick="deleteSelected()">
+                                    <i class="fas fa-trash me-1"></i>Delete Selected
+                                </button>
+                            </div>
+                        </div>
+
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 40px;">
+                                        <input type="checkbox" id="selectAll" class="form-check-input" 
+                                               onchange="toggleSelectAll(this)">
+                                    </th>
+                                    <th style="width: 80px;">Image</th>
+                                    <th>Date</th>
+                                    <th>Crop</th>
+                                    <th>Identified Issue</th>
+                                    <th>Severity</th>
+                                    <th>Confidence</th>
+                                    <th>Status</th>
+                                    <th style="width: 200px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for analysis in analyses %}
+                                <tr>
+                                    <!-- Checkbox -->
+                                    <td>
+                                        <input type="checkbox" class="form-check-input analysis-checkbox" 
+                                               value="{{ analysis.id }}" onchange="updateBulkActions()">
+                                    </td>
+                                    <!-- Thumbnail -->
+                                    <td>
+                                        {% if analysis.image_path %}
+                                        {% set clean_path = analysis.image_path.replace('\\', '/') %}
+                                        {% if clean_path.startswith('static/') %}
+                                            {% set image_url = '/' + clean_path %}
+                                        {% elif clean_path.startswith('/static/') %}
+                                            {% set image_url = clean_path %}
+                                        {% elif clean_path.startswith('http') %}
+                                            {% set image_url = clean_path %}
+                                        {% else %}
+                                            {% set image_url = '/static/uploads/pest_analysis/default.jpg' %}
+                                        {% endif %}
+                                        <img src="{{ image_url }}" alt="Plant" class="img-thumbnail"
+                                            style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;"
+                                            onclick="showImageModal('{{ image_url }}')"
+                                            onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23ddd%22 width=%22100%22 height=%22100%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22%23999%22%3ENo Image%3C/text%3E%3C/svg%3E'; this.onerror=null;">
+                                        {% else %}
+                                        <div class="bg-light d-flex align-items-center justify-content-center"
+                                            style="width: 60px; height: 60px; border-radius: 4px;">
+                                            <i class="fas fa-image text-muted"></i>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+
+                                    <!-- Date -->
+                                    <td>
+                                        <div class="small">
+                                            <div class="fw-bold">{{ analysis.created_at.strftime('%b %d, %Y') }}</div>
+                                            <div class="text-muted">{{ analysis.created_at.strftime('%I:%M %p') }}</div>
+                                        </div>
+                                    </td>
+
+                                    <!-- Crop -->
+                                    <td>
+                                        <div class="small">
+                                            <div class="fw-bold">{{ analysis.crop_type }}</div>
+                                            {% if analysis.crop %}
+                                            <div class="text-muted">{{ analysis.crop.category }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+
+                                    <!-- Issue -->
+                                    <td>
+                                        <div class="small">
+                                            {{ analysis.identified_issue or 'Unknown' }}
+                                            <br>
+                                            <span class="badge bg-secondary">{{ analysis.issue_type|title or 'Unknown'
+                                                }}</span>
+                                        </div>
+                                    </td>
+
+                                    <!-- Severity -->
+                                    <td>
+                                        <span
+                                            class="badge bg-{{ 'danger' if analysis.severity_level == 'critical' else 'warning' if analysis.severity_level == 'high' else 'info' if analysis.severity_level == 'medium' else 'success' }}">
+                                            {{ analysis.severity_level|title or 'Unknown' }}
+                                        </span>
+                                    </td>
+
+                                    <!-- Confidence -->
+                                    <td>
+                                        <div class="small">
+                                            <div class="fw-bold">{{ analysis.confidence_score|round(1) or 0 }}%</div>
+                                            <div class="progress" style="height: 4px;">
+                                                <div class="progress-bar bg-{{ 'danger' if analysis.confidence_score < 50 else 'warning' if analysis.confidence_score < 75 else 'success' }}"
+                                                    style="width: {{ analysis.confidence_score or 0 }}%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <!-- Status -->
+                                    <td>
+                                        <span
+                                            class="badge bg-{{ 'success' if analysis.analysis_status == 'completed' else 'warning' if analysis.analysis_status == 'pending' else 'danger' }}">
+                                            {{ analysis.analysis_status|title }}
+                                        </span>
+                                    </td>
+
+                                    <!-- Actions -->
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ url_for('view_pest_analysis', analysis_id=analysis.id) }}"
+                                                class="btn btn-outline-primary" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('download_pest_analysis_pdf', analysis_id=analysis.id) }}"
+                                                class="btn btn-outline-success" title="Download PDF">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-danger" 
+                                                    title="Delete" onclick="deleteSingle({{ analysis.id }})">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            {% if pagination.pages > 1 %}
+            <nav aria-label="Analysis pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('pest_analysis_history', page=pagination.prev_num) if pagination.has_prev else '#' }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+
+                    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2)
+                    %}
+                    {% if page_num %}
+                    <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('pest_analysis_history', page=page_num) }}">{{ page_num
+                            }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                    {% endfor %}
+
+                    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                        <a class="page-link"
+                            href="{{ url_for('pest_analysis_history', page=pagination.next_num) if pagination.has_next else '#' }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <!-- Empty State -->
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-microscope fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted mb-3">No Analysis History</h4>
+                    <p class="text-muted mb-4">
+                        You haven't performed any pest or disease analyses yet.<br>
+                        Start analyzing your crops to track their health over time.
+                    </p>
+                    <a href="{{ url_for('pest_disease_analysis') }}" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>Start Your First Analysis
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Plant Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="Plant" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showImageModal(imageSrc) {
+        const modal = new bootstrap.Modal(document.getElementById('imageModal'));
+        document.getElementById('modalImage').src = imageSrc;
+        modal.show();
+    }
+
+    // Bulk selection functions
+    function toggleSelectAll(checkbox) {
+        const checkboxes = document.querySelectorAll('.analysis-checkbox');
+        checkboxes.forEach(cb => {
+            cb.checked = checkbox.checked;
+        });
+        updateBulkActions();
+    }
+
+    function updateBulkActions() {
+        const checkboxes = document.querySelectorAll('.analysis-checkbox:checked');
+        const count = checkboxes.length;
+        const bulkBar = document.getElementById('bulkActionsBar');
+        const countSpan = document.getElementById('selectedCount');
+        
+        if (count > 0) {
+            bulkBar.classList.remove('d-none');
+            countSpan.textContent = count;
+        } else {
+            bulkBar.classList.add('d-none');
+        }
+        
+        // Update select all checkbox
+        const allCheckboxes = document.querySelectorAll('.analysis-checkbox');
+        const selectAllCheckbox = document.getElementById('selectAll');
+        selectAllCheckbox.checked = count === allCheckboxes.length && count > 0;
+    }
+
+    function deleteSingle(analysisId) {
+        if (!confirm('Are you sure you want to delete this analysis? This action cannot be undone.')) {
+            return;
+        }
+        
+        deleteAnalyses([analysisId]);
+    }
+
+    function deleteSelected() {
+        const checkboxes = document.querySelectorAll('.analysis-checkbox:checked');
+        const ids = Array.from(checkboxes).map(cb => cb.value);
+        
+        if (ids.length === 0) {
+            alert('Please select at least one analysis to delete.');
+            return;
+        }
+        
+        if (!confirm(`Are you sure you want to delete ${ids.length} analysis record(s)? This action cannot be undone.`)) {
+            return;
+        }
+        
+        deleteAnalyses(ids);
+    }
+
+    function deleteAnalyses(ids) {
+        // Show loading
+        const deleteBtn = event.target.closest('button');
+        const originalText = deleteBtn.innerHTML;
+        deleteBtn.disabled = true;
+        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Deleting...';
+        
+        // Send delete request
+        fetch('/ai/pest-analysis/bulk-delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ ids: ids })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload page to show updated list
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Failed to delete analyses'));
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = originalText;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting analyses.');
+            deleteBtn.disabled = false;
+            deleteBtn.innerHTML = originalText;
+        });
+    }
+</script>
+{% endblock %}

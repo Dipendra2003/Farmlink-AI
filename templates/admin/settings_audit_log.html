@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Settings Audit Log - Admin - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-history me-2"></i>Settings Audit Log
+            </h1>
+            <p class="lead text-muted">Track all changes made to system settings.</p>
+            <a href="{{ url_for('admin_system_settings') }}" class="btn btn-outline-secondary mt-2">
+                <i class="fas fa-arrow-left me-1"></i>Back to Settings
+            </a>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'error' else category }} alert-dismissible fade show"
+        role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <!-- Audit Log Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white py-2">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i>Audit Trail</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if logs %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60" class="text-center">ID</th>
+                            <th width="160">Timestamp</th>
+                            <th width="140">Admin</th>
+                            <th width="150">Action</th>
+                            <th>Description</th>
+                            <th width="130">IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td class="text-center text-muted">#{{ log.id }}</td>
+                            <td class="text-nowrap small">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>
+                                {% if log.admin %}
+                                <a href="{{ url_for('admin_user_analytics', user_id=log.admin.id) }}"
+                                    class="text-decoration-none">
+                                    <i class="fas fa-user-shield me-1"></i>{{ log.admin.username }}
+                                </a>
+                                {% else %}
+                                <span class="text-muted"><i class="fas fa-user-slash me-1"></i>Unknown</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span
+                                    class="badge {% if log.action_type == 'update_settings' %}bg-primary{% elif log.action_type == 'test_email' %}bg-info text-dark{% elif log.action_type == 'update_api_settings' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                    {{ log.action_type.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td>{{ log.description }}</td>
+                            <td><code class="small">{{ log.ip_address or 'N/A' }}</code></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if pagination and pagination.pages > 1 %}
+            <div class="card-footer bg-light py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        Showing {{ ((pagination.page-1) * pagination.per_page) + 1 }} - {{ [pagination.page *
+                        pagination.per_page, pagination.total]|min }} of {{ pagination.total }} entries
+                    </small>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item {% if pagination.page == 1 %}disabled{% endif %}">
+                                <a class="page-link"
+                                    href="{{ url_for('admin_settings_audit_log', page=pagination.page-1) }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            {% for p in range(1, pagination.pages + 1) %}
+                            {% if p == pagination.page %}
+                            <li class="page-item active"><span class="page-link">{{ p }}</span></li>
+                            {% elif p <= 3 or p> pagination.pages - 3 or (p >= pagination.page - 1 and p <=
+                                    pagination.page + 1) %} <li class="page-item"><a class="page-link"
+                                        href="{{ url_for('admin_settings_audit_log', page=p) }}">{{ p }}</a></li>
+                                    {% elif p == 4 or p == pagination.pages - 3 %}
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                    {% endif %}
+                                    {% endfor %}
+                                    <li
+                                        class="page-item {% if pagination.page == pagination.pages %}disabled{% endif %}">
+                                        <a class="page-link"
+                                            href="{{ url_for('admin_settings_audit_log', page=pagination.page+1) }}">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="p-5 text-center text-muted">
+                <i class="fas fa-inbox fa-4x mb-3 opacity-50"></i>
+                <h5>No Audit Log Entries Found</h5>
+                <p class="mb-0">There are no audit log entries to display at this time.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

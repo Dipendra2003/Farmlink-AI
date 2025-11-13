@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Create Post - Expert Forum{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('expert_forum') }}">Expert Forum</a></li>
+                    <li class="breadcrumb-item active">Create Post</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h1 class="h3 mb-4">Create a New Post</h1>
+                    
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.title.label(class="form-label") }}
+                            {{ form.title(class="form-control") }}
+                            {% if form.title.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.title.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.content.label(class="form-label") }}
+                            {{ form.content(class="form-control", rows="10") }}
+                            {% if form.content.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.content.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.main_category.label(class="form-label") }}
+                                {{ form.main_category(class="form-select", id="main_category") }}
+                                {% if form.main_category.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.main_category.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.subcategory.label(class="form-label") }}
+                                {{ form.subcategory(class="form-select", id="subcategory") }}
+                                {% if form.subcategory.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.subcategory.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.tags.label(class="form-label") }}
+                            {{ form.tags(class="form-control") }}
+                            <small class="text-muted">Separate tags with commas (e.g., organic, pest control)</small>
+                            {% if form.tags.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.tags.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.is_question(class="form-check-input") }}
+                                {{ form.is_question.label(class="form-check-label") }}
+                            </div>
+                            <small class="text-muted">Check this if you're asking a question and need expert advice.</small>
+                        </div>
+
+                        <div class="text-end">
+                            <a href="{{ url_for('expert_forum') }}" class="btn btn-outline-secondary me-2">Cancel</a>
+                            {{ form.submit(class="btn btn-success") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script id="category-data" type="application/json">
+{{ category_structure|tojson|safe }}
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load category structure from JSON script tag
+    const categoryStructure = JSON.parse(document.getElementById('category-data').textContent);
+    
+    const mainCategorySelect = document.getElementById('main_category');
+    const subcategorySelect = document.getElementById('subcategory');
+    
+    if (mainCategorySelect && subcategorySelect) {
+        mainCategorySelect.addEventListener('change', function() {
+            const selectedMain = this.value;
+            
+            // Clear subcategory options
+            subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+            
+            if (selectedMain && categoryStructure[selectedMain]) {
+                const subcategories = categoryStructure[selectedMain].subcategories;
+                
+                for (const [key, value] of Object.entries(subcategories)) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = value;
+                    subcategorySelect.appendChild(option);
+                }
+                
+                subcategorySelect.disabled = false;
+            } else {
+                subcategorySelect.disabled = true;
+            }
+        });
+        
+        // Trigger change if main category is already selected (for edit mode)
+        if (mainCategorySelect.value) {
+            mainCategorySelect.dispatchEvent(new Event('change'));
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1814 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}FarmLink AI - Connecting Agriculture{% endblock %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome Icons - Multiple CDN sources for reliability -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
+          integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" 
+          crossorigin="anonymous" referrerpolicy="no-referrer" 
+          onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css';" />
+    
+    <!-- Bootstrap Icons as additional fallback -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        /* AI Quick Access Panel - Round Mind Shape */
+        .ai-quick-access {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1050;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.95), rgba(118, 75, 162, 0.95));
+            backdrop-filter: blur(15px);
+            border-radius: 50%;
+            width: 280px;
+            height: 280px;
+            padding: 20px;
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4), 0 0 30px rgba(118, 75, 162, 0.3);
+            transition: all 0.3s ease;
+            cursor: move;
+            user-select: none;
+            display: none;
+            /* Hidden by default */
+            opacity: 0;
+            transform: translateY(20px) scale(0.8);
+        }
+
+        .ai-quick-access.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .ai-quick-access.dragging {
+            transform: scale(1.05);
+            box-shadow: 0 20px 50px rgba(102, 126, 234, 0.6), 0 0 40px rgba(118, 75, 162, 0.5);
+            transition: none;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: brain-pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes brain-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4), 0 0 30px rgba(118, 75, 162, 0.3);
+            }
+
+            50% {
+                transform: scale(1.02);
+                box-shadow: 0 20px 50px rgba(102, 126, 234, 0.6), 0 0 40px rgba(118, 75, 162, 0.5);
+            }
+        }
+
+        .ai-quick-access:hover {
+            transform: scale(1.05);
+            box-shadow: 0 25px 60px rgba(102, 126, 234, 0.6), 0 0 50px rgba(118, 75, 162, 0.5);
+        }
+
+        .ai-quick-access .ai-header {
+            text-align: center;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .ai-quick-access .ai-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .ai-quick-access .btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 0.7rem;
+            padding: 0;
+        }
+
+        .ai-quick-access .btn:hover {
+            transform: translateY(-3px) scale(1.1);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 20px rgba(255, 255, 255, 0.2);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .ai-quick-access .btn i {
+            font-size: 1.2rem;
+            margin-bottom: 2px;
+        }
+
+        .ai-quick-access .btn small {
+            font-size: 0.6rem;
+            line-height: 1;
+        }
+
+        .ai-quick-access .quick-actions {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .ai-quick-access .quick-actions .btn {
+            width: 45px;
+            height: 35px;
+            font-size: 0.6rem;
+            border-radius: 20px;
+        }
+
+        .ai-quick-access .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .ai-quick-access .reset-position-btn {
+            position: absolute;
+            top: 10px;
+            right: 45px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .ai-quick-access .close-btn:hover,
+        .ai-quick-access .reset-position-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        /* AI Helper Widget - Enhanced Brain Design */
+        .ai-helper-widget {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            z-index: 1045;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: brain-float 4s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            user-select: none;
+        }
+
+        .ai-helper-widget.dragging {
+            transform: translateY(-50%) scale(1.15);
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.8), 0 0 50px rgba(118, 75, 162, 0.6);
+            border-color: rgba(255, 255, 255, 0.6);
+            animation: none;
+            transition: none;
+            z-index: 1060;
+        }
+
+        @keyframes brain-float {
+
+            0%,
+            100% {
+                transform: translateY(-50%) translateX(0) scale(1);
+                box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+            }
+
+            50% {
+                transform: translateY(-50%) translateX(-5px) scale(1.05);
+                box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+            }
+        }
+
+        .ai-helper-widget:hover {
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .ai-helper-widget:hover .brain-icon {
+            animation: brain-think-fast 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes brain-think-fast {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.2);
+            }
+        }
+
+        .ai-helper-widget .brain-icon {
+            color: white;
+            font-size: 1.8rem;
+            animation: brain-think 2s ease-in-out infinite alternate;
+            transition: all 0.3s ease;
+        }
+
+        .ai-helper-widget.dragging .brain-icon {
+            animation: brain-pulse-drag 0.8s ease-in-out infinite;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes brain-think {
+            0% {
+                transform: scale(1);
+            }
+
+            100% {
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes brain-pulse-drag {
+
+            0%,
+            100% {
+                transform: scale(1.2);
+                text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            }
+
+            50% {
+                transform: scale(1.4);
+                text-shadow: 0 0 30px rgba(255, 255, 255, 1);
+            }
+        }
+
+        @keyframes pulse-hint {
+
+            0%,
+            100% {
+                box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 15px 50px rgba(102, 126, 234, 0.8), 0 0 40px rgba(118, 75, 162, 0.6);
+                border-color: rgba(255, 255, 255, 0.6);
+            }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .ai-quick-access {
+                width: 240px;
+                height: 240px;
+                padding: 15px;
+                bottom: 15px;
+                left: 15px;
+            }
+
+            .ai-quick-access .btn {
+                width: 50px;
+                height: 50px;
+                font-size: 0.6rem;
+            }
+
+            .ai-quick-access .btn i {
+                font-size: 1rem;
+            }
+
+            .ai-quick-access .quick-actions .btn {
+                width: 40px;
+                height: 30px;
+                font-size: 0.5rem;
+            }
+
+            .ai-helper-widget {
+                right: 15px;
+                width: 70px;
+                height: 70px;
+            }
+
+            .ai-helper-widget .brain-icon {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .ai-quick-access {
+                width: 200px;
+                height: 200px;
+                padding: 10px;
+            }
+
+            .ai-quick-access .btn {
+                width: 45px;
+                height: 45px;
+            }
+
+            .ai-helper-widget {
+                width: 60px;
+                height: 60px;
+            }
+
+            .ai-helper-widget .brain-icon {
+                font-size: 1.3rem;
+            }
+        }
+
+        /* Cart Preview Dropdown Styles */
+        .cart-preview-dropdown {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .cart-preview-item {
+            transition: background-color 0.2s;
+        }
+
+        .cart-preview-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .cart-preview-items::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .cart-preview-items::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .cart-preview-items::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 3px;
+        }
+
+        .cart-preview-items::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+
+    <!-- CSRF Token for AJAX Requests -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    {% block extra_head %}{% endblock %}
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-success" href="{{ url_for('index') }}">
+                <i class="fas fa-seedling me-2"></i>FarmLink AI
+            </a>
+
+            <!-- Custom hamburger button for rightbar -->
+            <button class="navbar-toggler d-lg-none" type="button" id="rightbarToggle" aria-controls="rightbar"
+                aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Desktop navigation (hidden on mobile) -->
+            <div class="navbar-nav-desktop d-none d-lg-flex w-100">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">
+                            <i class="fas fa-home me-1"></i>Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('marketplace') }}">
+                            <i class="fas fa-store me-1"></i>Marketplace
+                        </a>
+                    </li>
+                    {% if current_user.is_authenticated and current_user.role != 'admin' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link position-relative dropdown-toggle" href="#" id="cartDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-shopping-cart me-1"></i>Cart
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success cart-count" style="display: none;">
+                                0
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end cart-preview-dropdown" style="min-width: 320px; max-height: 400px; overflow-y: auto;">
+                            <li class="dropdown-header d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-shopping-cart me-2"></i>Shopping Cart</span>
+                                <span class="badge bg-success cart-count-badge">0</span>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="cart-preview-items px-3 py-2">
+                                <div class="text-center text-muted py-3">
+                                    <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                                    <p class="mb-0">Your cart is empty</p>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="px-3 py-2">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <strong>Total:</strong>
+                                    <strong class="text-success cart-total">₹0.00</strong>
+                                </div>
+                                <div class="d-grid gap-2">
+                                    <a href="{{ url_for('view_cart') }}" class="btn btn-success btn-sm">
+                                        <i class="fas fa-shopping-cart me-1"></i>View Cart
+                                    </a>
+                                    <a href="{{ url_for('checkout') }}" class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-credit-card me-1"></i>Checkout
+                                    </a>
+                                </div>
+                            </li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="aiServicesDropdown" role="button"
+                            data-bs-toggle="dropdown">
+                            <i class="fas fa-brain me-1"></i>AI Services
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('crop_suggestions') }}">
+                                    <i class="fas fa-seedling me-2"></i>Crop Suggestions
+                                </a></li>
+                            <div class="dropdown-divider"></div>
+                            <li><a class="dropdown-item" href="{{ url_for('pest_disease_analysis') }}">
+                                    <i class="fas fa-bug me-2"></i>Pest Detection
+                                </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('voice_interface') }}">
+                                    <i class="fas fa-microphone me-2"></i>FarmLink Assistant
+                                </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('price_forecast_dashboard') }}">
+                                    <i class="fas fa-chart-line me-2"></i>Price Forecast
+                                </a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="{{ url_for('weather_dashboard') }}">
+                                    <i class="fas fa-cloud-sun me-2"></i>Weather Dashboard
+                                </a></li>
+                        </ul>
+                    </li>
+
+                    {% if current_user.role == 'farmer' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('my_crops') }}">
+                            <i class="fas fa-wheat-awn me-1"></i>My Crops
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.role == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin_orders') }}">
+                            <i class="fas fa-shopping-cart me-1"></i>Manage Orders
+                        </a>
+                    </li>
+                    {% elif current_user.role != 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('my_orders') }}">
+                            <i class="fas fa-shopping-cart me-1"></i>Orders
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link position-relative" href="{{ url_for('inbox') }}">
+                            <i class="fas fa-envelope me-1"></i>Messages
+                            {% if current_user.received_messages|selectattr('is_read', 'equalto', false)|list|length > 0
+                            %}
+                            <span
+                                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ current_user.received_messages|selectattr('is_read', 'equalto', false)|list|length }}
+                            </span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                            data-bs-toggle="dropdown">
+                            {% if current_user.profile_image and current_user.profile_image != 'default.jpg' %}
+                                <img src="{{ url_for('static', filename=current_user.profile_image) }}"
+                                    class="rounded-circle me-2" width="32" height="32" alt="Profile" style="object-fit: cover;">
+                            {% else %}
+                                <img src="https://ui-avatars.com/api/?name={{ current_user.full_name }}&background=28a745&color=fff&size=32"
+                                    class="rounded-circle me-2" width="32" height="32" alt="Profile">
+                            {% endif %}
+                            {{ current_user.full_name }}
+                            {% if current_user.email_verified %}
+                            <i class="fas fa-check-circle text-success ms-1" title="Verified Account" style="font-size: 0.8rem;"></i>
+                            {% else %}
+                            <i class="fas fa-exclamation-circle text-warning ms-1" title="Unverified Account" style="font-size: 0.8rem;"></i>
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu">
+                            {% if not current_user.email_verified and current_user.role != 'admin' %}
+                            <li><a class="dropdown-item text-warning" href="{{ url_for('verification_status') }}">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>Verify Email
+                                </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="{{ url_for('edit_profile') }}">
+                                    <i class="fas fa-user me-2"></i>Profile
+                                </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('change_password') }}">
+                                    <i class="fas fa-lock me-2"></i>Change Password
+                                </a></li>
+                            {% if current_user.role == 'farmer' %}
+                            <li><a class="dropdown-item" href="{{ url_for('kyc_status') }}">
+                                    <i class="fas fa-id-card me-2"></i>KYC Status
+                                </a></li>
+                            {% endif %}
+                            {% if current_user.role in ['farmer', 'buyer'] %}
+                            <li><a class="dropdown-item" href="{{ url_for('payment_history') }}">
+                                    <i class="fas fa-credit-card me-2"></i>Payment History
+                                </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('my_ratings') }}">
+                                    <i class="fas fa-star me-2"></i>My Ratings
+                                </a></li>
+                            {% endif %}
+                            {% if current_user.role == 'farmer' %}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="{{ url_for('pest_analysis_history') }}">
+                                    <i class="fas fa-history me-2"></i>Analysis History
+                                </a></li>
+                            {% endif %}
+                            {% if current_user.role == 'admin' %}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_dashboard') }}">
+                                    <i class="fas fa-cog me-2"></i>Admin Panel
+                                </a></li>
+                            {% endif %}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                </a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">
+                            <i class="fas fa-sign-in-alt me-1"></i>Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-success ms-2" href="{{ url_for('register') }}">
+                            <i class="fas fa-user-plus me-1"></i>Register
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Rightbar Overlay (Mobile Only) -->
+    <div class="rightbar-overlay" id="rightbarOverlay"></div>
+
+    <!-- Rightbar Slide-out Menu (Mobile Only) -->
+    <div class="rightbar" id="rightbar" role="dialog" aria-labelledby="rightbarTitle" aria-hidden="true">
+        <div class="rightbar-header">
+            <h5 class="rightbar-title" id="rightbarTitle">
+                <i class="fas fa-seedling me-2"></i>FarmLink AI
+            </h5>
+            <button type="button" class="rightbar-close" id="rightbarClose" aria-label="Close navigation">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="rightbar-body">
+            <nav class="rightbar-nav">
+                <a class="rightbar-link" href="{{ url_for('index') }}">
+                    <i class="fas fa-home me-2"></i>Home
+                </a>
+                <a class="rightbar-link" href="{{ url_for('marketplace') }}">
+                    <i class="fas fa-store me-2"></i>Marketplace
+                </a>
+
+                {% if current_user.is_authenticated %}
+                {% if current_user.role != 'admin' %}
+                <a class="rightbar-link position-relative" href="{{ url_for('view_cart') }}">
+                    <i class="fas fa-shopping-cart me-2"></i>Cart
+                    <span class="position-absolute top-50 end-0 translate-middle-y badge rounded-pill bg-success cart-count" style="display: none;">
+                        0
+                    </span>
+                </a>
+                {% endif %}
+                <!-- AI Services Section -->
+                <div class="rightbar-section">
+                    <h6 class="rightbar-section-title">
+                        <i class="fas fa-brain me-2"></i>AI Services
+                    </h6>
+                    <a class="rightbar-link ps-3" href="{{ url_for('pest_disease_analysis') }}">
+                        <i class="fas fa-bug me-2"></i>Pest & Disease Analysis
+                    </a>
+                    <a class="rightbar-link ps-3" href="{{ url_for('voice_interface') }}">
+                        <i class="fas fa-microphone me-2"></i>FarmLink Assistant
+                    </a>
+                    <a class="rightbar-link ps-3" href="{{ url_for('price_forecast_dashboard') }}">
+                        <i class="fas fa-chart-line me-2"></i>Price Forecast
+                    </a>
+                    <a class="rightbar-link ps-3" href="{{ url_for('weather_dashboard') }}">
+                        <i class="fas fa-cloud-sun me-2"></i>Weather Dashboard
+                    </a>
+
+                    <a class="rightbar-link" href="{{ url_for('dashboard') }}">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </a>
+                    <a class="rightbar-link" href="{{ url_for('expert_forum') }}">
+                        <i class="fas fa-users me-1"></i>Expert Forum
+                    </a>
+
+                    {% if current_user.role == 'farmer' %}
+                    <a class="rightbar-link" href="{{ url_for('my_crops') }}">
+                        <i class="fas fa-wheat-awn me-2"></i>My Crops
+                    </a>
+                    {% endif %}
+
+                    {% if current_user.role == 'admin' %}
+                    <a class="rightbar-link" href="{{ url_for('admin_orders') }}">
+                        <i class="fas fa-shopping-cart me-2"></i>Manage Orders
+                    </a>
+                    {% elif current_user.role != 'admin' %}
+                    <a class="rightbar-link" href="{{ url_for('my_orders') }}">
+                        <i class="fas fa-shopping-cart me-2"></i>Orders
+                    </a>
+                    {% endif %}
+
+                    <a class="rightbar-link position-relative" href="{{ url_for('inbox') }}">
+                        <i class="fas fa-envelope me-2"></i>Messages
+                        {% if current_user.received_messages|selectattr('is_read', 'equalto', false)|list|length > 0 %}
+                        <span class="position-absolute top-50 end-0 translate-middle-y badge rounded-pill bg-danger">
+                            {{ current_user.received_messages|selectattr('is_read', 'equalto', false)|list|length }}
+                        </span>
+                        {% endif %}
+                    </a>
+                </div>
+                <!-- Profile Section -->
+                <div class="rightbar-section mt-3">
+                    <div class="rightbar-profile">
+                        <img src="https://ui-avatars.com/api/?name={{ current_user.full_name }}&background=28a745&color=fff&size=40"
+                            class="rounded-circle me-2" width="40" height="40" alt="Profile">
+                        <div>
+                            <div class="fw-bold">{{ current_user.full_name }}</div>
+                            <small class="text-muted">{{ current_user.role|title }}</small>
+                        </div>
+                    </div>
+
+                    <a class="rightbar-link ps-0 mt-2" href="{{ url_for('edit_profile') }}">
+                        <i class="fas fa-user me-2"></i>Profile
+                    </a>
+                    <a class="rightbar-link ps-0" href="{{ url_for('change_password') }}">
+                        <i class="fas fa-lock me-2"></i>Change Password
+                    </a>
+                    {% if current_user.role == 'farmer' %}
+                    <a class="rightbar-link ps-0" href="{{ url_for('kyc_status') }}">
+                        <i class="fas fa-id-card me-2"></i>KYC Status
+                    </a>
+                    {% endif %}
+                    {% if current_user.role in ['farmer', 'buyer'] %}
+                    <a class="rightbar-link ps-0" href="{{ url_for('payment_history') }}">
+                        <i class="fas fa-credit-card me-2"></i>Payment History
+                    </a>
+                    <a class="rightbar-link ps-0" href="{{ url_for('my_ratings') }}">
+                        <i class="fas fa-star me-2"></i>My Ratings
+                    </a>
+                    {% endif %}
+
+                    {% if current_user.role == 'farmer' %}
+                    <a class="rightbar-link ps-0" href="{{ url_for('pest_analysis_history') }}">
+                        <i class="fas fa-history me-2"></i>Analysis History
+                    </a>
+                    {% endif %}
+
+                    {% if current_user.role == 'admin' %}
+                    <a class="rightbar-link ps-0" href="{{ url_for('admin_dashboard') }}">
+                        <i class="fas fa-cog me-2"></i>Admin Panel
+                    </a>
+                    {% endif %}
+
+                    <hr class="my-2">
+                    <a class="rightbar-link ps-0 text-danger" href="{{ url_for('logout') }}">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a>
+                </div>
+                {% else %}
+                <a class="rightbar-link" href="{{ url_for('login') }}">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                </a>
+                <a class="rightbar-link" href="{{ url_for('register') }}">
+                    <i class="fas fa-user-plus me-2"></i>Register
+                </a>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="container mt-3">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'danger' else 'warning' if category == 'warning' else 'info' }} alert-dismissible fade show"
+            role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Breadcrumb Navigation -->
+    {% if current_user.is_authenticated %}
+    <div class="container mt-2">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-light rounded p-2 mb-0">
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('index') }}" class="text-decoration-none">
+                        <i class="fas fa-home me-1"></i>Home
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{{ url_for('dashboard') }}" class="text-decoration-none">
+                        <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                    </a>
+                </li>
+                {% if request.endpoint == 'voice_interface' %}
+                <li class="breadcrumb-item active" aria-current="page">
+                    <i class="fas fa-microphone me-1"></i>FarmLink Assistant
+                </li>
+                {% elif request.endpoint == 'marketplace' %}
+                <li class="breadcrumb-item active" aria-current="page">
+                    <i class="fas fa-store me-1"></i>Marketplace
+                </li>
+                {% elif request.endpoint == 'my_crops' %}
+                <li class="breadcrumb-item active" aria-current="page">
+                    <i class="fas fa-wheat-awn me-1"></i>My Crops
+                </li>
+                {% elif request.endpoint == 'expert_forum' %}
+                <li class="breadcrumb-item active" aria-current="page">
+                    <i class="fas fa-users me-1"></i>Expert Forum
+                </li>
+                {% elif request.endpoint == 'weather_dashboard' %}
+                <li class="breadcrumb-item active" aria-current="page">
+                    <i class="fas fa-cloud-sun me-1"></i>Weather
+                </li>
+                {% endif %}
+
+                <!-- Quick Action Links -->
+                <li class="breadcrumb-item ms-auto">
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('voice_interface') }}" class="btn btn-sm btn-outline-success"
+                            title="Voice Assistant">
+                            <i class="fas fa-microphone"></i>
+                        </a>
+                        <a href="{{ url_for('marketplace') }}" class="btn btn-sm btn-outline-primary"
+                            title="Marketplace">
+                            <i class="fas fa-store"></i>
+                        </a>
+                        <a href="{{ url_for('expert_forum') }}" class="btn btn-sm btn-outline-info"
+                            title="Expert Forum">
+                            <i class="fas fa-users"></i>
+                        </a>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- AI Quick Access Panel - Round Mind Shape -->
+    {% if current_user.is_authenticated %}
+    <div class="ai-quick-access" id="aiQuickAccess">
+        <button class="close-btn" onclick="toggleAIPanel()" title="Close">
+            <i class="fas fa-times"></i>
+        </button>
+
+        <button class="reset-position-btn" onclick="resetAIPanelPosition()" title="Reset Position">
+            <i class="fas fa-redo-alt"></i>
+        </button>
+
+        <div class="ai-header">
+            <h6 class="mb-1 fw-bold">
+                <i class="fas fa-brain me-1"></i>AI Mind
+            </h6>
+            <small style="opacity: 0.8;">
+                <i class="fas fa-grip-dots me-1" style="font-size: 0.6rem;"></i>Drag to Move
+            </small>
+        </div>
+
+        <div class="ai-grid">
+            <a href="{{ url_for('crop_suggestions') }}" class="btn">
+                <i class="fas fa-seedling"></i>
+                <small>Crops</small>
+            </a>
+            <a href="{{ url_for('voice_interface') }}" class="btn">
+                <i class="fas fa-microphone"></i>
+                <small>Voice</small>
+            </a>
+            <a href="{{ url_for('pest_disease_analysis') }}" class="btn">
+                <i class="fas fa-bug"></i>
+                <small>Pest</small>
+            </a>
+            <a href="{{ url_for('price_forecast_dashboard') }}" class="btn">
+                <i class="fas fa-chart-line"></i>
+                <small>Price</small>
+            </a>
+            <a href="{{ url_for('weather_dashboard') }}" class="btn">
+                <i class="fas fa-cloud-sun"></i>
+                <small>Weather</small>
+            </a>
+            <a href="{{ url_for('expert_forum') }}" class="btn">
+                <i class="fas fa-users"></i>
+                <small>Expert</small>
+            </a>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="{{ url_for('marketplace') }}" class="btn" title="Market">
+                <i class="fas fa-store"></i>
+            </a>
+            <a href="{{ url_for('my_crops') }}" class="btn" title="Crops">
+                <i class="fas fa-wheat-awn"></i>
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn" title="Dashboard">
+                <i class="fas fa-tachometer-alt"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- AI Helper Widget - Brain Design -->
+    <div class="ai-helper-widget" onclick="toggleAIPanel()"
+        title="🧠 Click to Open AI Quick Access | Right-click or Ctrl+Click to Drag">
+        <i class="fas fa-brain brain-icon"></i>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <footer class="footer-enhanced bg-success text-white mt-5 position-relative overflow-hidden">
+        
+        <div class="container py-5 position-relative">
+            <div class="row g-4">
+                <!-- Brand & Contact Section -->
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="footer-brand">
+                        <h5 class="fw-bold mb-3 footer-logo">
+                            <i class="fas fa-seedling me-2"></i>FarmLink AI
+                        </h5>
+                        <p class="footer-description mb-4">
+                            Connecting farmers, buyers, and agricultural experts to build a sustainable and efficient
+                            agricultural ecosystem.
+                        </p>
+                        
+                        <!-- Contact Info -->
+                        <div class="footer-contact mb-3">
+                            <div class="contact-item mb-2">
+                                <i class="fas fa-envelope me-2"></i>
+                                <a href="mailto:farmlink76@gmail.com" class="contact-link">farmlink76@gmail.com</a>
+                            </div>
+                            <div class="contact-item mb-2">
+                                <i class="fas fa-phone me-2"></i>
+                                <a href="tel:+917644868038" class="contact-link">+91 7644868038</a>
+                            </div>
+                            <div class="contact-item">
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                <span class="contact-text">India</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Social Links with Enhanced Design -->
+                        <div class="social-links-enhanced d-flex gap-2 mb-3">
+                            <a href="https://www.linkedin.com/in/dipendra-kumar-b077b9286/" target="_blank" 
+                               class="social-icon" title="LinkedIn" aria-label="LinkedIn">
+                                <i class="fab fa-linkedin-in"></i>
+                            </a>
+                            <a href="https://www.instagram.com/dipendra.sah02?igsh=ajR2anVxeTVmcGZq" target="_blank" 
+                               class="social-icon" title="Instagram" aria-label="Instagram">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            <a href="#" target="_blank" 
+                               class="social-icon" title="Portfolio" aria-label="Portfolio">
+                                <i class="fas fa-briefcase"></i>
+                            </a>
+                            <a href="https://github.com/Dipendra2003" target="_blank" 
+                               class="social-icon" title="GitHub" aria-label="GitHub">
+                                <i class="fab fa-github"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="col-lg-2 col-md-6 col-sm-6 mb-4">
+                    <h6 class="footer-heading mb-3 d-flex align-items-center">
+                        <span class="heading-icon me-2">⚡</span>
+                        Quick Links
+                    </h6>
+                    <ul class="footer-links list-unstyled">
+                        <li><a href="{{ url_for('index') }}"><i class="fas fa-home me-2"></i>Home</a></li>
+                        <li><a href="{{ url_for('marketplace') }}"><i class="fas fa-store me-2"></i>Marketplace</a></li>
+                        <li><a href="{{ url_for('voice_interface') }}"><i class="fas fa-microphone me-2"></i>FarmLink Assistant</a></li>
+                        <li><a href="{{ url_for('dashboard') }}"><i class="fas fa-chart-line me-2"></i>Dashboard</a></li>
+                        <li><a href="{{ url_for('learning_hub') }}"><i class="fas fa-book me-2"></i>Knowledge Center</a></li>
+                        <li><a href="{{ url_for('about') }}"><i class="fas fa-info-circle me-2"></i>About Us</a></li>
+                        <li><a href="{{ url_for('contact') }}"><i class="fas fa-envelope me-2"></i>Contact</a></li>
+                    </ul>
+                </div>
+
+                <!-- For Farmers -->
+                <div class="col-lg-2 col-md-6 col-sm-6 mb-4">
+                    <h6 class="footer-heading mb-3 d-flex align-items-center">
+                        <span class="heading-icon me-2">🚜</span>
+                        For Farmers
+                    </h6>
+                    <ul class="footer-links list-unstyled">
+                        <li><a href="{{ url_for('sell_crops') }}"><i class="fas fa-shopping-basket me-2"></i>Sell Crops</a></li>
+                        <li><a href="{{ url_for('my_crops') }}"><i class="fas fa-wheat-awn me-2"></i>My Crops</a></li>
+                        <li><a href="{{ url_for('pest_disease_analysis') }}"><i class="fas fa-bug me-2"></i>Pest Analysis</a></li>
+                        <li><a href="{{ url_for('weather_info') }}"><i class="fas fa-cloud-sun me-2"></i>Weather Info</a></li>
+                    </ul>
+                </div>
+
+                <!-- For Buyers -->
+                <div class="col-lg-2 col-md-6 col-sm-6 mb-4">
+                    <h6 class="footer-heading mb-3 d-flex align-items-center">
+                        <span class="heading-icon me-2">🛒</span>
+                        For Buyers
+                    </h6>
+                    <ul class="footer-links list-unstyled">
+                        <li><a href="{{ url_for('buy_direct') }}"><i class="fas fa-shopping-cart me-2"></i>Buy Direct</a></li>
+                        <li><a href="{{ url_for('price_forecast_dashboard') }}"><i class="fas fa-chart-line me-2"></i>Price Forecast</a></li>
+                        <li><a href="{{ url_for('quality_assurance') }}"><i class="fas fa-certificate me-2"></i>Quality Assured</a></li>
+                        <li><a href="{{ url_for('bulk_orders') }}"><i class="fas fa-boxes me-2"></i>Bulk Orders</a></li>
+                        <li><a href="{{ url_for('delivery_info') }}"><i class="fas fa-truck me-2"></i>Delivery</a></li>
+                    </ul>
+                </div>
+
+                <!-- Support -->
+                <div class="col-lg-3 col-md-6 col-sm-6 mb-4">
+                    <h6 class="footer-heading mb-3 d-flex align-items-center">
+                        <span class="leaf-icon-left me-2">🌱</span>
+                        Support
+                        <span class="leaf-icon-right ms-2">🌿</span>
+                    </h6>
+                    <ul class="footer-links list-unstyled">
+                        <li><a href="{{ url_for('help_center') }}"><i class="fas fa-question-circle me-2"></i>Help Center</a></li>
+                        <li><a href="{{ url_for('expert_forum') }}"><i class="fas fa-users me-2"></i>Expert Forum</a></li>
+                        <li><a href="{{ url_for('terms') }}"><i class="fas fa-file-contract me-2"></i>Terms of Service</a></li>
+                        <li><a href="{{ url_for('privacy') }}"><i class="fas fa-shield-alt me-2"></i>Privacy Policy</a></li>
+                        <li><a href="{{ url_for('faq') }}"><i class="fas fa-comments me-2"></i>FAQ</a></li>
+                    </ul>
+
+                </div>
+            </div>
+
+            <!-- Footer Bottom -->
+            <div class="footer-bottom mt-4 pt-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
+                        <p class="footer-copyright mb-0">
+                            <i class="far fa-copyright me-1"></i> 2025 FarmLink AI. All rights reserved.
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-center text-md-end">
+                        <p class="footer-tagline mb-0">
+                            Made with <i class="fas fa-heart text-danger heartbeat"></i> for farmers
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <style>
+        /* Enhanced Footer Styles */
+        .footer-enhanced {
+            background: linear-gradient(135deg, #1e7e34 0%, #28a745 50%, #20c997 100%);
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+
+
+        /* Footer Brand */
+        .footer-brand {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .footer-logo {
+            color: #00ffff !important;
+            text-shadow: 0 0 15px rgba(0, 255, 255, 0.6);
+            font-size: 1.75rem;
+            letter-spacing: 0.5px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px rgba(0, 255, 255, 0.4);
+            }
+            to {
+                text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            }
+        }
+
+        .footer-description {
+            color: rgba(255, 255, 255, 0.95);
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        /* Social Icons Enhanced */
+        .social-links-enhanced {
+            margin-top: 1.5rem;
+        }
+
+        .social-icon {
+            width: 45px;
+            height: 45px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            color: #fff;
+            font-size: 1.1rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-decoration: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .social-icon::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.4s, height 0.4s;
+        }
+
+        .social-icon:hover::before {
+            width: 100%;
+            height: 100%;
+        }
+
+        .social-icon:hover {
+            transform: translateY(-5px) scale(1.1);
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #00ffff;
+            box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4);
+            color: #00ffff;
+        }
+
+        /* Footer Contact Section */
+        .footer-contact {
+            margin-top: 1rem;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .contact-item i {
+            color: #00ffff;
+            font-size: 0.9rem;
+            min-width: 20px;
+        }
+
+        .contact-link {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .contact-link:hover {
+            color: #00ffff;
+            padding-left: 3px;
+        }
+
+        .contact-text {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Footer Headings */
+        .footer-heading {
+            color: #00ffff !important;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 1.25rem;
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+
+        .footer-heading::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 40px;
+            height: 2px;
+            background: linear-gradient(90deg, #00ffff, transparent);
+            border-radius: 2px;
+        }
+
+        /* Heading Icons */
+        .heading-icon {
+            font-size: 1.2rem;
+            display: inline-block;
+            animation: bounce-subtle 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+        }
+
+        @keyframes bounce-subtle {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-3px);
+            }
+        }
+
+        /* Leaf Icons */
+        .leaf-icon-left,
+        .leaf-icon-right {
+            font-size: 1.1rem;
+            display: inline-block;
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+            transition: all 0.3s ease;
+        }
+
+        .leaf-icon-left {
+            animation: rotate-left 3s ease-in-out infinite;
+        }
+
+        .leaf-icon-right {
+            animation: rotate-right 3s ease-in-out infinite;
+        }
+
+        @keyframes rotate-left {
+            0%, 100% {
+                transform: rotate(0deg) scale(1);
+            }
+            50% {
+                transform: rotate(-15deg) scale(1.1);
+            }
+        }
+
+        @keyframes rotate-right {
+            0%, 100% {
+                transform: rotate(0deg) scale(1);
+            }
+            50% {
+                transform: rotate(15deg) scale(1.1);
+            }
+        }
+
+        .footer-heading:hover .leaf-icon-left {
+            animation: spin-left 0.6s ease-in-out;
+        }
+
+        .footer-heading:hover .leaf-icon-right {
+            animation: spin-right 0.6s ease-in-out;
+        }
+
+        @keyframes spin-left {
+            0% {
+                transform: rotate(0deg) scale(1);
+            }
+            50% {
+                transform: rotate(-180deg) scale(1.2);
+            }
+            100% {
+                transform: rotate(-360deg) scale(1);
+            }
+        }
+
+        @keyframes spin-right {
+            0% {
+                transform: rotate(0deg) scale(1);
+            }
+            50% {
+                transform: rotate(180deg) scale(1.2);
+            }
+            100% {
+                transform: rotate(360deg) scale(1);
+            }
+        }
+
+
+
+        /* Footer Links */
+        .footer-links {
+            margin: 0;
+            padding: 0;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.75rem;
+            transition: transform 0.3s ease;
+        }
+
+        .footer-links li:hover {
+            transform: translateX(5px);
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .footer-links a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -2px;
+            width: 0;
+            height: 2px;
+            background: #00ffff;
+            transition: width 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #00ffff;
+            padding-left: 5px;
+        }
+
+        .footer-links a:hover::before {
+            width: 100%;
+        }
+
+        .footer-links a i {
+            font-size: 0.75rem;
+            opacity: 0.7;
+        }
+
+        /* Footer Bottom */
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .footer-copyright,
+        .footer-tagline {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Heartbeat Animation */
+        .heartbeat {
+            animation: heartbeat 1.5s ease-in-out infinite;
+            display: inline-block;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% {
+                transform: scale(1);
+            }
+            10%, 30% {
+                transform: scale(1.1);
+            }
+            20%, 40% {
+                transform: scale(1);
+            }
+        }
+
+        /* Fade In Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .footer-logo {
+                font-size: 1.5rem;
+            }
+
+            .footer-heading {
+                font-size: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .footer-links a {
+                font-size: 0.85rem;
+            }
+
+            .social-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+
+            .footer-copyright,
+            .footer-tagline {
+                font-size: 0.85rem;
+            }
+
+            .heading-icon,
+            .leaf-icon-left,
+            .leaf-icon-right {
+                font-size: 1rem;
+            }
+
+
+        }
+
+        @media (max-width: 480px) {
+            .footer-heading {
+                font-size: 0.95rem;
+            }
+
+            .heading-icon,
+            .leaf-icon-left,
+            .leaf-icon-right {
+                font-size: 0.9rem;
+            }
+
+
+        }
+
+        /* Scroll to Top Button (Optional Enhancement) */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .scroll-to-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
+        }
+
+        .scroll-to-top.show {
+            display: flex;
+        }
+    </style>
+
+    <!-- jQuery (required for AJAX functionality) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" 
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" 
+            crossorigin="anonymous"></script>
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Cart AJAX functionality (loaded globally for all pages) -->
+    {% if current_user.is_authenticated %}
+    <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+    {% endif %}
+
+    <script>
+        // AI Quick Access Panel Functions
+        function toggleAIPanel() {
+            const aiPanel = document.getElementById('aiQuickAccess');
+            if (aiPanel) {
+                const isVisible = aiPanel.classList.contains('show');
+                if (isVisible) {
+                    // Hide panel
+                    aiPanel.classList.remove('show');
+                    setTimeout(() => {
+                        aiPanel.style.display = 'none';
+                    }, 300);
+                } else {
+                    // Show panel
+                    aiPanel.style.display = 'block';
+                    setTimeout(() => {
+                        aiPanel.classList.add('show');
+                    }, 10);
+                }
+            }
+        }
+
+        // Auto-show AI helper animation for new users
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Add subtle pulsing animation to brain icon to indicate it's interactive
+            const widget = document.querySelector('.ai-helper-widget');
+            if (widget) {
+                // Add a subtle hint animation every 10 seconds
+                setInterval(() => {
+                    widget.style.animation = 'brain-float 4s ease-in-out infinite, pulse-hint 2s ease-in-out';
+                    setTimeout(() => {
+                        widget.style.animation = 'brain-float 4s ease-in-out infinite';
+                    }, 2000);
+                }, 10000);
+            }
+
+            // Load saved AI panel position
+            loadAIPanelPosition();
+
+            // Make AI panel draggable
+            makeAIPanelDraggable();
+
+            // Make AI helper widget draggable
+            makeAIHelperDraggable();
+        });
+
+        // AI Panel Position Management
+        function loadAIPanelPosition() {
+            const aiPanel = document.getElementById('aiQuickAccess');
+            if (aiPanel) {
+                const savedPosition = localStorage.getItem('aiPanelPosition');
+                if (savedPosition) {
+                    const position = JSON.parse(savedPosition);
+                    aiPanel.style.left = position.left + 'px';
+                    aiPanel.style.bottom = position.bottom + 'px';
+                }
+            }
+        }
+
+        function saveAIPanelPosition(left, bottom) {
+            localStorage.setItem('aiPanelPosition', JSON.stringify({
+                left: left,
+                bottom: bottom
+            }));
+        }
+
+        function resetAIPanelPosition() {
+            const aiPanel = document.getElementById('aiQuickAccess');
+            if (aiPanel) {
+                aiPanel.style.left = '20px';
+                aiPanel.style.bottom = '20px';
+                localStorage.removeItem('aiPanelPosition');
+
+                // Add visual feedback
+                aiPanel.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    aiPanel.style.transform = 'scale(1)';
+                }, 200);
+            }
+        }
+
+        // Make AI Panel Draggable
+        function makeAIPanelDraggable() {
+            const aiPanel = document.getElementById('aiQuickAccess');
+            if (!aiPanel) return;
+
+            let isDragging = false;
+            let startX, startY, startLeft, startBottom;
+
+            aiPanel.addEventListener('mousedown', function (e) {
+                // Don't drag if clicking on buttons
+                if (e.target.closest('.btn')) return;
+
+                isDragging = true;
+                aiPanel.classList.add('dragging');
+
+                startX = e.clientX;
+                startY = e.clientY;
+                startLeft = parseInt(aiPanel.style.left) || 20;
+                startBottom = parseInt(aiPanel.style.bottom) || 20;
+
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', function (e) {
+                if (!isDragging) return;
+
+                const deltaX = e.clientX - startX;
+                const deltaY = startY - e.clientY; // Inverted for bottom positioning
+
+                const newLeft = Math.max(0, Math.min(window.innerWidth - 280, startLeft + deltaX));
+                const newBottom = Math.max(0, Math.min(window.innerHeight - 280, startBottom + deltaY));
+
+                aiPanel.style.left = newLeft + 'px';
+                aiPanel.style.bottom = newBottom + 'px';
+            });
+
+            document.addEventListener('mouseup', function () {
+                if (isDragging) {
+                    isDragging = false;
+                    aiPanel.classList.remove('dragging');
+
+                    // Save position
+                    const left = parseInt(aiPanel.style.left);
+                    const bottom = parseInt(aiPanel.style.bottom);
+                    saveAIPanelPosition(left, bottom);
+                }
+            });
+        }
+
+        // Make AI Helper Widget Draggable
+        function makeAIHelperDraggable() {
+            const aiHelper = document.querySelector('.ai-helper-widget');
+            if (!aiHelper) return;
+
+            let isDraggingHelper = false;
+            let startX, startY, startTop, startRight;
+
+            aiHelper.addEventListener('mousedown', function (e) {
+                // Only allow dragging with right-click or ctrl+click
+                if (e.button !== 2 && !e.ctrlKey) return;
+
+                isDraggingHelper = true;
+                aiHelper.classList.add('dragging');
+
+                startX = e.clientX;
+                startY = e.clientY;
+                startTop = parseInt(aiHelper.style.top) || (window.innerHeight / 2);
+                startRight = parseInt(aiHelper.style.right) || 20;
+
+                e.preventDefault();
+                e.stopPropagation();
+            });
+
+            document.addEventListener('mousemove', function (e) {
+                if (!isDraggingHelper) return;
+
+                const deltaX = startX - e.clientX; // Inverted for right positioning
+                const deltaY = e.clientY - startY;
+
+                const newRight = Math.max(0, Math.min(window.innerWidth - 80, startRight + deltaX));
+                const newTop = Math.max(0, Math.min(window.innerHeight - 80, startTop + deltaY));
+
+                aiHelper.style.right = newRight + 'px';
+                aiHelper.style.top = newTop + 'px';
+                aiHelper.style.transform = 'none'; // Remove default transform
+            });
+
+            document.addEventListener('mouseup', function () {
+                if (isDraggingHelper) {
+                    isDraggingHelper = false;
+                    aiHelper.classList.remove('dragging');
+
+                    // Save helper position
+                    const right = parseInt(aiHelper.style.right);
+                    const top = parseInt(aiHelper.style.top);
+                    saveAIHelperPosition(right, top);
+                }
+            });
+
+            // Load saved helper position
+            loadAIHelperPosition();
+        }
+
+        // AI Helper Position Management
+        function loadAIHelperPosition() {
+            const aiHelper = document.querySelector('.ai-helper-widget');
+            if (aiHelper) {
+                const savedPosition = localStorage.getItem('aiHelperPosition');
+                if (savedPosition) {
+                    const position = JSON.parse(savedPosition);
+                    aiHelper.style.right = position.right + 'px';
+                    aiHelper.style.top = position.top + 'px';
+                    aiHelper.style.transform = 'none';
+                }
+            }
+        }
+
+        function saveAIHelperPosition(right, top) {
+            localStorage.setItem('aiHelperPosition', JSON.stringify({
+                right: right,
+                top: top
+            }));
+        }
+
+        // Add click tracking for AI features
+        function trackAIFeature(feature) {
+            console.log('AI Feature used:', feature);
+            // Can be expanded to send analytics
+        }
+
+        // Enhanced AI panel interactions
+        document.addEventListener('DOMContentLoaded', function () {
+            const aiButtons = document.querySelectorAll('.ai-quick-access .btn');
+            aiButtons.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const feature = this.textContent.trim();
+                    trackAIFeature(feature);
+                });
+            });
+        });
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
+
+    <!-- Font Awesome Icon Loading Detection and Fix -->
+    <script>
+        // Check if Font Awesome is loaded properly
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                // Test if Font Awesome is loaded by checking computed styles
+                const testIcon = document.createElement('i');
+                testIcon.className = 'fas fa-check';
+                testIcon.style.display = 'none';
+                document.body.appendChild(testIcon);
+                
+                const computedStyle = window.getComputedStyle(testIcon);
+                const fontFamily = computedStyle.getPropertyValue('font-family');
+                
+                // If Font Awesome is not loaded (font-family won't contain 'Font Awesome')
+                if (!fontFamily.includes('Font Awesome')) {
+                    console.warn('Font Awesome not loaded, attempting to reload...');
+                    
+                    // Try loading from alternative CDN
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = 'https://use.fontawesome.com/releases/v6.5.1/css/all.css';
+                    link.crossOrigin = 'anonymous';
+                    document.head.appendChild(link);
+                    
+                    // Also try unpkg as last resort
+                    setTimeout(function() {
+                        const link2 = document.createElement('link');
+                        link2.rel = 'stylesheet';
+                        link2.href = 'https://unpkg.com/@fortawesome/fontawesome-free@6.5.1/css/all.min.css';
+                        document.head.appendChild(link2);
+                    }, 1000);
+                } else {
+                    console.log('Font Awesome loaded successfully');
+                }
+                
+                document.body.removeChild(testIcon);
+            }, 500);
+        });
+    </script>
+
+    <!-- Cart Count and Preview Loading Script -->
+    {% if current_user.is_authenticated %}
+    <script>
+        $(document).ready(function() {
+            // Load cart count and preview on page load
+            function loadCartData() {
+                $.ajax({
+                    url: '{{ url_for("get_cart_count") }}',
+                    method: 'GET',
+                    success: function(response) {
+                        if (response.success && response.count > 0) {
+                            $('.cart-count').text(response.count).show();
+                            $('.cart-count-badge').text(response.count);
+                        } else {
+                            $('.cart-count').hide();
+                            $('.cart-count-badge').text('0');
+                        }
+                    },
+                    error: function() {
+                        $('.cart-count').hide();
+                        $('.cart-count-badge').text('0');
+                    }
+                });
+            }
+            
+            // Load cart preview when dropdown is opened
+            $('#cartDropdown').on('show.bs.dropdown', function() {
+                loadCartPreview();
+            });
+            
+            function loadCartPreview() {
+                $.ajax({
+                    url: '{{ url_for("get_cart_preview") }}',
+                    method: 'GET',
+                    success: function(response) {
+                        if (response.success) {
+                            updateCartPreview(response.items, response.total);
+                        }
+                    },
+                    error: function() {
+                        console.error('Failed to load cart preview');
+                    }
+                });
+            }
+            
+            function updateCartPreview(items, total) {
+                const previewContainer = $('.cart-preview-items');
+                
+                if (items && items.length > 0) {
+                    let html = '';
+                    items.forEach(function(item) {
+                        html += `
+                            <div class="cart-preview-item mb-2 pb-2 border-bottom">
+                                <div class="d-flex align-items-start">
+                                    <img src="${item.image}" alt="${item.name}" 
+                                         class="rounded me-2" style="width: 50px; height: 50px; object-fit: cover;">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0 small">${item.name}</h6>
+                                        <small class="text-muted">${item.quantity} ${item.unit} × ${item.price}</small>
+                                        <div class="text-success small fw-bold">${item.subtotal}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    previewContainer.html(html);
+                    $('.cart-total').text(total);
+                } else {
+                    previewContainer.html(`
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                            <p class="mb-0">Your cart is empty</p>
+                        </div>
+                    `);
+                    $('.cart-total').text('₹0.00');
+                }
+            }
+            
+            loadCartData();
+            
+            // Refresh cart count every 30 seconds
+            setInterval(loadCartData, 30000);
+        });
+    </script>
+    {% endif %}
+
+    <!-- Page-specific scripts -->
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,1098 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} - Expert Forum{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-9 mx-auto">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('expert_forum') }}">Expert Forum</a></li>
+                    {% if post.main_category %}
+                        <li class="breadcrumb-item"><a href="{{ url_for('expert_forum', main_category=post.main_category) }}">{{ get_category_display_name(post.main_category, post.subcategory).split(' → ')[0] }}</a></li>
+                        {% if post.subcategory %}
+                            <li class="breadcrumb-item"><a href="{{ url_for('expert_forum', main_category=post.main_category, subcategory=post.subcategory) }}">{{ get_category_display_name(post.main_category, post.subcategory).split(' → ')[1] }}</a></li>
+                        {% endif %}
+                    {% endif %}
+                    <li class="breadcrumb-item active">{{ post.title|truncate(30) }}</li>
+                </ol>
+            </nav>
+
+            <!-- Lock Notice -->
+            {% if post.is_locked_active %}
+            <div class="alert alert-warning">
+                <i class="fas fa-lock me-2"></i>This post is currently locked. New replies are not allowed.
+            </div>
+            {% endif %}
+
+            <!-- Main Post -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h1 class="h3 mb-0">{{ post.title }}</h1>
+                        <div class="d-flex gap-2">
+                            {% if post.is_question %}
+                                <span class="badge bg-primary">Question</span>
+                            {% endif %}
+                            {% if post.is_answered %}
+                                <span class="badge bg-success">Answered</span>
+                            {% endif %}
+                            {% if post.is_featured %}
+                                <span class="badge bg-warning">Featured</span>
+                            {% endif %}
+                            {% if post.is_locked_active %}
+                                <span class="badge bg-secondary">Locked</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Post Metadata -->
+                    <div class="d-flex justify-content-between align-items-center text-muted small mb-4">
+                        <div>
+                            {% if post.author.profile_image and post.author.profile_image != 'default.jpg' %}
+                                <img src="{{ url_for('static', filename=post.author.profile_image) }}" 
+                                     alt="{{ post.author.full_name or post.author.username }}" 
+                                     class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                            {% else %}
+                                <img src="https://ui-avatars.com/api/?name={{ post.author.full_name or post.author.username }}&background=28a745&color=fff&size=32" 
+                                     alt="{{ post.author.full_name or post.author.username }}" 
+                                     class="rounded-circle me-2" style="width: 32px; height: 32px;">
+                            {% endif %}
+                            <a href="{{ url_for('expert_user_profile', user_id=post.author.id) }}" class="text-decoration-none">
+                                {{ post.author.full_name or post.author.username }}
+                            </a>
+                            <span class="mx-2">•</span>
+                            <span>{{ post.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
+                            {% if post.updated_at > post.created_at %}
+                                <span class="mx-2">•</span>
+                                <span>Edited {{ post.updated_at.strftime('%B %d, %Y') }}</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <span class="me-3"><i class="far fa-eye me-1"></i>{{ post.views }}</span>
+                            <span><i class="far fa-comment me-1"></i>{{ replies|length }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Post Content -->
+                    <div class="post-content mb-4">
+                        {{ post.content|safe }}
+                    </div>
+
+                    <!-- Tags -->
+                    {% if post.tags %}
+                    <div class="mb-3">
+                        {% for tag in post.tags.split(',') %}
+                            <span class="badge bg-light text-dark me-2">
+                                <i class="fas fa-tag me-1"></i>{{ tag.strip() }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Post Actions -->
+                    {% if current_user.is_authenticated %}
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="btn-group" role="group">
+                            <!-- Voting -->
+                            <button type="button" 
+                                    class="btn btn-outline-success btn-sm"
+                                    data-action="upvote-post"
+                                    data-post-id="{{ post.id }}">
+                                <i class="fas fa-thumbs-up me-1"></i>
+                                <span id="post-upvotes">{{ post.upvotes }}</span>
+                            </button>
+                            <button type="button" 
+                                    class="btn btn-outline-danger btn-sm"
+                                    data-action="downvote-post"
+                                    data-post-id="{{ post.id }}">
+                                <i class="fas fa-thumbs-down me-1"></i>
+                                <span id="post-downvotes">{{ post.downvotes }}</span>
+                            </button>
+                            
+                            <!-- Follow Author -->
+                            {% if current_user.id != post.author.id %}
+                            <button type="button" 
+                                    class="btn {% if is_following_author %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm"
+                                    data-action="follow-user"
+                                    data-user-id="{{ post.author.id }}"
+                                    id="follow-btn-{{ post.author.id }}">
+                                <i class="fas {% if is_following_author %}fa-user-minus{% else %}fa-user-plus{% endif %} me-1"></i>
+                                <span id="follow-text-{{ post.author.id }}">{% if is_following_author %}Unfollow{% else %}Follow{% endif %}</span>
+                            </button>
+                            {% endif %}
+                        </div>
+
+                        <div class="btn-group" role="group">
+                            <!-- Post Owner Actions -->
+                            {% if current_user.id == post.author.id or current_user.role == 'admin' %}
+                                {% if current_user.id == post.author.id %}
+                                <a href="{{ url_for('edit_expert_post', post_id=post.id) }}" 
+                                   class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-edit me-1"></i>Edit
+                                </a>
+                                {% endif %}
+                                <button type="button" class="btn btn-outline-danger btn-sm" 
+                                        data-action="delete-post"
+                                        data-post-id="{{ post.id }}">
+                                    <i class="fas fa-trash me-1"></i>Delete
+                                </button>
+                            {% endif %}
+                            
+                            <!-- Admin Actions -->
+                            {% if current_user.role == 'admin' %}
+                                <button type="button" class="btn btn-outline-warning btn-sm"
+                                        data-action="toggle-post-lock"
+                                        data-post-id="{{ post.id }}"
+                                        data-should-lock="{{ 'false' if post.is_locked_active else 'true' }}">
+                                    <i class="fas fa-{{ 'unlock' if post.is_locked_active else 'lock' }} me-1"></i>
+                                    {{ 'Unlock' if post.is_locked_active else 'Lock' }}
+                                </button>
+                                <button type="button" class="btn btn-outline-info btn-sm"
+                                        data-action="toggle-post-feature"
+                                        data-post-id="{{ post.id }}"
+                                        data-should-feature="{{ 'false' if post.is_featured else 'true' }}">
+                                    <i class="fas fa-star me-1"></i>
+                                    {{ 'Unfeature' if post.is_featured else 'Feature' }}
+                                </button>
+                            {% endif %}
+                            
+                            <!-- Report -->
+                            {% if current_user.id != post.author.id %}
+                                <button type="button" class="btn btn-outline-warning btn-sm" 
+                                        data-action="report-post"
+                                        data-post-id="{{ post.id }}">
+                                    <i class="fas fa-flag me-1"></i>Report
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Replies Section -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="h4 mb-0">{{ replies|length }} Replies</h3>
+                {% if replies %}
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-outline-secondary active" data-action="sort-replies" data-sort-type="votes">
+                        Most Helpful
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-action="sort-replies" data-sort-type="oldest">
+                        Oldest First
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-action="sort-replies" data-sort-type="newest">
+                        Newest First
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+
+            <div id="replies-container">
+                {% if replies %}
+                    {% for reply in replies %}
+                    <div class="card shadow-sm mb-3 reply-item {{ 'border-success' if reply.is_solution else '' }}"
+                         data-reply-id="{{ reply.id }}"
+                         data-votes="{{ reply.upvotes - reply.downvotes }}"
+                         data-created="{{ reply.created_at.timestamp() }}">
+                        <div class="card-body">
+                            {% if reply.is_solution %}
+                            <div class="alert alert-success py-2 mb-3">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Accepted Solution</strong>
+                            </div>
+                            {% endif %}
+
+                            <!-- Reply Author -->
+                            <div class="d-flex align-items-center mb-3">
+                                {% if reply.author.profile_image and reply.author.profile_image != 'default.jpg' %}
+                                    <img src="{{ url_for('static', filename=reply.author.profile_image) }}" 
+                                         alt="{{ reply.author.full_name or reply.author.username }}" 
+                                         class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                {% else %}
+                                    <img src="https://ui-avatars.com/api/?name={{ reply.author.full_name or reply.author.username }}&background=667eea&color=fff&size=40" 
+                                         alt="{{ reply.author.full_name or reply.author.username }}" 
+                                         class="rounded-circle me-3" style="width: 40px; height: 40px;">
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-0">
+                                        <a href="{{ url_for('expert_user_profile', user_id=reply.author.id) }}" 
+                                           class="text-decoration-none">
+                                            {{ reply.author.full_name or reply.author.username }}
+                                        </a>
+                                        {% if reply.expertise %}
+                                            <small class="text-muted">• {{ reply.expertise }}</small>
+                                        {% endif %}
+                                    </h6>
+                                    <small class="text-muted">
+                                        {{ reply.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                        {% if reply.updated_at > reply.created_at %}
+                                            • Edited {{ reply.updated_at.strftime('%B %d, %Y') }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Reply Content -->
+                            <div class="reply-content mb-3">
+                                {{ reply.content|safe }}
+                            </div>
+
+                            <!-- Reply Actions -->
+                            {% if current_user.is_authenticated %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <!-- Voting -->
+                                    <button type="button" 
+                                            class="btn btn-outline-success"
+                                            data-action="upvote-reply"
+                                            data-reply-id="{{ reply.id }}">
+                                        <i class="fas fa-thumbs-up me-1"></i>
+                                        <span id="reply-upvotes-{{ reply.id }}">{{ reply.upvotes }}</span>
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-outline-danger"
+                                            data-action="downvote-reply"
+                                            data-reply-id="{{ reply.id }}">
+                                        <i class="fas fa-thumbs-down me-1"></i>
+                                        <span id="reply-downvotes-{{ reply.id }}">{{ reply.downvotes }}</span>
+                                    </button>
+                                </div>
+
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <!-- Mark as Solution -->
+                                    {% if current_user.id == post.author.id and not reply.is_solution and post.is_question %}
+                                        <button type="button" class="btn btn-outline-success" 
+                                                data-action="mark-solution"
+                                                data-reply-id="{{ reply.id }}">
+                                            <i class="fas fa-check me-1"></i>Mark as Solution
+                                        </button>
+                                    {% endif %}
+                                    
+                                    <!-- Delete Reply -->
+                                    {% if current_user.id == reply.author.id or current_user.role == 'admin' %}
+                                    <button type="button" class="btn btn-outline-danger" 
+                                            data-action="delete-reply"
+                                            data-reply-id="{{ reply.id }}">
+                                        <i class="fas fa-trash me-1"></i>Delete
+                                    </button>
+                                    {% endif %}
+                                    
+                                    <!-- Report -->
+                                    {% if current_user.id != reply.author.id %}
+                                        <button type="button" class="btn btn-outline-warning" 
+                                                data-action="report-reply"
+                                                data-reply-id="{{ reply.id }}">
+                                            <i class="fas fa-flag me-1"></i>Report
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>No replies yet. Be the first to help!
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Reply Form -->
+            {% if current_user.is_authenticated and not post.is_locked_active %}
+            <div class="card shadow-sm mt-4" id="reply-form">
+                <div class="card-header bg-success text-white">
+                    <h4 class="h5 mb-0">
+                        <i class="fas fa-reply me-2"></i>Add Your Reply
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('reply_to_expert_post', post_id=post.id) }}" id="replyForm">
+                        {{ reply_form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ reply_form.content.label(class="form-label fw-bold") }}
+                            {{ reply_form.content(class="form-control", rows="8", placeholder="Share your knowledge and help the community...") }}
+                            {% if reply_form.content.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in reply_form.content.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">Minimum 20 characters required</div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            {{ reply_form.expertise.label(class="form-label") }}
+                            {{ reply_form.expertise(class="form-control", placeholder="e.g., 10 years farming experience, Agricultural Engineer") }}
+                            {% if reply_form.expertise.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in reply_form.expertise.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Be respectful and helpful in your responses
+                            </small>
+                            {{ reply_form.submit(class="btn btn-success btn-lg") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% elif not current_user.is_authenticated %}
+            <div class="alert alert-warning mt-4">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                Please <a href="{{ url_for('login') }}">login</a> to post a reply.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+// Get CSRF token from meta tag
+function getCSRFToken() {
+    return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+}
+
+// Event delegation for all button actions
+document.addEventListener('click', function(e) {
+    const button = e.target.closest('[data-action]');
+    if (!button) return;
+    
+    const action = button.dataset.action;
+    
+    switch(action) {
+        case 'upvote-post':
+            upvotePost(button.dataset.postId);
+            break;
+        case 'downvote-post':
+            downvotePost(button.dataset.postId);
+            break;
+        case 'upvote-reply':
+            upvoteReply(button.dataset.replyId);
+            break;
+        case 'downvote-reply':
+            downvoteReply(button.dataset.replyId);
+            break;
+        case 'follow-user':
+            followUser(button.dataset.userId);
+            break;
+        case 'delete-post':
+            deletePost(button.dataset.postId);
+            break;
+        case 'delete-reply':
+            deleteReply(button.dataset.replyId);
+            break;
+        case 'mark-solution':
+            markAsSolution(button.dataset.replyId);
+            break;
+        case 'report-post':
+            reportPost(button.dataset.postId);
+            break;
+        case 'report-reply':
+            reportReply(button.dataset.replyId);
+            break;
+        case 'toggle-post-lock':
+            togglePostLock(button.dataset.postId, button.dataset.shouldLock === 'true');
+            break;
+        case 'toggle-post-feature':
+            togglePostFeature(button.dataset.postId, button.dataset.shouldFeature === 'true');
+            break;
+        case 'sort-replies':
+            sortReplies(button.dataset.sortType, button);
+            break;
+    }
+});
+
+// Toast notification function
+function showToast(message, type = 'info') {
+    // Remove any existing toasts
+    const existingToast = document.querySelector('.custom-toast');
+    if (existingToast) {
+        existingToast.remove();
+    }
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `custom-toast toast-${type}`;
+    toast.textContent = message;
+    
+    // Add styles
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        animation: slideIn 0.3s ease-out;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        max-width: 300px;
+    `;
+    
+    // Set background color based on type
+    const colors = {
+        'success': '#28a745',
+        'error': '#dc3545',
+        'info': '#17a2b8',
+        'warning': '#ffc107'
+    };
+    toast.style.backgroundColor = colors[type] || colors['info'];
+    
+    // Add to page
+    document.body.appendChild(toast);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Add CSS animations
+if (!document.querySelector('#toast-animations')) {
+    const style = document.createElement('style');
+    style.id = 'toast-animations';
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+function upvotePost(postId) {
+    fetch(`/expert-forum/post/${postId}/vote`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            'vote_type': 'upvote'
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Update vote counts
+            document.getElementById('post-upvotes').textContent = data.upvotes;
+            document.getElementById('post-downvotes').textContent = data.downvotes;
+            
+            // Show success message based on action
+            if (data.action === 'added') {
+                showToast('Upvoted!', 'success');
+            } else if (data.action === 'removed') {
+                showToast('Upvote removed', 'info');
+            } else if (data.action === 'changed') {
+                showToast('Changed to upvote', 'success');
+            }
+        } else {
+            showToast(data.message || 'Failed to vote', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error voting:', error);
+        showToast('Failed to vote. Please try again.', 'error');
+    });
+}
+
+function downvotePost(postId) {
+    fetch(`/expert-forum/post/${postId}/vote`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            'vote_type': 'downvote'
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Update vote counts
+            document.getElementById('post-upvotes').textContent = data.upvotes;
+            document.getElementById('post-downvotes').textContent = data.downvotes;
+            
+            // Show success message based on action
+            if (data.action === 'added') {
+                showToast('Downvoted!', 'success');
+            } else if (data.action === 'removed') {
+                showToast('Downvote removed', 'info');
+            } else if (data.action === 'changed') {
+                showToast('Changed to downvote', 'success');
+            }
+        } else {
+            showToast(data.message || 'Failed to vote', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error voting:', error);
+        showToast('Failed to vote. Please try again.', 'error');
+    });
+}
+
+function upvoteReply(replyId) {
+    fetch(`/expert-forum/reply/${replyId}/vote`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            'vote_type': 'upvote'
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Update vote counts
+            document.getElementById(`reply-upvotes-${replyId}`).textContent = data.upvotes;
+            document.getElementById(`reply-downvotes-${replyId}`).textContent = data.downvotes;
+            
+            // Show success message based on action
+            if (data.action === 'added') {
+                showToast('Upvoted!', 'success');
+            } else if (data.action === 'removed') {
+                showToast('Upvote removed', 'info');
+            } else if (data.action === 'changed') {
+                showToast('Changed to upvote', 'success');
+            }
+        } else {
+            showToast(data.message || 'Failed to vote', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error voting on reply:', error);
+        showToast('Failed to vote. Please try again.', 'error');
+    });
+}
+
+function downvoteReply(replyId) {
+    fetch(`/expert-forum/reply/${replyId}/vote`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({
+            'vote_type': 'downvote'
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Update vote counts
+            document.getElementById(`reply-upvotes-${replyId}`).textContent = data.upvotes;
+            document.getElementById(`reply-downvotes-${replyId}`).textContent = data.downvotes;
+            
+            // Show success message based on action
+            if (data.action === 'added') {
+                showToast('Downvoted!', 'success');
+            } else if (data.action === 'removed') {
+                showToast('Downvote removed', 'info');
+            } else if (data.action === 'changed') {
+                showToast('Changed to downvote', 'success');
+            }
+        } else {
+            showToast(data.message || 'Failed to vote', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error voting on reply:', error);
+        showToast('Failed to vote. Please try again.', 'error');
+    });
+}
+
+function markAsSolution(replyId) {
+    if (confirm('Are you sure you want to mark this reply as the solution?')) {
+        fetch(`/expert-forum/reply/${replyId}/mark-solution`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        });
+    }
+}
+
+function deletePost(postId) {
+    // Show confirmation modal
+    showConfirmModal(
+        'Are you sure you want to delete this post? This action cannot be undone.',
+        function() {
+            // User confirmed - proceed with deletion
+            const deleteBtn = document.querySelector(`button[data-action="delete-post"][data-post-id="${postId}"]`);
+            if (!deleteBtn) return;
+            
+            const originalText = deleteBtn.innerHTML;
+            deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+            deleteBtn.disabled = true;
+            
+            fetch(`/expert-forum/post/${postId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    showSuccessModal('Post deleted successfully!', function() {
+                        // Redirect to forum page
+                        window.location.href = data.redirect;
+                    });
+                } else {
+                    // Reset button and show error
+                    if (deleteBtn && deleteBtn.parentElement) {
+                        deleteBtn.innerHTML = originalText;
+                        deleteBtn.disabled = false;
+                    }
+                    showErrorModal(data.message || 'Failed to delete post. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting post:', error);
+                // Reset button and show error
+                if (deleteBtn && deleteBtn.parentElement) {
+                    deleteBtn.innerHTML = originalText;
+                    deleteBtn.disabled = false;
+                }
+                showErrorModal('An error occurred while deleting the post. Please try again.');
+            });
+        }
+    );
+}
+
+function deleteReply(replyId) {
+    // Show confirmation modal
+    showConfirmModal(
+        'Are you sure you want to delete this reply? This action cannot be undone.',
+        function() {
+            // User confirmed - proceed with deletion
+            const deleteBtn = document.querySelector(`button[data-action="delete-reply"][data-reply-id="${replyId}"]`);
+            if (!deleteBtn) return;
+            
+            const originalText = deleteBtn.innerHTML;
+            deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Deleting...';
+            deleteBtn.disabled = true;
+            
+            fetch(`/expert-forum/reply/${replyId}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    showSuccessModal('Reply deleted successfully!', function() {
+                        // Reload the page to show updated replies
+                        location.reload();
+                    });
+                } else {
+                    // Reset button and show error
+                    if (deleteBtn && deleteBtn.parentElement) {
+                        deleteBtn.innerHTML = originalText;
+                        deleteBtn.disabled = false;
+                    }
+                    showErrorModal(data.message || 'Failed to delete reply. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting reply:', error);
+                // Reset button and show error
+                if (deleteBtn && deleteBtn.parentElement) {
+                    deleteBtn.innerHTML = originalText;
+                    deleteBtn.disabled = false;
+                }
+                showErrorModal('An error occurred while deleting the reply. Please try again.');
+            });
+        }
+    );
+}
+
+function followUser(userId) {
+    const followBtn = document.getElementById(`follow-btn-${userId}`);
+    const followText = document.getElementById(`follow-text-${userId}`);
+    const followIcon = followBtn.querySelector('i');
+    
+    // Disable button during request
+    followBtn.disabled = true;
+    
+    fetch(`/expert-forum/user/${userId}/follow`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.action === 'followed') {
+                followText.textContent = 'Unfollow';
+                followBtn.className = 'btn btn-primary btn-sm';
+                followIcon.className = 'fas fa-user-minus me-1';
+            } else {
+                followText.textContent = 'Follow';
+                followBtn.className = 'btn btn-outline-primary btn-sm';
+                followIcon.className = 'fas fa-user-plus me-1';
+            }
+            
+            // Show success message
+            showNotification(data.message, 'success');
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred while updating follow status', 'error');
+    })
+    .finally(() => {
+        // Re-enable button
+        followBtn.disabled = false;
+    });
+}
+
+// Helper function to show notifications
+function showNotification(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.parentNode.removeChild(alertDiv);
+        }
+    }, 5000);
+}
+
+function reportPost(postId) {
+    const reason = prompt('Please specify the reason for reporting this post:');
+    if (reason && reason.trim()) {
+        fetch(`/expert-forum/post/${postId}/report`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                reason: reason.trim()
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Thank you for your report. We will review this content.');
+            } else {
+                alert(data.message);
+            }
+        });
+    }
+}
+
+function reportReply(replyId) {
+    const reason = prompt('Please specify the reason for reporting this reply:');
+    if (reason && reason.trim()) {
+        fetch(`/expert-forum/reply/${replyId}/report`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({
+                reason: reason.trim()
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Thank you for your report. We will review this content.');
+            } else {
+                alert(data.message);
+            }
+        });
+    }
+}
+
+function sortReplies(sortType, clickedButton) {
+    const container = document.getElementById('replies-container');
+    const replies = Array.from(container.querySelectorAll('.reply-item'));
+    
+    replies.sort((a, b) => {
+        switch(sortType) {
+            case 'votes':
+                return parseInt(b.dataset.votes) - parseInt(a.dataset.votes);
+            case 'newest':
+                return parseFloat(b.dataset.created) - parseFloat(a.dataset.created);
+            case 'oldest':
+                return parseFloat(a.dataset.created) - parseFloat(b.dataset.created);
+            default:
+                return 0;
+        }
+    });
+    
+    // Move solution to top if sorting by votes
+    if (sortType === 'votes') {
+        const solutionReply = replies.find(reply => reply.classList.contains('border-success'));
+        if (solutionReply) {
+            replies.splice(replies.indexOf(solutionReply), 1);
+            replies.unshift(solutionReply);
+        }
+    }
+    
+    // Reorder elements in DOM
+    replies.forEach(reply => container.appendChild(reply));
+    
+    // Update active button
+    document.querySelectorAll('[data-action="sort-replies"]').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    clickedButton.classList.add('active');
+}
+
+function togglePostLock(postId, shouldLock) {
+    const reason = shouldLock ? prompt('Reason for locking this post:') : 'Unlocked by admin';
+    if (!shouldLock || (reason && reason.trim())) {
+        fetch(`/admin/forum/post/${postId}/lock`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: `action=${shouldLock ? 'lock' : 'unlock'}&reason=${encodeURIComponent(reason || '')}`
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('Failed to update post lock status.');
+            }
+        });
+    }
+}
+
+function togglePostFeature(postId, shouldFeature) {
+    fetch(`/admin/forum/post/${postId}/feature`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: `action=${shouldFeature ? 'feature' : 'unfeature'}`
+    })
+    .then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            showErrorModal('Failed to update post feature status.');
+        }
+    });
+}
+
+// Modal utility functions
+function showConfirmModal(message, onConfirm) {
+    const modalHtml = `
+        <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body text-center py-4">
+                        <p class="mb-4">${message}</p>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <button type="button" class="btn btn-primary px-4" id="confirmBtn">OK</button>
+                            <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('confirmModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+    modal.show();
+    
+    // Handle confirm button
+    document.getElementById('confirmBtn').addEventListener('click', function() {
+        modal.hide();
+        if (onConfirm) onConfirm();
+    });
+    
+    // Clean up after modal is hidden
+    document.getElementById('confirmModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function showSuccessModal(message, onClose) {
+    const modalHtml = `
+        <div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body text-center py-4">
+                        <p class="mb-4">${message}</p>
+                        <button type="button" class="btn btn-primary px-4" id="successBtn">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('successModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('successModal'));
+    modal.show();
+    
+    let callbackExecuted = false;
+    
+    // Handle OK button
+    document.getElementById('successBtn').addEventListener('click', function() {
+        modal.hide();
+        if (onClose && !callbackExecuted) {
+            callbackExecuted = true;
+            setTimeout(() => onClose(), 300); // Wait for modal to hide
+        }
+    });
+    
+    // Clean up after modal is hidden
+    document.getElementById('successModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function showErrorModal(message) {
+    const modalHtml = `
+        <div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body text-center py-4">
+                        <p class="mb-4 text-danger">${message}</p>
+                        <button type="button" class="btn btn-primary px-4" data-bs-dismiss="modal">OK</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('errorModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('errorModal'));
+    modal.show();
+    
+    // Clean up after modal is hidden
+    document.getElementById('errorModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+</script>
+{% endblock %}
+{% endblock %}

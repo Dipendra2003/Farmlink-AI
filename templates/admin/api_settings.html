@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}API Configuration - Admin - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+      <div class="row mb-4">
+            <div class="col">
+                  <h1 class="display-6 fw-bold text-success">
+                        <i class="fas fa-plug me-2"></i>API Configuration
+                  </h1>
+                  <p class="lead text-muted">Manage third-party API keys and integrations.</p>
+                  <a href="{{ url_for('admin_system_settings') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Settings
+                  </a>
+            </div>
+      </div>
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'error' else category }} alert-dismissible fade show"
+            role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+      {% endif %}
+      {% endwith %}
+
+      <!-- Security Warning -->
+      <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Security Notice:</strong> For production environments, it's recommended to store API keys in
+            environment variables rather than the database.
+            This interface is provided for configuration management only. Sensitive keys should be masked or stored
+            securely.
+      </div>
+
+      <!-- API Configuration Form -->
+      <div class="row">
+            <div class="col-md-8">
+                  <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                              <h5 class="mb-0"><i class="fas fa-key me-2"></i>API Keys & Settings</h5>
+                        </div>
+                        <div class="card-body">
+                              <form method="POST" action="{{ url_for('admin_api_settings') }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                                    <!-- Weather API -->
+                                    <h6 class="border-bottom pb-2 mb-3">Weather API</h6>
+
+                                    <div class="mb-3">
+                                          <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="enable_weather_api"
+                                                      name="enable_weather_api" {{ 'checked' if
+                                                      settings.get('enable_weather_api', 'true' )=='true' }}>
+                                                <label class="form-check-label fw-semibold" for="enable_weather_api">
+                                                      Enable Weather API Integration
+                                                </label>
+                                          </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                          <label for="weather_api_provider" class="form-label fw-semibold">Weather API
+                                                Provider</label>
+                                          <select class="form-select" id="weather_api_provider"
+                                                name="weather_api_provider">
+                                                <option value="openweathermap" {{ 'selected' if
+                                                      settings.get('weather_api_provider', 'openweathermap'
+                                                      )=='openweathermap' }}>OpenWeatherMap</option>
+                                                <option value="weatherapi" {{ 'selected' if
+                                                      settings.get('weather_api_provider')=='weatherapi' }}>
+                                                      WeatherAPI.com</option>
+                                                <option value="accuweather" {{ 'selected' if
+                                                      settings.get('weather_api_provider')=='accuweather' }}>AccuWeather
+                                                </option>
+                                          </select>
+                                    </div>
+
+                                    <div class="mb-3">
+                                          <label for="weather_api_key" class="form-label fw-semibold">Weather API
+                                                Key</label>
+                                          <input type="password" class="form-control" id="weather_api_key"
+                                                name="weather_api_key" value="{{ settings.get('weather_api_key', '') }}"
+                                                placeholder="Enter API key">
+                                          <small class="form-text text-muted">API key for weather data
+                                                integration.</small>
+                                    </div>
+
+                                    <hr class="my-4">
+
+                                    <!-- AI/Gemini API -->
+                                    <h6 class="border-bottom pb-2 mb-3">AI Services (Google Gemini)</h6>
+
+                                    <div class="mb-3">
+                                          <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" id="enable_ai_api"
+                                                      name="enable_ai_api" {{ 'checked' if
+                                                      settings.get('enable_ai_api', 'true' )=='true' }}>
+                                                <label class="form-check-label fw-semibold" for="enable_ai_api">
+                                                      Enable AI Features (Crop Suggestions, Pest Detection)
+                                                </label>
+                                          </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                          <label for="gemini_api_key" class="form-label fw-semibold">Gemini API
+                                                Key</label>
+                                          <input type="password" class="form-control" id="gemini_api_key"
+                                                name="gemini_api_key" value="{{ settings.get('gemini_api_key', '') }}"
+                                                placeholder="Enter Gemini API key">
+                                          <small class="form-text text-muted">Google Gemini API key for AI-powered
+                                                features.</small>
+                                    </div>
+
+                                    <hr class="my-4">
+
+                                    <!-- Payment Gateway -->
+                                    <h6 class="border-bottom pb-2 mb-3">Payment Gateway (Razorpay)</h6>
+
+                                    <div class="mb-3">
+                                          <label for="razorpay_key_id" class="form-label fw-semibold">Razorpay Key
+                                                ID</label>
+                                          <input type="text" class="form-control" id="razorpay_key_id"
+                                                name="razorpay_key_id" value="{{ settings.get('razorpay_key_id', '') }}"
+                                                placeholder="rzp_test_...">
+                                          <small class="form-text text-muted">Razorpay Key ID for payment processing.
+                                                Secret should be in environment variables.</small>
+                                    </div>
+
+                                    <div class="alert alert-info">
+                                          <i class="fas fa-info-circle me-2"></i>
+                                          <strong>Note:</strong> Razorpay Key Secret must be configured in environment
+                                          variables as <code>RAZORPAY_KEY_SECRET</code> for security.
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary">
+                                          <i class="fas fa-save me-1"></i>Save API Configuration
+                                    </button>
+                              </form>
+                        </div>
+                  </div>
+            </div>
+
+            <!-- API Usage Statistics -->
+            <div class="col-md-4">
+                  <div class="card shadow-sm">
+                        <div class="card-header bg-info text-white">
+                              <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>API Usage</h5>
+                        </div>
+                        <div class="card-body">
+                              <div class="mb-3">
+                                    <h6 class="text-muted">Weather API</h6>
+                                    <p class="mb-1"><strong>Total Calls:</strong> {{ api_stats.weather_api_calls }}</p>
+                                    <p class="mb-0 text-muted small">Last Call: {{ api_stats.last_weather_call or
+                                          'Never' }}</p>
+                              </div>
+                              <hr>
+                              <div class="mb-3">
+                                    <h6 class="text-muted">AI API</h6>
+                                    <p class="mb-1"><strong>Total Calls:</strong> {{ api_stats.ai_api_calls }}</p>
+                                    <p class="mb-0 text-muted small">Last Call: {{ api_stats.last_ai_call or 'Never' }}
+                                    </p>
+                              </div>
+                              <hr>
+                              <div class="alert alert-secondary mb-0">
+                                    <small><i class="fas fa-info-circle me-1"></i>API usage tracking coming
+                                          soon.</small>
+                              </div>
+                        </div>
+                  </div>
+
+                  <!-- Quick Links -->
+                  <div class="card shadow-sm mt-3">
+                        <div class="card-header bg-secondary text-white">
+                              <h6 class="mb-0"><i class="fas fa-link me-2"></i>API Documentation</h6>
+                        </div>
+                        <div class="card-body">
+                              <ul class="list-unstyled mb-0">
+                                    <li class="mb-2">
+                                          <a href="https://openweathermap.org/api" target="_blank"
+                                                class="text-decoration-none">
+                                                <i class="fas fa-external-link-alt me-1"></i>OpenWeatherMap Docs
+                                          </a>
+                                    </li>
+                                    <li class="mb-2">
+                                          <a href="https://ai.google.dev/docs" target="_blank"
+                                                class="text-decoration-none">
+                                                <i class="fas fa-external-link-alt me-1"></i>Google Gemini Docs
+                                          </a>
+                                    </li>
+                                    <li class="mb-0">
+                                          <a href="https://razorpay.com/docs/" target="_blank"
+                                                class="text-decoration-none">
+                                                <i class="fas fa-external-link-alt me-1"></i>Razorpay Docs
+                                          </a>
+                                    </li>
+                              </ul>
+                        </div>
+                  </div>
+            </div>
+      </div>
+</div>
+{% endblock %}

@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Payment - {{ order_count }} Orders - FarmLink AI{% endblock %}
+
+{% block extra_head %}
+<!-- Razorpay Checkout JS -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-credit-card me-2"></i>Complete Payment
+            </h1>
+            <p class="lead text-muted">Secure payment for {{ order_count }} order{{ 's' if order_count > 1 else '' }}</p>
+        </div>
+    </div>
+
+    <!-- Orders Summary -->
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <!-- Total Amount Card -->
+            <div class="card shadow-sm mb-4 border-success">
+                <div class="card-body text-center py-4">
+                    <h5 class="text-muted mb-2">Total Payment Amount</h5>
+                    <h2 class="display-4 text-success fw-bold mb-0">{{ format_currency(total_amount) }}</h2>
+                    <small class="text-muted">For {{ order_count }} order{{ 's' if order_count > 1 else '' }} from {{ orders|map(attribute='farmer_user')|unique|list|length }} farmer{{ 's' if orders|map(attribute='farmer_user')|unique|list|length > 1 else '' }}</small>
+                </div>
+            </div>
+
+            <!-- Orders List -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>Orders Summary
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Crop</th>
+                                    <th>Seller</th>
+                                    <th>Quantity</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-secondary">#{{ order.id }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img src="{{ url_for('static', filename=order.crop.image_url) if order.crop.image_url else 'https://via.placeholder.com/50' }}" 
+                                                 class="rounded me-2" 
+                                                 alt="{{ order.crop.name }}"
+                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                            <div>
+                                                <strong>{{ order.crop.name }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ format_currency(order.price_per_unit) }}/{{ order.crop.unit }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-user-circle text-muted me-1"></i>
+                                        {{ order.farmer_user.full_name }}
+                                    </td>
+                                    <td>
+                                        {{ order.quantity_requested }} {{ order.crop.unit }}
+                                    </td>
+                                    <td class="text-end">
+                                        <strong class="text-success">{{ format_currency(order.total_amount) }}</strong>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="4" class="text-end">
+                                        <strong>Total Amount:</strong>
+                                    </td>
+                                    <td class="text-end">
+                                        <h5 class="text-success mb-0">{{ format_currency(total_amount) }}</h5>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Section -->
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-4">Choose Payment Method</h5>
+                    <button id="razorpay-button" class="btn btn-success btn-lg px-5">
+                        <i class="fas fa-lock me-2"></i>Pay {{ format_currency(total_amount) }} Securely
+                    </button>
+                    
+                    <!-- Loading Indicator -->
+                    <div id="payment-loading" class="mt-3" style="display: none;">
+                        <div class="spinner-border text-success" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted mt-2">Processing payment...</p>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <small class="text-muted d-block mb-2">Powered by</small>
+                        <img src="https://razorpay.com/assets/razorpay-glyph.svg" 
+                             alt="Razorpay" height="30" class="me-2">
+                        <span class="text-muted">Razorpay</span>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <a href="{{ url_for('view_cart') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Cart
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payment Info -->
+            <div class="alert alert-info mt-3">
+                <h6 class="alert-heading">
+                    <i class="fas fa-info-circle me-2"></i>Payment Information
+                </h6>
+                <ul class="mb-0 small">
+                    <li>Your payment is secured with 256-bit SSL encryption</li>
+                    <li>All {{ order_count }} order{{ 's' if order_count > 1 else '' }} will be confirmed after successful payment</li>
+                    <li>Email notifications will be sent to you and all sellers</li>
+                    <li>You can track all your orders from your dashboard</li>
+                    <li>Inventory will be automatically updated for all orders</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('razorpay-button').addEventListener('click', function() {
+    var button = this;
+    var loadingIndicator = document.getElementById('payment-loading');
+    
+    // Disable button and show loading
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Opening Payment Gateway...';
+    
+    var options = {
+        key: '{{ key_id }}',
+        amount: '{{ "%.0f"|format(total_amount * 100) }}',
+        currency: 'INR',
+        name: 'FarmLink AI',
+        description: 'Payment for {{ order_count }} order{{ "s" if order_count > 1 else "" }}',
+        order_id: '{{ razorpay_order_id }}',
+        prefill: {
+            name: '{{ current_user.full_name }}',
+            email: '{{ current_user.email }}',
+            contact: '{{ current_user.phone }}'
+        },
+        theme: {
+            color: '#198754'  // Bootstrap success color
+        },
+        modal: {
+            ondismiss: function() {
+                console.log('Payment window closed');
+                // Re-enable button
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-lock me-2"></i>Pay {{ format_currency(total_amount) }} Securely';
+                loadingIndicator.style.display = 'none';
+            }
+        },
+        handler: function(response) {
+            // Show loading indicator
+            loadingIndicator.style.display = 'block';
+            button.style.display = 'none';
+            
+            // Handle successful payment
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url_for("payment_routes.bulk_payment_callback") }}';
+
+            function addHiddenField(name, value) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                input.value = value;
+                form.appendChild(input);
+            }
+
+            addHiddenField('razorpay_payment_id', response.razorpay_payment_id);
+            addHiddenField('razorpay_order_id', response.razorpay_order_id);
+            addHiddenField('razorpay_signature', response.razorpay_signature);
+            addHiddenField('order_ids', '{{ order_ids|join(",") }}');
+            addHiddenField('csrf_token', '{{ csrf_token() }}');
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    };
+
+    var rzp = new Razorpay(options);
+    rzp.on('payment.failed', function(response) {
+        // Re-enable button on failure
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-lock me-2"></i>Pay {{ format_currency(total_amount) }} Securely';
+        loadingIndicator.style.display = 'none';
+        alert('Payment failed: ' + response.error.description);
+    });
+    
+    rzp.open();
+});
+</script>
+{% endblock %}

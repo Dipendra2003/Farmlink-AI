@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}User Messages - Admin - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="h3 mb-2">
+                <a href="{{ url_for('admin_users') }}" class="text-decoration-none text-muted">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Users
+                </a>
+            </h1>
+            <h2 class="display-6 fw-bold text-success">
+                <i class="fas fa-envelope me-2"></i>{{ user.full_name }}'s Messages
+            </h2>
+            <p class="lead text-muted">View all messages sent and received by this user.</p>
+        </div>
+    </div>
+
+    <!-- Message Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3 class="fw-bold">{{ sent_messages|length + received_messages|length }}</h3>
+                    <p class="mb-0">Total Messages</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h3 class="fw-bold">{{ sent_messages|length }}</h3>
+                    <p class="mb-0">Sent Messages</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3 class="fw-bold">{{ received_messages|length }}</h3>
+                    <p class="mb-0">Received Messages</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages List -->
+    <div class="row">
+        <!-- Sent Messages -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-paper-plane me-2"></i>Sent Messages
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for message in sent_messages %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between mb-1">
+                                <h6 class="mb-1">To: {{ message.recipient.full_name }}</h6>
+                                <small class="text-muted">{{ message.created_at.strftime('%b %d, %Y') }}</small>
+                            </div>
+                            <p class="mb-1">{{ message.content }}</p>
+                            <small class="text-muted">{{ message.created_at.strftime('%I:%M %p') }}</small>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-paper-plane text-muted fa-2x mb-2"></i>
+                            <p class="text-muted mb-0">No sent messages</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Received Messages -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-inbox me-2"></i>Received Messages
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for message in received_messages %}
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between mb-1">
+                                <h6 class="mb-1">From: {{ message.sender.full_name }}</h6>
+                                <small class="text-muted">{{ message.created_at.strftime('%b %d, %Y') }}</small>
+                            </div>
+                            <p class="mb-1">{{ message.content }}</p>
+                            <small class="text-muted">{{ message.created_at.strftime('%I:%M %p') }}</small>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox text-muted fa-2x mb-2"></i>
+                            <p class="text-muted mb-0">No received messages</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

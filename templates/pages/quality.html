@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Quality Assurance - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="display-4 text-success mb-4">Quality Assurance</h1>
+            <p class="lead text-muted mb-5">Our commitment to maintaining the highest standards in agricultural products.</p>
+
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-certificate text-success fa-2x me-3"></i>
+                                <h3 class="h5 mb-0">Quality Standards</h3>
+                            </div>
+                            <p class="text-muted">We maintain strict quality standards for all products listed on our platform. Each crop undergoes thorough inspection before approval.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-microscope text-success fa-2x me-3"></i>
+                                <h3 class="h5 mb-0">Testing Process</h3>
+                            </div>
+                            <p class="text-muted">Our quality testing process includes visual inspection, moisture content analysis, and contamination checks.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-shield-alt text-success fa-2x me-3"></i>
+                                <h3 class="h5 mb-0">Buyer Protection</h3>
+                            </div>
+                            <p class="text-muted">Our buyer protection program ensures you receive products exactly as described or get your money back.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fas fa-history text-success fa-2x me-3"></i>
+                                <h3 class="h5 mb-0">Traceability</h3>
+                            </div>
+                            <p class="text-muted">Track your products from farm to table with our comprehensive traceability system.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-light p-4 rounded-3 mb-5">
+                <h2 class="h4 mb-4">Our Quality Process</h2>
+                <div class="row g-4">
+                    <div class="col-md-3 text-center">
+                        <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                            <span>1</span>
+                        </div>
+                        <h4 class="h6">Initial Screening</h4>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                            <span>2</span>
+                        </div>
+                        <h4 class="h6">Quality Testing</h4>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                            <span>3</span>
+                        </div>
+                        <h4 class="h6">Verification</h4>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                            <span>4</span>
+                        </div>
+                        <h4 class="h6">Approval</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <h2 class="h4 mb-4">Ready to experience our quality?</h2>
+                <a href="{{ url_for('marketplace') }}" class="btn btn-success btn-lg">
+                    <i class="fas fa-shopping-basket me-2"></i>Visit Marketplace
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

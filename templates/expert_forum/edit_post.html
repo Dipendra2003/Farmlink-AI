@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Post - Expert Forum{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('expert_forum') }}">Expert Forum</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('view_expert_post', post_id=post.id) }}">{{ post.title|truncate(30) }}</a></li>
+                    <li class="breadcrumb-item active">Edit Post</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-edit me-2"></i>Edit Post
+                    </h3>
+                    <p class="mb-0 mt-2 text-light">Update your expert forum post</p>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Show original post info -->
+                    <div class="alert alert-info mb-4">
+                        <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Editing Post</h6>
+                        <p class="mb-1"><strong>Originally posted:</strong> {{ post.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                        {% if post.updated_at > post.created_at %}
+                            <p class="mb-0"><strong>Last updated:</strong> {{ post.updated_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                        {% endif %}
+                    </div>
+
+                    <form method="POST" id="editPostForm">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Title -->
+                        <div class="mb-3">
+                            {{ form.title.label(class="form-label fw-bold") }}
+                            {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+                            {% for error in form.title.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Category Row -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.main_category.label(class="form-label fw-bold") }}
+                                {{ form.main_category(class="form-select" + (" is-invalid" if form.main_category.errors else ""), id="main_category") }}
+                                {% for error in form.main_category.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.subcategory.label(class="form-label fw-bold") }}
+                                {{ form.subcategory(class="form-select" + (" is-invalid" if form.subcategory.errors else ""), id="subcategory") }}
+                                {% for error in form.subcategory.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Question Checkbox -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_question(class="form-check-input") }}
+                                {{ form.is_question.label(class="form-check-label") }}
+                                <div class="form-text">Check this if you're asking a question and need expert advice.</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Content -->
+                        <div class="mb-3">
+                            {{ form.content.label(class="form-label fw-bold") }}
+                            {{ form.content(class="form-control" + (" is-invalid" if form.content.errors else ""), rows="12", id="contentEditor") }}
+                            {% for error in form.content.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <div class="form-text">Minimum 20 characters, maximum 5000 characters.</div>
+                        </div>
+                        
+                        <!-- Tags -->
+                        <div class="mb-3">
+                            {{ form.tags.label(class="form-label fw-bold") }}
+                            {{ form.tags(class="form-control" + (" is-invalid" if form.tags.errors else ""), placeholder="irrigation, pest control, organic farming...") }}
+                            {% for error in form.tags.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <div class="form-text">Separate tags with commas (e.g., organic, pest control)</div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Update Post
+                            </button>
+                            <a href="{{ url_for('view_expert_post', post_id=post.id) }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Tips Card -->
+            <div class="card mt-4 border-success">
+                <div class="card-header bg-light">
+                    <h6 class="card-title mb-0 text-success">
+                        <i class="fas fa-lightbulb me-2"></i>Editing Tips
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0 small">
+                        <li>Your edit will be tracked and shown as "updated" to other users</li>
+                        <li>Make sure your changes improve the quality and clarity of your post</li>
+                        <li>Consider adding more details if users have asked for clarification in replies</li>
+                        <li>You can change the priority if the urgency has changed</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Character Counter and Category Cascade Script -->
+<script id="category-data" type="application/json">
+{{ category_structure|tojson|safe }}
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load category structure from JSON script tag
+    const categoryStructure = JSON.parse(document.getElementById('category-data').textContent);
+    
+    const contentTextarea = document.getElementById('contentEditor');
+    const maxLength = 5000;
+    
+    // Create character counter
+    const counterDiv = document.createElement('div');
+    counterDiv.className = 'form-text text-end';
+    counterDiv.style.marginTop = '5px';
+    
+    function updateCounter() {
+        const currentLength = contentTextarea.value.length;
+        counterDiv.textContent = `${currentLength}/${maxLength} characters`;
+        
+        if (currentLength > maxLength * 0.9) {
+            counterDiv.className = 'form-text text-end text-warning';
+        } else {
+            counterDiv.className = 'form-text text-end text-muted';
+        }
+    }
+    
+    contentTextarea.parentNode.appendChild(counterDiv);
+    contentTextarea.addEventListener('input', updateCounter);
+    updateCounter(); // Initial count
+    
+    // Form validation enhancement
+    document.getElementById('editPostForm').addEventListener('submit', function(e) {
+        if (contentTextarea.value.length < 20) {
+            e.preventDefault();
+            alert('Content must be at least 20 characters long.');
+            contentTextarea.focus();
+        }
+    });
+    
+    // Category cascade logic
+    const mainCategorySelect = document.getElementById('main_category');
+    const subcategorySelect = document.getElementById('subcategory');
+    
+    if (mainCategorySelect && subcategorySelect) {
+        const currentSubcategory = subcategorySelect.value; // Save current value
+        
+        mainCategorySelect.addEventListener('change', function() {
+            const selectedMain = this.value;
+            const savedSubcategory = subcategorySelect.value;
+            
+            // Clear subcategory options
+            subcategorySelect.innerHTML = '<option value="">Select Subcategory</option>';
+            
+            if (selectedMain && categoryStructure[selectedMain]) {
+                const subcategories = categoryStructure[selectedMain].subcategories;
+                
+                for (const [key, value] of Object.entries(subcategories)) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = value;
+                    if (key === savedSubcategory) {
+                        option.selected = true;
+                    }
+                    subcategorySelect.appendChild(option);
+                }
+                
+                subcategorySelect.disabled = false;
+            } else {
+                subcategorySelect.disabled = true;
+            }
+        });
+        
+        // Trigger change if main category is already selected (for edit mode)
+        if (mainCategorySelect.value) {
+            mainCategorySelect.dispatchEvent(new Event('change'));
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,600 @@
+{% extends "base.html" %}
+
+{% block title %}{{ seller.full_name or seller.username }} - Seller Profile - FarmLink AI{% endblock %}
+
+{% block extra_css %}
+<style>
+      .profile-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 50px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+      }
+
+      .profile-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 15s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+
+            0%,
+            100% {
+                  transform: scale(1);
+                  opacity: 0.5;
+            }
+
+            50% {
+                  transform: scale(1.1);
+                  opacity: 0.8;
+            }
+      }
+
+      .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 5px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            object-fit: cover;
+            transition: transform 0.3s ease;
+      }
+
+      .profile-avatar:hover {
+            transform: scale(1.1) rotate(5deg);
+      }
+
+      .seller-info h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 15px;
+      }
+
+      .seller-meta {
+            opacity: 0.95;
+            font-size: 1rem;
+            font-weight: 500;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+      }
+
+      .seller-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .stats-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            height: 100%;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            position: relative;
+            overflow: hidden;
+      }
+
+      .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+      }
+
+      .stats-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.2);
+      }
+
+      .stats-card:hover::before {
+            transform: scaleX(1);
+      }
+
+      .stats-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            transition: transform 0.3s ease;
+      }
+
+      .stats-card:hover .stats-icon {
+            transform: scale(1.2) rotate(5deg);
+      }
+
+      .stats-number {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+      }
+
+      .stats-label {
+            color: #6c757d;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+      }
+
+      .section-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+      }
+
+      .section-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 25px;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+      }
+
+      .section-title i {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+      }
+
+      .crop-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            height: 100%;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+      }
+
+      .crop-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.2);
+      }
+
+      .crop-image {
+            height: 220px;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+      }
+
+      .crop-card:hover .crop-image {
+            transform: scale(1.1);
+      }
+
+      .crop-card .card-body {
+            padding: 20px;
+      }
+
+      .badge-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: none;
+      }
+
+      .contact-btn {
+            border-radius: 30px;
+            padding: 15px 35px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .contact-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+      }
+
+      .btn-gradient:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+      }
+
+      .info-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+      }
+
+      .info-item:last-child {
+            border-bottom: none;
+      }
+
+      .info-item i {
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            width: 30px;
+      }
+
+      .info-item strong {
+            color: #4a5568;
+            min-width: 80px;
+      }
+
+      .reputation-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            padding: 12px 28px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-top: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .no-crops-message {
+            text-align: center;
+            padding: 60px 40px;
+            color: #6c757d;
+      }
+
+      .no-crops-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+      }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                  <li class="breadcrumb-item"><a href="{{ url_for('marketplace') }}">Marketplace</a></li>
+                  <li class="breadcrumb-item active">Seller Profile</li>
+            </ol>
+      </nav>
+
+      <!-- Profile Hero Section -->
+      <div class="profile-hero">
+            <div class="row align-items-center">
+                  <div class="col-md-2 text-center mb-3 mb-md-0">
+                        <img src="{% if seller.profile_image and seller.profile_image != 'default.jpg' %}{{ url_for('static', filename=seller.profile_image) }}{% else %}https://ui-avatars.com/api/?name={{ seller.full_name or seller.username }}&background=667eea&color=ffffff&size=120&bold=true{% endif %}"
+                              class="profile-avatar" alt="{{ seller.full_name or seller.username }}"
+                              onerror="this.src='https://ui-avatars.com/api/?name={{ seller.full_name or seller.username }}&background=667eea&color=ffffff&size=120&bold=true'">
+                  </div>
+                  <div class="col-md-10">
+                        <div class="seller-info">
+                              <h1>{{ seller.full_name or seller.username }}
+                                    {% include 'components/kyc_badge.html' %}
+                              </h1>
+                              <div class="seller-meta">
+                                    <div class="seller-meta-item">
+                                          <i class="fas fa-store"></i>
+                                          <span>{{ seller.role|title }}</span>
+                                    </div>
+                                    {% if seller.location %}
+                                    <div class="seller-meta-item">
+                                          <i class="fas fa-map-marker-alt"></i>
+                                          <span>{{ seller.location }}</span>
+                                    </div>
+                                    {% endif %}
+                                    <div class="seller-meta-item">
+                                          <i class="fas fa-calendar-check"></i>
+                                          <span>Member since {{ seller.created_at.strftime('%B %Y') }}</span>
+                                    </div>
+                                    {% if crops %}
+                                    <div class="seller-meta-item">
+                                          <i class="fas fa-box-open"></i>
+                                          <span>{{ crops|length }} Active Product{{ 's' if crops|length != 1 else ''
+                                                }}</span>
+                                    </div>
+                                    {% endif %}
+                              </div>
+                              {% if seller_reputation %}
+                              <div class="reputation-badge">
+                                    {% if seller_reputation.average_rating >= 4.8 %}
+                                    <i class="fas fa-trophy"></i> Outstanding Seller
+                                    {% elif seller_reputation.average_rating >= 4.5 %}
+                                    <i class="fas fa-medal"></i> Excellent Seller
+                                    {% elif seller_reputation.average_rating >= 4.0 %}
+                                    <i class="fas fa-star"></i> Great Seller
+                                    {% elif seller_reputation.average_rating >= 3.5 %}
+                                    <i class="fas fa-thumbs-up"></i> Good Seller
+                                    {% elif seller_reputation.average_rating > 0 %}
+                                    <i class="fas fa-check"></i> Rated Seller
+                                    {% else %}
+                                    <i class="fas fa-seedling"></i> New Seller
+                                    {% endif %}
+                              </div>
+                              {% endif %}
+                        </div>
+                  </div>
+            </div>
+      </div>
+
+      <div class="container py-4">
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                  <div class="col-md-3 mb-3">
+                        <div class="stats-card">
+                              <div class="stats-icon">
+                                    <i class="fas fa-seedling"></i>
+                              </div>
+                              <div class="stats-number">{{ total_crops }}</div>
+                              <div class="stats-label">Listed Crops</div>
+                        </div>
+                  </div>
+                  <div class="col-md-3 mb-3">
+                        <div class="stats-card">
+                              <div class="stats-icon">
+                                    <i class="fas fa-check-circle"></i>
+                              </div>
+                              <div class="stats-number">{{ completed_orders }}</div>
+                              <div class="stats-label">Completed Orders</div>
+                        </div>
+                  </div>
+                  <div class="col-md-3 mb-3">
+                        <div class="stats-card">
+                              <div class="stats-icon">
+                                    <i class="fas fa-comments"></i>
+                              </div>
+                              <div class="stats-number">{{ total_ratings }}</div>
+                              <div class="stats-label">Customer Reviews</div>
+                        </div>
+                  </div>
+                  <div class="col-md-3 mb-3">
+                        <div class="stats-card">
+                              <div class="stats-icon">
+                                    <i class="fas fa-star"></i>
+                              </div>
+                              <div class="stats-number">
+                                    {% if seller_reputation %}
+                                    {{ "%.1f"|format(seller_reputation.average_rating) }}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                              </div>
+                              <div class="stats-label">Average Rating</div>
+                        </div>
+                  </div>
+            </div>
+
+            <div class="row">
+                  <!-- Left Column: Bio and Contact -->
+                  <div class="col-lg-4 mb-4">
+                        <!-- Bio Section -->
+                        {% if seller.full_name or seller.phone or seller.email %}
+                        <div class="section-card">
+                              <h5 class="section-title">
+                                    <i class="fas fa-user"></i> About Seller
+                              </h5>
+                              <div>
+                                    {% if seller.full_name %}
+                                    <div class="info-item">
+                                          <i class="fas fa-user"></i>
+                                          <strong>Name:</strong>
+                                          <span>{{ seller.full_name }}</span>
+                                    </div>
+                                    {% endif %}
+                                    {% if seller.location %}
+                                    <div class="info-item">
+                                          <i class="fas fa-map-marker-alt"></i>
+                                          <strong>Location:</strong>
+                                          <span>{{ seller.location }}</span>
+                                    </div>
+                                    {% endif %}
+                                    {% if seller.phone %}
+                                    <div class="info-item">
+                                          <i class="fas fa-phone"></i>
+                                          <strong>Phone:</strong>
+                                          <span>{{ seller.phone }}</span>
+                                    </div>
+                                    {% endif %}
+                              </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Contact Seller -->
+                        {% if current_user.is_authenticated and current_user.id != seller.id %}
+                        <div class="section-card text-center">
+                              <h5 class="section-title justify-content-center">
+                                    <i class="fas fa-envelope"></i> Get in Touch
+                              </h5>
+                              <p class="text-muted mb-4">Have questions? Send a message to this seller.</p>
+                              <a href="{{ url_for('send_message', user_id=seller.id) }}"
+                                    class="btn btn-gradient contact-btn w-100">
+                                    <i class="fas fa-paper-plane me-2"></i>Send Message
+                              </a>
+                        </div>
+                        {% elif not current_user.is_authenticated %}
+                        <div class="section-card text-center">
+                              <div class="no-crops-icon">
+                                    <i class="fas fa-sign-in-alt"></i>
+                              </div>
+                              <h5>Login to Contact</h5>
+                              <p class="text-muted mb-4">Please login to send messages to sellers.</p>
+                              <a href="{{ url_for('login') }}" class="btn btn-gradient contact-btn w-100">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                              </a>
+                        </div>
+                        {% endif %}
+
+                        <!-- Reputation Link -->
+                        {% if seller_reputation %}
+                        <div class="section-card text-center">
+                              <h5 class="section-title justify-content-center">
+                                    <i class="fas fa-star"></i> Seller Reputation
+                              </h5>
+                              <div class="mb-4">
+                                    <div class="stats-number" style="font-size: 3.5rem;">{{
+                                          "%.1f"|format(seller_reputation.average_rating) }}</div>
+                                    <div class="text-muted">out of 5.0</div>
+                                    <div class="mt-3" style="color: #ffc107; font-size: 1.5rem;">
+                                          {% set full_stars = seller_reputation.average_rating|int %}
+                                          {% set has_half = (seller_reputation.average_rating - full_stars) >= 0.5 %}
+                                          {% for i in range(full_stars) %}
+                                          <i class="fas fa-star"></i>
+                                          {% endfor %}
+                                          {% if has_half %}
+                                          <i class="fas fa-star-half-alt"></i>
+                                          {% endif %}
+                                          {% for i in range(5 - full_stars - (1 if has_half else 0)) %}
+                                          <i class="far fa-star"></i>
+                                          {% endfor %}
+                                    </div>
+                              </div>
+                              <a href="{{ url_for('rating.view_seller_reputation', seller_id=seller.id) }}"
+                                    class="btn btn-gradient contact-btn w-100">
+                                    <i class="fas fa-chart-line me-2"></i>View Full Reputation
+                              </a>
+                        </div>
+                        {% endif %}
+                  </div>
+
+                  <!-- Right Column: Listed Crops -->
+                  <div class="col-lg-8">
+                        <div class="section-card">
+                              <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <h4 class="section-title mb-0">
+                                          <i class="fas fa-box-open"></i> Available Crops
+                                    </h4>
+                                    <span class="badge badge-gradient" style="font-size: 1rem; padding: 10px 20px;">{{
+                                          crops|length }} items</span>
+                              </div>
+                              {% if crops %}
+                              <div class="row">
+                                    {% for crop in crops %}
+                                    <div class="col-md-6 mb-4">
+                                          <div class="crop-card">
+                                                <div style="overflow: hidden;">
+                                                      <img src="{{ url_for('static', filename='uploads/crops/' + crop.image_url.split('/')[-1]) if crop.image_url else 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' }}"
+                                                            class="card-img-top crop-image" alt="{{ crop.name }}">
+                                                </div>
+                                                <div class="card-body">
+                                                      <div
+                                                            class="d-flex justify-content-between align-items-start mb-2">
+                                                            <h5 class="card-title mb-0 fw-bold" style="color: #2d3748;">
+                                                                  {{ crop.name }}</h5>
+                                                            <span class="badge badge-gradient">{{ crop.category|title
+                                                                  }}</span>
+                                                      </div>
+                                                      <p class="text-muted small mb-3">
+                                                            <i class="fas fa-map-marker-alt me-1"></i>{{ crop.location
+                                                            }}
+                                                      </p>
+                                                      <div class="d-flex justify-content-between align-items-center mb-3 p-3"
+                                                            style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 10px;">
+                                                            <div>
+                                                                  <div class="text-muted small">Available</div>
+                                                                  <div class="fw-bold" style="color: #667eea;">{{
+                                                                        crop.quantity }} {{ crop.unit }}</div>
+                                                            </div>
+                                                            <div class="text-end">
+                                                                  <div class="text-muted small">Price</div>
+                                                                  <div class="fw-bold" style="color: #28a745;">{{
+                                                                        format_currency(crop.price_per_unit) }}/{{
+                                                                        crop.unit }}</div>
+                                                            </div>
+                                                      </div>
+                                                      <a href="{{ url_for('product_detail', crop_id=crop.id) }}"
+                                                            class="btn btn-gradient w-100"
+                                                            style="border-radius: 10px; padding: 12px;">
+                                                            <i class="fas fa-eye me-2"></i>View Details
+                                                      </a>
+                                                </div>
+                                          </div>
+                                    </div>
+                                    {% endfor %}
+                              </div>
+                              {% else %}
+                              <div class="no-crops-message">
+                                    <div class="no-crops-icon">
+                                          <i class="fas fa-seedling"></i>
+                                    </div>
+                                    <h5>No crops listed yet</h5>
+                                    <p>This seller hasn't listed any crops for sale.</p>
+                              </div>
+                              {% endif %}
+                        </div>
+                  </div>
+            </div>
+      </div>
+      {% endblock %}
+
+      {% block extra_js %}
+      <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                  // Animate stats numbers on load
+                  const statsNumbers = document.querySelectorAll('.stats-number');
+                  statsNumbers.forEach(stat => {
+                        stat.style.opacity = '0';
+                        setTimeout(() => {
+                              stat.style.transition = 'opacity 0.5s ease';
+                              stat.style.opacity = '1';
+                        }, 100);
+                  });
+
+                  // Add smooth scroll behavior
+                  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                        anchor.addEventListener('click', function (e) {
+                              e.preventDefault();
+                              const target = document.querySelector(this.getAttribute('href'));
+                              if (target) {
+                                    target.scrollIntoView({ behavior: 'smooth' });
+                              }
+                        });
+                  });
+            });
+      </script>
+      {% endblock %}

@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Sell Crops - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-store me-2"></i>Sell Your Crops
+            </h1>
+            <p class="lead text-muted">List your agricultural products and connect with buyers directly.</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('add_crop') }}" class="btn btn-success btn-lg">
+                <i class="fas fa-plus-circle me-2"></i>Add New Crop
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Benefits Card -->
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h4 mb-4">Why Sell with Us?</h2>
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-users text-success fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="h6">Direct Buyer Access</h3>
+                            <p class="text-muted small mb-0">Connect directly with buyers, eliminating middlemen.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-chart-line text-success fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="h6">Better Prices</h3>
+                            <p class="text-muted small mb-0">Get fair market prices for your produce.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-shield-alt text-success fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="h6">Secure Payments</h3>
+                            <p class="text-muted small mb-0">Safe and timely payment processing.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-analytics text-success fa-2x"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h3 class="h6">Market Insights</h3>
+                            <p class="text-muted small mb-0">Get AI-powered market analysis and trends.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="col-md-8">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h4 mb-4">How It Works</h2>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded-3">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <span>1</span>
+                                    </div>
+                                    <h3 class="h6 mb-0">List Your Crops</h3>
+                                </div>
+                                <p class="text-muted small mb-0">Add your crop details including quantity, price, and quality specifications.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded-3">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <span>2</span>
+                                    </div>
+                                    <h3 class="h6 mb-0">Get Verified</h3>
+                                </div>
+                                <p class="text-muted small mb-0">Our team verifies your listing to ensure quality standards.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded-3">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <span>3</span>
+                                    </div>
+                                    <h3 class="h6 mb-0">Receive Orders</h3>
+                                </div>
+                                <p class="text-muted small mb-0">Get orders from verified buyers and negotiate terms.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded-3">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                        <span>4</span>
+                                    </div>
+                                    <h3 class="h6 mb-0">Complete Sale</h3>
+                                </div>
+                                <p class="text-muted small mb-0">Arrange delivery and receive secure payment.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tips Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h2 class="h4 mb-4">Tips for Successful Selling</h2>
+                    <div class="row g-4">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <i class="fas fa-camera text-success fa-2x mb-3"></i>
+                                <h3 class="h6">Quality Photos</h3>
+                                <p class="text-muted small">Add clear photos of your crops to attract buyers.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <i class="fas fa-file-alt text-success fa-2x mb-3"></i>
+                                <h3 class="h6">Detailed Description</h3>
+                                <p class="text-muted small">Provide complete information about your produce.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <i class="fas fa-tag text-success fa-2x mb-3"></i>
+                                <h3 class="h6">Competitive Pricing</h3>
+                                <p class="text-muted small">Set fair prices based on market trends.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <i class="fas fa-comments text-success fa-2x mb-3"></i>
+                                <h3 class="h6">Quick Response</h3>
+                                <p class="text-muted small">Respond promptly to buyer inquiries.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

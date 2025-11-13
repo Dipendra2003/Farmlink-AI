@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}User Analytics - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_analytics_dashboard') }}">Analytics</a></li>
+                    <li class="breadcrumb-item active">User Analytics</li>
+                </ol>
+            </nav>
+            <h2><i class="fas fa-users me-2"></i>User Analytics</h2>
+        </div>
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fas fa-download me-1"></i>Export
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ url_for('export_user_analytics', format='csv') }}">
+                    <i class="fas fa-file-csv me-2"></i>CSV
+                </a></li>
+                <li><a class="dropdown-item" href="{{ url_for('export_user_analytics', format='json') }}">
+                    <i class="fas fa-file-code me-2"></i>JSON
+                </a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Active Users Card -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body text-center">
+            <h6 class="text-muted mb-2">Active Users (Last 30 Days)</h6>
+            <h1 class="display-4 text-primary mb-0">{{ analytics.active_users }}</h1>
+        </div>
+    </div>
+
+    <!-- User Growth Chart -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">User Growth Trend</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="userGrowthChart" height="80"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Performers Row -->
+    <div class="row g-3 mb-4">
+        <!-- Top Buyers -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Top Buyers by Spending</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Name</th>
+                                    <th>Orders</th>
+                                    <th>Total Spent</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for buyer in analytics.top_buyers %}
+                                <tr>
+                                    <td><strong>#{{ loop.index }}</strong></td>
+                                    <td>
+                                        <a href="{{ url_for('admin_user_analytics', user_id=buyer.id) }}">
+                                            {{ buyer.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ buyer.orders }}</td>
+                                    <td><strong>₹{{ "%.2f"|format(buyer.total_spent) }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Farmers -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Top Farmers by Revenue</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Name</th>
+                                    <th>Orders</th>
+                                    <th>Total Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for farmer in analytics.top_farmers %}
+                                <tr>
+                                    <td><strong>#{{ loop.index }}</strong></td>
+                                    <td>
+                                        <a href="{{ url_for('admin_user_analytics', user_id=farmer.id) }}">
+                                            {{ farmer.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ farmer.orders }}</td>
+                                    <td><strong>₹{{ "%.2f"|format(farmer.total_revenue) }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Rated Users -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Top Rated Users</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Name</th>
+                            <th>Average Rating</th>
+                            <th>Total Ratings</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in analytics.top_rated_users %}
+                        <tr>
+                            <td><strong>#{{ loop.index }}</strong></td>
+                            <td>{{ user.name }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="me-2">{{ "%.2f"|format(user.avg_rating) }}</span>
+                                    <div>
+                                        {% for i in range(5) %}
+                                            {% if i < user.avg_rating %}
+                                                <i class="fas fa-star text-warning"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-warning"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ user.rating_count }}</td>
+                            <td>
+                                <a href="{{ url_for('admin_user_analytics', user_id=user.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    View Profile
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+// User Growth Chart
+const growthAnalytics = {{ analytics.user_growth | tojson }};
+const growthCtx = document.getElementById('userGrowthChart').getContext('2d');
+
+new Chart(growthCtx, {
+    type: 'line',
+    data: {
+        labels: growthAnalytics.map(d => d.date),
+        datasets: [{
+            label: 'New Users',
+            data: growthAnalytics.map(d => d.new_users),
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'New Users'
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

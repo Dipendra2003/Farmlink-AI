@@ -1,0 +1,606 @@
+{% extends "base.html" %}
+
+{% block title %}Create Shipment - Order #{{ order.id }} - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('my_orders') }}">My Orders</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('order_detail', order_id=order.id) }}">Order #{{ order.id }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Create Shipment</li>
+                </ol>
+            </nav>
+            <h2 class="mb-0">
+                <i class="fas fa-shipping-fast text-primary me-2"></i>Create Shipment
+            </h2>
+            <p class="text-muted mt-2">Fill in the shipment details to create a tracking number and ship the order.</p>
+        </div>
+    </div>
+
+    <!-- Order Summary Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-box text-info me-2"></i>Order Summary
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <strong>Order ID:</strong> #{{ order.id }}
+                            </div>
+                            <div class="mb-2">
+                                <strong>Buyer:</strong> {{ order.buyer.full_name }}
+                            </div>
+                            <div class="mb-2">
+                                <strong>Crop:</strong> {{ order.crop.name }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-2">
+                                <strong>Quantity:</strong> {{ order.quantity }} {{ order.crop.unit }}
+                            </div>
+                            <div class="mb-2">
+                                <strong>Total Amount:</strong> ₹{{ "%.2f"|format(order.total_price) }}
+                            </div>
+                            <div class="mb-2">
+                                <strong>Payment Status:</strong>
+                                <span class="badge bg-success">{{ order.payment_status|title }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shipment Creation Form -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-edit text-success me-2"></i>Shipment Details
+                    </h5>
+
+                    <form method="POST" id="shipment-form" novalidate>
+                        <!-- Pickup Address -->
+                        <div class="mb-4">
+                            <label for="pickup_address" class="form-label">
+                                <i class="fas fa-map-marker-alt me-1"></i>Pickup Address <span class="text-danger">*</span>
+                            </label>
+                            <textarea 
+                                class="form-control" 
+                                id="pickup_address" 
+                                name="pickup_address" 
+                                rows="3" 
+                                required
+                                placeholder="Enter complete pickup address including street, city, state, and PIN code"
+                            ></textarea>
+                            <div class="invalid-feedback">
+                                Please provide a valid pickup address.
+                            </div>
+                            <small class="form-text text-muted">
+                                This is where the courier will pick up the package from.
+                            </small>
+                        </div>
+
+                        <!-- Package Weight -->
+                        <div class="mb-4">
+                            <label for="package_weight" class="form-label">
+                                <i class="fas fa-weight me-1"></i>Package Weight (kg) <span class="text-danger">*</span>
+                            </label>
+                            <input 
+                                type="number" 
+                                class="form-control" 
+                                id="package_weight" 
+                                name="package_weight" 
+                                step="0.01" 
+                                min="0.01" 
+                                max="999.99" 
+                                required
+                                placeholder="e.g., 5.5"
+                            >
+                            <div class="invalid-feedback">
+                                Weight must be between 0.01 and 999.99 kg.
+                            </div>
+                            <small class="form-text text-muted">
+                                Enter the total weight of the package in kilograms.
+                            </small>
+                        </div>
+
+                        <!-- Package Dimensions -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="fas fa-ruler-combined me-1"></i>Package Dimensions (cm) <span class="text-danger">*</span>
+                            </label>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <input 
+                                        type="number" 
+                                        class="form-control" 
+                                        id="package_length" 
+                                        name="package_length" 
+                                        step="0.1" 
+                                        min="0.1" 
+                                        max="999.9" 
+                                        required
+                                        placeholder="Length"
+                                    >
+                                    <div class="invalid-feedback">
+                                        Length must be greater than 0.
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <input 
+                                        type="number" 
+                                        class="form-control" 
+                                        id="package_width" 
+                                        name="package_width" 
+                                        step="0.1" 
+                                        min="0.1" 
+                                        max="999.9" 
+                                        required
+                                        placeholder="Width"
+                                    >
+                                    <div class="invalid-feedback">
+                                        Width must be greater than 0.
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <input 
+                                        type="number" 
+                                        class="form-control" 
+                                        id="package_height" 
+                                        name="package_height" 
+                                        step="0.1" 
+                                        min="0.1" 
+                                        max="999.9" 
+                                        required
+                                        placeholder="Height"
+                                    >
+                                    <div class="invalid-feedback">
+                                        Height must be greater than 0.
+                                    </div>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">
+                                Enter the package dimensions in centimeters (Length × Width × Height).
+                            </small>
+                        </div>
+
+                        <!-- Courier Selection -->
+                        <div class="mb-4">
+                            <label for="courier_preference" class="form-label">
+                                <i class="fas fa-truck me-1"></i>Courier Service <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="courier_preference" name="courier_preference" required>
+                                <option value="" selected disabled>Select a courier service</option>
+                                <option value="shiprocket">Shiprocket (Blue Dart / Delhivery)</option>
+                                <option value="india_post">India Post</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select a courier service.
+                            </div>
+                            <small class="form-text text-muted">
+                                Choose your preferred courier service for delivery.
+                            </small>
+                        </div>
+
+                        <!-- Estimated Shipping Cost (if available) -->
+                        <div class="mb-4" id="shipping-cost-container" style="display: none;">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Estimated Shipping Cost:</strong> 
+                                <span id="estimated-cost">Calculating...</span>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="submit" class="btn btn-success" id="submit-btn">
+                                <i class="fas fa-shipping-fast me-2"></i>Create Shipment
+                            </button>
+                            <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Creating shipment...</span>
+        </div>
+        <p class="mt-3 text-primary fw-bold">Creating shipment, please wait...</p>
+    </div>
+</div>
+
+<style>
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-overlay .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Form Styling */
+.form-label {
+    font-weight: 600;
+    color: #212529;
+}
+
+.form-label i {
+    color: #6c757d;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.invalid-feedback {
+    display: none;
+}
+
+.form-control.is-invalid ~ .invalid-feedback,
+.form-select.is-invalid ~ .invalid-feedback {
+    display: block;
+}
+
+/* Card Styling */
+.card {
+    border: none;
+    border-radius: 12px;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+/* Button Styling */
+.btn {
+    padding: 10px 24px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border: none;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #218838, #1aa179);
+}
+
+/* Alert Styling */
+.alert-info {
+    background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(13, 202, 240, 0.1));
+    border: 1px solid rgba(23, 162, 184, 0.3);
+    border-radius: 8px;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .my-5 {
+        margin-top: 2rem !important;
+        margin-bottom: 2rem !important;
+    }
+    
+    .card {
+        margin-bottom: 15px;
+        border-radius: 10px;
+    }
+    
+    .card-body {
+        padding: 15px;
+    }
+    
+    h2 {
+        font-size: 24px;
+    }
+    
+    h5.card-title {
+        font-size: 18px;
+    }
+    
+    /* Form adjustments */
+    .form-label {
+        font-size: 14px;
+    }
+    
+    .form-control,
+    .form-select {
+        min-height: 44px;
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+    
+    textarea.form-control {
+        min-height: 100px;
+    }
+    
+    .form-text {
+        font-size: 12px;
+    }
+    
+    /* Button adjustments */
+    .btn {
+        min-height: 44px;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .d-flex.gap-2 {
+        flex-direction: column;
+        gap: 0 !important;
+    }
+    
+    /* Dimension inputs */
+    .row.g-3 {
+        gap: 10px !important;
+    }
+    
+    .row.g-3 > div {
+        padding: 0;
+    }
+    
+    /* Breadcrumb */
+    .breadcrumb {
+        font-size: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .breadcrumb-item {
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 576px) {
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .my-5 {
+        margin-top: 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .card-body {
+        padding: 12px;
+    }
+    
+    h2 {
+        font-size: 20px;
+    }
+    
+    h5.card-title {
+        font-size: 16px;
+    }
+    
+    .form-label {
+        font-size: 13px;
+    }
+    
+    .btn {
+        font-size: 15px;
+        padding: 11px 20px;
+    }
+}
+
+/* Touch-friendly inputs */
+@media (max-width: 768px) {
+    input, select, textarea {
+        -webkit-appearance: none;
+        appearance: none;
+        border-radius: 8px;
+        touch-action: manipulation;
+    }
+    
+    /* Prevent zoom on focus for iOS */
+    input:focus, select:focus, textarea:focus {
+        font-size: 16px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('shipment-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    
+    // Form validation
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        // Remove previous validation states
+        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        
+        let isValid = true;
+        
+        // Validate pickup address
+        const pickupAddress = document.getElementById('pickup_address');
+        if (!pickupAddress.value.trim()) {
+            pickupAddress.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        // Validate package weight
+        const weight = document.getElementById('package_weight');
+        const weightValue = parseFloat(weight.value);
+        if (!weight.value || weightValue <= 0 || weightValue >= 1000) {
+            weight.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        // Validate package dimensions
+        const length = document.getElementById('package_length');
+        const width = document.getElementById('package_width');
+        const height = document.getElementById('package_height');
+        
+        const lengthValue = parseFloat(length.value);
+        const widthValue = parseFloat(width.value);
+        const heightValue = parseFloat(height.value);
+        
+        if (!length.value || lengthValue <= 0) {
+            length.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        if (!width.value || widthValue <= 0) {
+            width.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        if (!height.value || heightValue <= 0) {
+            height.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        // Validate courier selection
+        const courier = document.getElementById('courier_preference');
+        if (!courier.value) {
+            courier.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        if (isValid) {
+            // Show loading overlay
+            loadingOverlay.style.display = 'flex';
+            submitBtn.disabled = true;
+            
+            // Submit the form
+            form.submit();
+        } else {
+            // Scroll to first invalid field
+            const firstInvalid = form.querySelector('.is-invalid');
+            if (firstInvalid) {
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstInvalid.focus();
+            }
+        }
+    });
+    
+    // Real-time validation feedback
+    const inputs = form.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            validateField(this);
+        });
+        
+        input.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid')) {
+                validateField(this);
+            }
+        });
+    });
+    
+    function validateField(field) {
+        field.classList.remove('is-invalid');
+        
+        if (field.id === 'pickup_address') {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+            }
+        } else if (field.id === 'package_weight') {
+            const value = parseFloat(field.value);
+            if (!field.value || value <= 0 || value >= 1000) {
+                field.classList.add('is-invalid');
+            }
+        } else if (['package_length', 'package_width', 'package_height'].includes(field.id)) {
+            const value = parseFloat(field.value);
+            if (!field.value || value <= 0) {
+                field.classList.add('is-invalid');
+            }
+        } else if (field.id === 'courier_preference') {
+            if (!field.value) {
+                field.classList.add('is-invalid');
+            }
+        }
+    }
+    
+    // Optional: Calculate estimated shipping cost
+    // This would require an API endpoint to calculate costs
+    const weightInput = document.getElementById('package_weight');
+    const lengthInput = document.getElementById('package_length');
+    const widthInput = document.getElementById('package_width');
+    const heightInput = document.getElementById('package_height');
+    const courierSelect = document.getElementById('courier_preference');
+    
+    function calculateShippingCost() {
+        const weight = parseFloat(weightInput.value);
+        const length = parseFloat(lengthInput.value);
+        const width = parseFloat(widthInput.value);
+        const height = parseFloat(heightInput.value);
+        const courier = courierSelect.value;
+        
+        if (weight > 0 && length > 0 && width > 0 && height > 0 && courier) {
+            // This is a placeholder - in production, you would call an API
+            // to get actual shipping costs from the courier
+            const volumetricWeight = (length * width * height) / 5000;
+            const chargeableWeight = Math.max(weight, volumetricWeight);
+            const baseCost = courier === 'shiprocket' ? 50 : 40;
+            const estimatedCost = baseCost + (chargeableWeight * 10);
+            
+            document.getElementById('estimated-cost').textContent = '₹' + estimatedCost.toFixed(2);
+            document.getElementById('shipping-cost-container').style.display = 'block';
+        }
+    }
+    
+    // Attach event listeners for cost calculation
+    [weightInput, lengthInput, widthInput, heightInput, courierSelect].forEach(input => {
+        if (input) {
+            input.addEventListener('change', calculateShippingCost);
+            input.addEventListener('input', calculateShippingCost);
+        }
+    });
+});
+</script>
+{% endblock %}

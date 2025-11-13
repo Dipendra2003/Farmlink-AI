@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Advanced Search - Expert Forum{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h2 class="card-title mb-0">
+                        <i class="fas fa-search me-2"></i>Advanced Search
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('expert_forum') }}">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                {{ form.query.label(class="form-label") }}
+                                {{ form.query(class="form-control", placeholder="Enter keywords to search...") }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.main_category.label(class="form-label") }}
+                                {{ form.main_category(class="form-select", id="search_main_category") }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.subcategory.label(class="form-label") }}
+                                {{ form.subcategory(class="form-select", id="search_subcategory") }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.post_type.label(class="form-label") }}
+                                {{ form.post_type(class="form-select") }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.date_range.label(class="form-label") }}
+                                {{ form.date_range(class="form-select") }}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                {{ form.sort_by.label(class="form-label") }}
+                                {{ form.sort_by(class="form-select") }}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2 justify-content-between">
+                            <a href="{{ url_for('expert_forum') }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <div>
+                                <button type="reset" class="btn btn-outline-secondary">
+                                    <i class="fas fa-undo me-2"></i>Reset
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-search me-2"></i>Search
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Search Tips -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2 text-warning"></i>Search Tips
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Use specific keywords related to your farming question
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Filter by category to narrow down results
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Sort by popularity to see most helpful posts first
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Use date range to find recent discussions
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script id="category-data" type="application/json">
+{{ category_structure|tojson|safe }}
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Load category structure from JSON script tag
+    const categoryStructure = JSON.parse(document.getElementById('category-data').textContent);
+    
+    const mainCategorySelect = document.getElementById('search_main_category');
+    const subcategorySelect = document.getElementById('search_subcategory');
+    
+    if (mainCategorySelect && subcategorySelect) {
+        mainCategorySelect.addEventListener('change', function() {
+            const selectedMain = this.value;
+            
+            // Clear subcategory options
+            subcategorySelect.innerHTML = '<option value="all">All Subcategories</option>';
+            
+            if (selectedMain && selectedMain !== 'all' && categoryStructure[selectedMain]) {
+                const subcategories = categoryStructure[selectedMain].subcategories;
+                
+                for (const [key, value] of Object.entries(subcategories)) {
+                    const option = document.createElement('option');
+                    option.value = key;
+                    option.textContent = value;
+                    subcategorySelect.appendChild(option);
+                }
+                
+                subcategorySelect.disabled = false;
+            } else {
+                subcategorySelect.disabled = true;
+            }
+        });
+        
+        // Trigger change if main category is already selected
+        if (mainCategorySelect.value && mainCategorySelect.value !== 'all') {
+            mainCategorySelect.dispatchEvent(new Event('change'));
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1788 @@
+{% extends "base.html" %}
+
+{% block title %}Track Order #{{ order.id }} - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('my_orders') }}">My Orders</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('order_detail', order_id=order.id) }}">Order #{{ order.id }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Track Order</li>
+                </ol>
+            </nav>
+            <h2 class="mb-0">Track Your Order</h2>
+        </div>
+    </div>
+
+    <!-- Tracking Information Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <h5 class="card-title mb-3">
+                                <i class="fas fa-box text-primary me-2"></i>Shipment Details
+                            </h5>
+                            <div class="tracking-info">
+                                <div class="mb-2">
+                                    <strong>Tracking Number:</strong>
+                                    <span class="text-primary fw-bold" id="tracking-number">{{ tracking_number }}</span>
+                                    <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyTrackingNumber()" title="Copy tracking number">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                {% if awb_code %}
+                                <div class="mb-2">
+                                    <strong>AWB Code:</strong>
+                                    <span id="awb-code">{{ awb_code }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="mb-2">
+                                    <strong>Courier:</strong>
+                                    <span id="courier-name">{{ courier_name|title if courier_name else 'N/A' }}</span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Current Status:</strong>
+                                    <span class="badge" id="current-status-badge">{{ current_status|title if current_status else 'Pending' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="card-title mb-3">
+                                <i class="fas fa-calendar-alt text-success me-2"></i>Delivery Information
+                            </h5>
+                            <div class="delivery-info">
+                                {% if estimated_delivery_date %}
+                                <div class="mb-2">
+                                    <strong>Estimated Delivery:</strong>
+                                    <span id="estimated-delivery">{{ estimated_delivery_date.strftime('%B %d, %Y') }}</span>
+                                </div>
+                                {% endif %}
+                                {% if actual_delivery_date %}
+                                <div class="mb-2">
+                                    <strong>Delivered On:</strong>
+                                    <span class="text-success fw-bold" id="actual-delivery">{{ actual_delivery_date.strftime('%B %d, %Y at %I:%M %p') }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="mb-2">
+                                    <strong>Last Updated:</strong>
+                                    <span class="text-muted" id="last-updated">
+                                        {% if last_updated %}
+                                            {{ last_updated.strftime('%B %d, %Y at %I:%M %p') }}
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            {% if tracking_url %}
+                            <div class="mt-3">
+                                <a href="{{ tracking_url }}" target="_blank" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-external-link-alt me-2"></i>Track on Courier Website
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery Progress Timeline -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="fas fa-route text-info me-2"></i>Delivery Progress
+                    </h5>
+                    
+                    <!-- Visual Progress Bar -->
+                    <div class="progress-timeline mb-4">
+                        <div class="timeline-container">
+                            <!-- Order Placed -->
+                            <div class="timeline-step" data-status="placed">
+                                <div class="timeline-icon">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                                <div class="timeline-label">Order Placed</div>
+                            </div>
+                            
+                            <!-- Packed -->
+                            <div class="timeline-step" data-status="packed">
+                                <div class="timeline-icon">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <div class="timeline-label">Packed</div>
+                            </div>
+                            
+                            <!-- Shipped -->
+                            <div class="timeline-step" data-status="shipped">
+                                <div class="timeline-icon">
+                                    <i class="fas fa-truck"></i>
+                                </div>
+                                <div class="timeline-label">Shipped</div>
+                            </div>
+                            
+                            <!-- In Transit -->
+                            <div class="timeline-step" data-status="in_transit">
+                                <div class="timeline-icon">
+                                    <i class="fas fa-shipping-fast"></i>
+                                </div>
+                                <div class="timeline-label">In Transit</div>
+                            </div>
+                            
+                            <!-- Out for Delivery -->
+                            <div class="timeline-step" data-status="out_for_delivery">
+                                <div class="timeline-icon">
+                                    <i class="fas fa-truck-loading"></i>
+                                </div>
+                                <div class="timeline-label">Out for Delivery</div>
+                            </div>
+                            
+                            <!-- Delivered -->
+                            <div class="timeline-step" data-status="delivered">
+                                <div class="timeline-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="timeline-label">Delivered</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Status History -->
+                    <div class="status-history mt-4">
+                        <h6 class="mb-3">Shipment History</h6>
+                        <div class="timeline-history" id="tracking-history">
+                            {% if tracking_history %}
+                                {% for history in tracking_history|reverse %}
+                                <div class="history-item">
+                                    <div class="history-icon">
+                                        <i class="fas fa-circle"></i>
+                                    </div>
+                                    <div class="history-content">
+                                        <div class="history-status fw-bold">{{ history.new_status|replace('_', ' ')|title }}</div>
+                                        {% if history.status_description %}
+                                        <div class="history-description text-muted">{{ history.status_description }}</div>
+                                        {% endif %}
+                                        {% if history.location %}
+                                        <div class="history-location">
+                                            <i class="fas fa-map-marker-alt me-1"></i>{{ history.location }}
+                                        </div>
+                                        {% endif %}
+                                        <div class="history-timestamp text-muted small">
+                                            <i class="far fa-clock me-1"></i>
+                                            {{ (history.courier_timestamp or history.created_at).strftime('%B %d, %Y at %I:%M %p') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-muted text-center py-3">
+                                    <i class="fas fa-info-circle me-2"></i>No tracking history available yet.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delivery Confirmation (for buyers) -->
+    {% if current_user.id == order.buyer_id and current_status == 'delivered' and not delivery_confirmed %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-success">
+                <div class="card-body">
+                    <h5 class="card-title text-success">
+                        <i class="fas fa-check-circle me-2"></i>Confirm Delivery
+                    </h5>
+                    <p class="mb-3">Your order has been delivered. Please confirm that you have received it.</p>
+                    <form action="{{ url_for('confirm_delivery', order_id=order.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to confirm delivery?');">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check me-2"></i>Confirm Delivery
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-primary" onclick="refreshTracking()">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh Status
+                </button>
+                <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Order Details
+                </a>
+                {% if current_user.id == order.buyer_id %}
+                <a href="{{ url_for('inbox') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-envelope me-2"></i>Contact Seller
+                </a>
+                {% elif current_user.id == order.farmer_id %}
+                <a href="{{ url_for('inbox') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-envelope me-2"></i>Contact Buyer
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay" style="display: none;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+
+<!-- Store data for JavaScript -->
+<script type="application/json" id="tracking-data">
+{
+    "orderId": {{ order.id }},
+    "currentStatus": "{{ current_status }}"
+}
+</script>
+
+<style>
+/* Progress Timeline Styles */
+.progress-timeline {
+    padding: 20px 0;
+}
+
+.timeline-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    position: relative;
+    padding: 0 20px;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    top: 30px;
+    left: 40px;
+    right: 40px;
+    height: 3px;
+    background: #e0e0e0;
+    z-index: 0;
+}
+
+.timeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    flex: 1;
+}
+
+.timeline-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    border: 3px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #6c757d;
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
+}
+
+.timeline-step.completed .timeline-icon {
+    background: #28a745;
+    border-color: #28a745;
+    color: white;
+}
+
+.timeline-step.active .timeline-icon {
+    background: #007bff;
+    border-color: #007bff;
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+.timeline-label {
+    font-size: 12px;
+    text-align: center;
+    color: #6c757d;
+    font-weight: 500;
+    max-width: 80px;
+}
+
+.timeline-step.completed .timeline-label,
+.timeline-step.active .timeline-label {
+    color: #212529;
+    font-weight: 600;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(0, 123, 255, 0);
+    }
+}
+
+/* Status History Styles */
+.timeline-history {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.history-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.history-item:last-child {
+    border-bottom: none;
+}
+
+.history-icon {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #007bff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 10px;
+}
+
+.history-content {
+    flex: 1;
+}
+
+.history-status {
+    color: #212529;
+    margin-bottom: 5px;
+}
+
+.history-description {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.history-location {
+    font-size: 14px;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.history-timestamp {
+    font-size: 12px;
+}
+
+/* Status Badge Colors */
+#current-status-badge {
+    padding: 6px 12px;
+    font-size: 14px;
+}
+
+#current-status-badge.status-placed,
+#current-status-badge.status-pending {
+    background-color: #6c757d;
+}
+
+#current-status-badge.status-packed {
+    background-color: #17a2b8;
+}
+
+#current-status-badge.status-shipped,
+#current-status-badge.status-in_transit {
+    background-color: #007bff;
+}
+
+#current-status-badge.status-out_for_delivery {
+    background-color: #fd7e14;
+}
+
+#current-status-badge.status-delivered {
+    background-color: #28a745;
+}
+
+#current-status-badge.status-failed,
+#current-status-badge.status-returned {
+    background-color: #dc3545;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+/* Polling Indicator - Subtle indicator for background updates */
+.polling-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 123, 255, 0.9);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    z-index: 9998;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.3s ease;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.polling-indicator.show {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.polling-indicator.success {
+    background: rgba(40, 167, 69, 0.9);
+}
+
+.polling-indicator.error {
+    background: rgba(220, 53, 69, 0.9);
+}
+
+/* Status Update Animation */
+@keyframes statusUpdate {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.status-updated {
+    animation: statusUpdate 0.5s ease;
+}
+
+/* New History Item Animation */
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.history-item-new {
+    animation: slideInLeft 0.5s ease;
+    background: rgba(40, 167, 69, 0.05);
+    border-radius: 8px;
+    padding: 15px;
+    margin: -15px 0;
+}
+
+.history-item-new .history-icon {
+    background: #28a745;
+    animation: pulse 2s ease;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    /* Container adjustments */
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .my-5 {
+        margin-top: 2rem !important;
+        margin-bottom: 2rem !important;
+    }
+    
+    /* Timeline - Vertical layout for mobile */
+    .timeline-container {
+        flex-direction: column;
+        padding: 0;
+        align-items: flex-start;
+    }
+    
+    .timeline-container::before {
+        top: 30px;
+        left: 30px;
+        right: auto;
+        bottom: 30px;
+        width: 3px;
+        height: auto;
+    }
+    
+    .timeline-step {
+        flex-direction: row;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 20px;
+        justify-content: flex-start;
+    }
+    
+    .timeline-step:last-child {
+        margin-bottom: 0;
+    }
+    
+    .timeline-icon {
+        margin-bottom: 0;
+        margin-right: 15px;
+        flex-shrink: 0;
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .timeline-label {
+        text-align: left;
+        max-width: none;
+        font-size: 14px;
+        line-height: 1.4;
+    }
+    
+    /* Card spacing */
+    .card {
+        margin-bottom: 15px;
+        border-radius: 12px;
+    }
+    
+    .card-body {
+        padding: 15px;
+    }
+    
+    .card-body .row > div {
+        margin-bottom: 20px;
+    }
+    
+    .card-body .row > div:last-child {
+        margin-bottom: 0;
+    }
+    
+    /* Tracking info adjustments */
+    .tracking-info .mb-2,
+    .delivery-info .mb-2 {
+        font-size: 14px;
+        word-break: break-word;
+        line-height: 1.6;
+    }
+    
+    /* Make tracking number more prominent on mobile */
+    #tracking-number {
+        display: block;
+        margin-top: 5px;
+        font-size: 16px;
+    }
+    
+    /* Status history - Optimize for vertical scrolling */
+    .timeline-history {
+        max-height: 400px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        padding-right: 5px;
+    }
+    
+    /* Custom scrollbar for mobile */
+    .timeline-history::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    .timeline-history::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .timeline-history::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+    
+    .timeline-history::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+    
+    .history-item {
+        padding: 12px 0;
+        gap: 12px;
+    }
+    
+    .history-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 10px;
+    }
+    
+    .history-content {
+        font-size: 14px;
+    }
+    
+    .history-status {
+        font-size: 15px;
+        margin-bottom: 6px;
+    }
+    
+    .history-description,
+    .history-location {
+        font-size: 13px;
+        line-height: 1.5;
+    }
+    
+    .history-timestamp {
+        font-size: 11px;
+    }
+    
+    /* Breadcrumb adjustments */
+    .breadcrumb {
+        font-size: 12px;
+        padding: 8px 0;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .breadcrumb-item {
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .breadcrumb-item.active {
+        max-width: 150px;
+    }
+    
+    .breadcrumb-item + .breadcrumb-item::before {
+        padding-right: 0.3rem;
+        padding-left: 0.3rem;
+    }
+    
+    /* Page title */
+    h2 {
+        font-size: 24px;
+        margin-bottom: 1rem;
+    }
+    
+    h5.card-title {
+        font-size: 18px;
+        margin-bottom: 1rem;
+    }
+    
+    h6 {
+        font-size: 16px;
+    }
+    
+    /* Action buttons - Stack vertically on mobile */
+    .d-flex.gap-2 {
+        flex-direction: column;
+        gap: 10px !important;
+    }
+    
+    .d-flex.gap-2 .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    /* Improve spacing between sections */
+    .mb-4 {
+        margin-bottom: 1.5rem !important;
+    }
+    
+    /* Optimize card titles with icons */
+    .card-title i {
+        font-size: 16px;
+    }
+}
+
+/* Touch-friendly buttons for mobile - Minimum 44px height */
+@media (max-width: 768px) {
+    .btn {
+        min-height: 44px;
+        padding: 12px 20px;
+        font-size: 16px; /* Prevent zoom on iOS */
+        touch-action: manipulation; /* Disable double-tap zoom */
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+        transition: transform 0.1s ease, background-color 0.2s ease;
+    }
+    
+    /* Active state feedback for better touch interaction */
+    .btn:active {
+        transform: scale(0.98);
+    }
+    
+    .btn-sm {
+        min-height: 44px;
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+    
+    /* Copy button - make it more touch-friendly */
+    .btn-outline-secondary {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 10px;
+    }
+    
+    /* Form inputs (if any) */
+    input, select, textarea {
+        min-height: 44px;
+        font-size: 16px; /* Prevent zoom on iOS */
+        -webkit-appearance: none;
+        appearance: none;
+        border-radius: 8px;
+    }
+    
+    /* Form submit buttons */
+    form button[type="submit"] {
+        width: 100%;
+        min-height: 48px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    
+    /* Links should also be touch-friendly */
+    a.btn {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .breadcrumb-item a {
+        min-height: auto;
+        display: inline;
+        padding: 4px 0;
+    }
+    
+    /* Card links */
+    .card-body a:not(.btn) {
+        padding: 8px 0;
+        display: inline-block;
+    }
+}
+
+/* Extra small devices (phones in portrait, less than 576px) */
+@media (max-width: 576px) {
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .my-5 {
+        margin-top: 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    
+    .card {
+        border-radius: 10px;
+    }
+    
+    .card-body {
+        padding: 12px;
+    }
+    
+    h2 {
+        font-size: 20px;
+        line-height: 1.3;
+    }
+    
+    h5.card-title {
+        font-size: 16px;
+        margin-bottom: 0.75rem;
+    }
+    
+    h6 {
+        font-size: 15px;
+    }
+    
+    /* Smaller timeline icons for very small screens */
+    .timeline-icon {
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
+    
+    .timeline-label {
+        font-size: 13px;
+    }
+    
+    /* Adjust badge size */
+    #current-status-badge {
+        font-size: 12px;
+        padding: 5px 10px;
+        display: inline-block;
+        margin-top: 4px;
+    }
+    
+    /* Compact tracking info */
+    .tracking-info .mb-2,
+    .delivery-info .mb-2 {
+        font-size: 13px;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .tracking-info strong,
+    .delivery-info strong {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 12px;
+        color: #6c757d;
+    }
+    
+    /* Optimize history for small screens */
+    .timeline-history {
+        max-height: 350px;
+    }
+    
+    .history-item {
+        padding: 10px 0;
+        gap: 10px;
+    }
+    
+    .history-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 8px;
+    }
+    
+    .history-status {
+        font-size: 14px;
+    }
+    
+    .history-description,
+    .history-location {
+        font-size: 12px;
+    }
+    
+    .history-timestamp {
+        font-size: 10px;
+    }
+    
+    /* Breadcrumb for very small screens */
+    .breadcrumb {
+        font-size: 11px;
+        padding: 6px 0;
+    }
+    
+    .breadcrumb-item {
+        max-width: 80px;
+    }
+    
+    /* Button adjustments */
+    .btn {
+        font-size: 15px;
+        padding: 11px 18px;
+    }
+    
+    .btn i {
+        font-size: 14px;
+    }
+    
+    /* Reduce spacing between sections */
+    .mb-4 {
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Card title icons */
+    .card-title i {
+        font-size: 14px;
+    }
+    
+    /* Progress timeline padding */
+    .progress-timeline {
+        padding: 15px 0;
+    }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .timeline-history {
+        max-height: 200px;
+    }
+    
+    .container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+    
+    .my-5 {
+        margin-top: 1rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .card-body {
+        padding: 12px;
+    }
+    
+    .mb-4 {
+        margin-bottom: 1rem !important;
+    }
+    
+    /* Compact timeline for landscape */
+    .timeline-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .timeline-label {
+        font-size: 12px;
+    }
+    
+    .timeline-step {
+        margin-bottom: 12px;
+    }
+    
+    /* Compact history items */
+    .history-item {
+        padding: 8px 0;
+    }
+    
+    .history-icon {
+        width: 22px;
+        height: 22px;
+    }
+}
+
+/* Very small landscape devices */
+@media (max-width: 576px) and (orientation: landscape) {
+    .timeline-history {
+        max-height: 180px;
+    }
+    
+    h2 {
+        font-size: 18px;
+    }
+    
+    h5.card-title {
+        font-size: 15px;
+    }
+}
+
+/* Pull-to-refresh visual indicator */
+.pull-to-refresh-indicator {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100%);
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.95), rgba(0, 86, 179, 0.95));
+    color: white;
+    padding: 12px 24px;
+    border-radius: 0 0 12px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 9998;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pull-to-refresh-indicator.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.pull-to-refresh-indicator i {
+    font-size: 16px;
+}
+
+/* Pull-to-refresh animation */
+@keyframes pullRefreshSpin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.pull-to-refresh-indicator.refreshing i {
+    animation: pullRefreshSpin 1s linear infinite;
+}
+
+/* Smooth scrolling for better mobile experience */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Improve touch scrolling on iOS */
+.timeline-history,
+.card-body {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent text selection on buttons for better mobile UX */
+.btn {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Optimize for mobile performance */
+@media (max-width: 768px) {
+    /* Use hardware acceleration for animations */
+    .timeline-icon,
+    .history-icon,
+    .polling-indicator,
+    .pull-to-refresh-indicator,
+    .loading-overlay {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        will-change: transform;
+    }
+    
+    /* Optimize images for mobile */
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    /* Improve tap targets */
+    .card {
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Smooth transitions */
+    * {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Optimize scrolling */
+    body {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Better focus states for accessibility */
+    .btn:focus,
+    a:focus,
+    button:focus {
+        outline: 2px solid #007bff;
+        outline-offset: 2px;
+    }
+    
+    /* Improve readability */
+    body {
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+    }
+}
+
+/* High DPI displays (Retina) */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .timeline-icon,
+    .history-icon {
+        border-width: 2px;
+    }
+}
+
+/* Dark mode support for mobile (if system prefers dark) */
+@media (prefers-color-scheme: dark) and (max-width: 768px) {
+    .pull-to-refresh-indicator {
+        background: linear-gradient(135deg, rgba(0, 123, 255, 0.98), rgba(0, 86, 179, 0.98));
+    }
+    
+    .polling-indicator {
+        background: rgba(0, 123, 255, 0.95);
+    }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .pull-to-refresh-indicator,
+    .polling-indicator {
+        transition: none;
+    }
+}
+
+/* Loading overlay adjustments for mobile */
+@media (max-width: 768px) {
+    .loading-overlay {
+        backdrop-filter: blur(2px);
+    }
+    
+    .loading-overlay .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3em;
+    }
+    
+    /* Adjust polling indicator position for mobile */
+    .polling-indicator {
+        bottom: 80px; /* Move up to avoid overlapping with mobile navigation */
+        right: 15px;
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+    
+    /* Adjust alert positioning for mobile */
+    .alert.position-fixed {
+        left: 10px;
+        right: 10px;
+        top: 10px !important;
+        transform: translateX(0) !important;
+        max-width: calc(100% - 20px) !important;
+        margin-top: 0 !important;
+        font-size: 14px;
+        padding: 12px 15px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .alert i {
+        font-size: 16px;
+    }
+    
+    .alert .btn-close {
+        padding: 0.5rem;
+        font-size: 12px;
+    }
+}
+
+/* Tablet devices (between 576px and 768px) */
+@media (min-width: 576px) and (max-width: 768px) {
+    .container {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    .card-body {
+        padding: 20px;
+    }
+    
+    .timeline-icon {
+        width: 55px;
+        height: 55px;
+        font-size: 22px;
+    }
+    
+    .timeline-label {
+        font-size: 14px;
+    }
+    
+    h2 {
+        font-size: 26px;
+    }
+    
+    h5.card-title {
+        font-size: 19px;
+    }
+}
+</style>
+
+<script>
+// Load tracking data from JSON script tag
+const trackingDataElement = document.getElementById('tracking-data');
+const trackingData = JSON.parse(trackingDataElement.textContent);
+const orderId = trackingData.orderId;
+const initialStatus = trackingData.currentStatus;
+
+let pollingInterval = null;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    updateTimelineProgress(initialStatus);
+    updateStatusBadgeColor(initialStatus);
+    
+    // Start AJAX polling every 60 seconds
+    startPolling();
+    
+    // Stop polling when page is hidden/closed
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopPolling();
+        } else {
+            startPolling();
+        }
+    });
+});
+
+// Start polling for updates
+function startPolling() {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+    }
+    
+    // Poll every 60 seconds
+    pollingInterval = setInterval(function() {
+        fetchTrackingStatus(false); // false = don't show loading overlay
+    }, 60000);
+}
+
+// Stop polling
+function stopPolling() {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+    }
+}
+
+// Update timeline progress based on current status
+function updateTimelineProgress(status) {
+    const statusOrder = ['placed', 'packed', 'shipped', 'in_transit', 'out_for_delivery', 'delivered'];
+    const currentIndex = statusOrder.indexOf(status);
+    
+    document.querySelectorAll('.timeline-step').forEach((step, index) => {
+        const stepStatus = step.getAttribute('data-status');
+        const stepIndex = statusOrder.indexOf(stepStatus);
+        
+        if (stepIndex < currentIndex) {
+            step.classList.add('completed');
+            step.classList.remove('active');
+        } else if (stepIndex === currentIndex) {
+            step.classList.add('active');
+            step.classList.remove('completed');
+        } else {
+            step.classList.remove('completed', 'active');
+        }
+    });
+}
+
+// Update status badge color
+function updateStatusBadgeColor(status) {
+    const badge = document.getElementById('current-status-badge');
+    if (badge) {
+        // Remove all status classes
+        badge.className = 'badge';
+        // Add new status class
+        badge.classList.add('status-' + status);
+    }
+}
+
+// Copy tracking number to clipboard
+function copyTrackingNumber() {
+    const trackingNumber = document.getElementById('tracking-number').textContent;
+    navigator.clipboard.writeText(trackingNumber).then(function() {
+        // Show success message
+        const btn = event.target.closest('button');
+        const originalHTML = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        btn.classList.add('btn-success');
+        btn.classList.remove('btn-outline-secondary');
+        
+        setTimeout(function() {
+            btn.innerHTML = originalHTML;
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-outline-secondary');
+        }, 2000);
+    }).catch(function(err) {
+        console.error('Failed to copy tracking number:', err);
+        alert('Failed to copy tracking number');
+    });
+}
+
+// Refresh tracking status manually
+function refreshTracking() {
+    showLoading();
+    fetchTrackingStatus(true); // true = show loading overlay
+}
+
+// Show loading overlay
+function showLoading() {
+    document.getElementById('loading-overlay').style.display = 'flex';
+}
+
+// Hide loading overlay
+function hideLoading() {
+    document.getElementById('loading-overlay').style.display = 'none';
+}
+
+// Fetch tracking status via AJAX
+function fetchTrackingStatus(showLoader = false) {
+    if (showLoader) {
+        showLoading();
+    } else {
+        // Show subtle loading indicator for background polling
+        showPollingIndicator();
+    }
+    
+    fetch(`/api/orders/${orderId}/tracking-status`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        if (!response.ok) {
+            if (response.status === 403) {
+                throw new Error('You do not have permission to view this tracking information.');
+            } else if (response.status === 404) {
+                throw new Error('Order not found.');
+            } else if (response.status >= 500) {
+                throw new Error('Server error. Please try again later.');
+            } else {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            updateTrackingDisplay(data);
+            hidePollingIndicator(true); // true = success
+        } else {
+            const errorMsg = data.error || 'Failed to fetch tracking status';
+            console.error('Error fetching tracking status:', errorMsg);
+            if (showLoader) {
+                showErrorMessage(errorMsg);
+            }
+            hidePollingIndicator(false); // false = error
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching tracking status:', error);
+        if (showLoader) {
+            showErrorMessage(error.message || 'Unable to connect to server. Please check your internet connection.');
+        }
+        hidePollingIndicator(false); // false = error
+    })
+    .finally(() => {
+        if (showLoader) {
+            hideLoading();
+        }
+    });
+}
+
+// Update tracking display with new data
+function updateTrackingDisplay(data) {
+    let hasChanges = false;
+    
+    // Update current status
+    const currentStatusBadge = document.getElementById('current-status-badge');
+    if (currentStatusBadge && data.shipment_status) {
+        const formattedStatus = data.shipment_status.replace(/_/g, ' ');
+        const newStatusText = formattedStatus.charAt(0).toUpperCase() + formattedStatus.slice(1);
+        
+        // Check if status changed
+        if (currentStatusBadge.textContent.trim() !== newStatusText) {
+            hasChanges = true;
+            currentStatusBadge.textContent = newStatusText;
+            
+            // Add animation to highlight the change
+            currentStatusBadge.classList.add('status-updated');
+            setTimeout(() => {
+                currentStatusBadge.classList.remove('status-updated');
+            }, 2000);
+        }
+        
+        updateStatusBadgeColor(data.shipment_status);
+        updateTimelineProgress(data.shipment_status);
+    }
+    
+    // Update courier name
+    const courierName = document.getElementById('courier-name');
+    if (courierName && data.courier_name) {
+        const newCourierName = data.courier_name.charAt(0).toUpperCase() + data.courier_name.slice(1);
+        if (courierName.textContent !== newCourierName) {
+            courierName.textContent = newCourierName;
+        }
+    }
+    
+    // Update AWB code if present
+    const awbCode = document.getElementById('awb-code');
+    if (awbCode && data.awb_code) {
+        if (awbCode.textContent !== data.awb_code) {
+            awbCode.textContent = data.awb_code;
+        }
+    }
+    
+    // Update estimated delivery date
+    const estimatedDelivery = document.getElementById('estimated-delivery');
+    if (estimatedDelivery && data.estimated_delivery_date) {
+        const date = new Date(data.estimated_delivery_date);
+        const formattedDate = date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        if (estimatedDelivery.textContent !== formattedDate) {
+            estimatedDelivery.textContent = formattedDate;
+        }
+    }
+    
+    // Update actual delivery date
+    const actualDelivery = document.getElementById('actual-delivery');
+    if (actualDelivery && data.actual_delivery_date) {
+        const date = new Date(data.actual_delivery_date);
+        const formattedDate = date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+        if (actualDelivery.textContent !== formattedDate) {
+            actualDelivery.textContent = formattedDate;
+            hasChanges = true;
+        }
+    }
+    
+    // Update last updated timestamp
+    const lastUpdated = document.getElementById('last-updated');
+    if (lastUpdated && data.last_updated) {
+        const date = new Date(data.last_updated);
+        lastUpdated.textContent = date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+    }
+    
+    // Update tracking history
+    if (data.tracking_history && data.tracking_history.length > 0) {
+        const historyUpdated = updateTrackingHistory(data.tracking_history);
+        if (historyUpdated) {
+            hasChanges = true;
+        }
+    }
+    
+    // Show notification if there were changes (only for background polling)
+    if (hasChanges && !document.getElementById('loading-overlay').style.display) {
+        showUpdateNotification();
+    }
+}
+
+// Update tracking history timeline
+function updateTrackingHistory(history) {
+    const historyContainer = document.getElementById('tracking-history');
+    if (!historyContainer) return false;
+    
+    // Store current history count to detect changes
+    const currentHistoryCount = historyContainer.querySelectorAll('.history-item').length;
+    const newHistoryCount = history.length;
+    
+    // Only update if there are changes
+    if (currentHistoryCount === newHistoryCount && currentHistoryCount > 0) {
+        return false; // No changes
+    }
+    
+    // Clear existing history
+    historyContainer.innerHTML = '';
+    
+    // Check if there's any history
+    if (history.length === 0) {
+        historyContainer.innerHTML = `
+            <div class="text-muted text-center py-3">
+                <i class="fas fa-info-circle me-2"></i>No tracking history available yet.
+            </div>
+        `;
+        return false;
+    }
+    
+    // Add history items (reverse order - most recent first)
+    const reversedHistory = [...history].reverse();
+    reversedHistory.forEach((item, index) => {
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        
+        // Add animation for new items (first item is most recent)
+        if (index === 0 && newHistoryCount > currentHistoryCount) {
+            historyItem.classList.add('history-item-new');
+        }
+        
+        const timestamp = new Date(item.timestamp);
+        const formattedTimestamp = timestamp.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+        
+        const statusFormatted = item.status.replace(/_/g, ' ');
+        const statusTitle = statusFormatted.charAt(0).toUpperCase() + statusFormatted.slice(1);
+        
+        historyItem.innerHTML = `
+            <div class="history-icon">
+                <i class="fas fa-circle"></i>
+            </div>
+            <div class="history-content">
+                <div class="history-status fw-bold">${statusTitle}</div>
+                ${item.description ? `<div class="history-description text-muted">${item.description}</div>` : ''}
+                ${item.location ? `<div class="history-location"><i class="fas fa-map-marker-alt me-1"></i>${item.location}</div>` : ''}
+                <div class="history-timestamp text-muted small">
+                    <i class="far fa-clock me-1"></i>${formattedTimestamp}
+                </div>
+            </div>
+        `;
+        
+        historyContainer.appendChild(historyItem);
+    });
+    
+    return newHistoryCount > currentHistoryCount; // Return true if new items were added
+}
+
+// Show error message
+function showErrorMessage(message) {
+    // Create alert element
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+    alertDiv.style.zIndex = '10000';
+    alertDiv.style.maxWidth = '90%';
+    alertDiv.innerHTML = `
+        <i class="fas fa-exclamation-triangle me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Show update notification
+function showUpdateNotification() {
+    // Create notification element
+    const notificationDiv = document.createElement('div');
+    notificationDiv.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3';
+    notificationDiv.style.zIndex = '10000';
+    notificationDiv.style.maxWidth = '90%';
+    notificationDiv.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>Tracking information updated
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    document.body.appendChild(notificationDiv);
+    
+    // Auto-dismiss after 3 seconds
+    setTimeout(() => {
+        if (notificationDiv.parentNode) {
+            notificationDiv.remove();
+        }
+    }, 3000);
+}
+
+// Show polling indicator (subtle indicator for background updates)
+let pollingIndicatorElement = null;
+
+function showPollingIndicator() {
+    if (!pollingIndicatorElement) {
+        pollingIndicatorElement = document.createElement('div');
+        pollingIndicatorElement.className = 'polling-indicator';
+        pollingIndicatorElement.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i>';
+        document.body.appendChild(pollingIndicatorElement);
+    }
+    pollingIndicatorElement.classList.add('show');
+}
+
+function hidePollingIndicator(success = true) {
+    if (pollingIndicatorElement) {
+        if (success) {
+            pollingIndicatorElement.innerHTML = '<i class="fas fa-check"></i>';
+            pollingIndicatorElement.classList.add('success');
+        } else {
+            pollingIndicatorElement.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+            pollingIndicatorElement.classList.add('error');
+        }
+        
+        setTimeout(() => {
+            if (pollingIndicatorElement) {
+                pollingIndicatorElement.classList.remove('show', 'success', 'error');
+                pollingIndicatorElement.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i>';
+            }
+        }, 1000);
+    }
+}
+
+// Pull-to-refresh functionality for mobile
+let touchStartY = 0;
+let touchEndY = 0;
+let isPulling = false;
+let pullIndicator = null;
+let isRefreshing = false;
+
+// Create pull-to-refresh indicator
+function createPullIndicator() {
+    if (!pullIndicator) {
+        pullIndicator = document.createElement('div');
+        pullIndicator.className = 'pull-to-refresh-indicator';
+        pullIndicator.innerHTML = '<i class="fas fa-sync-alt"></i><span>Pull to refresh</span>';
+        document.body.appendChild(pullIndicator);
+    }
+    return pullIndicator;
+}
+
+// Check if device supports touch
+function isTouchDevice() {
+    return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+}
+
+// Only enable pull-to-refresh on touch devices
+if (isTouchDevice()) {
+    document.addEventListener('touchstart', function(e) {
+        // Only start pulling if at the top of the page and not already refreshing
+        if (window.scrollY === 0 && !isRefreshing) {
+            touchStartY = e.touches[0].clientY;
+            isPulling = true;
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchmove', function(e) {
+        if (isPulling && window.scrollY === 0 && !isRefreshing) {
+            touchEndY = e.touches[0].clientY;
+            const pullDistance = touchEndY - touchStartY;
+            
+            // Only show indicator for downward pulls
+            if (pullDistance > 0) {
+                const indicator = createPullIndicator();
+                
+                // Show indicator when pulled down more than 50px
+                if (pullDistance > 50) {
+                    indicator.classList.add('show');
+                    
+                    // Update indicator text and icon based on pull distance
+                    if (pullDistance > 100) {
+                        indicator.innerHTML = '<i class="fas fa-arrow-down"></i><span>Release to refresh</span>';
+                    } else {
+                        indicator.innerHTML = '<i class="fas fa-sync-alt"></i><span>Pull to refresh</span>';
+                    }
+                } else {
+                    indicator.classList.remove('show');
+                }
+            }
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchend', function() {
+        if (isPulling && !isRefreshing) {
+            const pullDistance = touchEndY - touchStartY;
+            
+            // Check if user pulled down more than 100px from top of page
+            if (window.scrollY === 0 && pullDistance > 100) {
+                const indicator = createPullIndicator();
+                indicator.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Refreshing...</span>';
+                indicator.classList.add('refreshing');
+                isRefreshing = true;
+                
+                // Trigger refresh
+                refreshTracking();
+                
+                // Hide indicator after refresh completes (with minimum display time)
+                setTimeout(() => {
+                    if (pullIndicator) {
+                        pullIndicator.classList.remove('show', 'refreshing');
+                        isRefreshing = false;
+                    }
+                }, 1500);
+            } else {
+                // Hide indicator if not enough pull distance
+                if (pullIndicator) {
+                    pullIndicator.classList.remove('show');
+                }
+            }
+            
+            isPulling = false;
+            touchStartY = 0;
+            touchEndY = 0;
+        }
+    }, { passive: true });
+}
+
+// Detect mobile device
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// Add visual feedback for mobile users
+if (isMobileDevice()) {
+    document.body.classList.add('mobile-device');
+    
+    // Optimize viewport for mobile
+    let viewport = document.querySelector('meta[name="viewport"]');
+    if (!viewport) {
+        viewport = document.createElement('meta');
+        viewport.name = 'viewport';
+        document.head.appendChild(viewport);
+    }
+    viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes';
+}
+
+// Improve scroll performance on mobile
+if (isMobileDevice()) {
+    // Add momentum scrolling to scrollable elements
+    const scrollableElements = document.querySelectorAll('.timeline-history');
+    scrollableElements.forEach(element => {
+        element.style.webkitOverflowScrolling = 'touch';
+    });
+}
+
+// Handle orientation changes
+window.addEventListener('orientationchange', function() {
+    // Adjust layout after orientation change
+    setTimeout(() => {
+        // Recalculate any dynamic heights if needed
+        const historyContainer = document.querySelector('.timeline-history');
+        if (historyContainer && window.innerHeight < 500) {
+            // Landscape mode on small device
+            historyContainer.style.maxHeight = '180px';
+        } else if (historyContainer) {
+            // Portrait mode or larger device
+            historyContainer.style.maxHeight = '';
+        }
+    }, 100);
+});
+
+// Prevent zoom on double-tap for specific elements
+document.addEventListener('DOMContentLoaded', function() {
+    const buttons = document.querySelectorAll('.btn');
+    buttons.forEach(button => {
+        button.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            this.click();
+        }, { passive: false });
+    });
+});
+</script>
+{% endblock %}

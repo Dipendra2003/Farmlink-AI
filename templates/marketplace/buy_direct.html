@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Buy Direct - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-shopping-basket me-2"></i>Buy Direct from Farmers
+            </h1>
+            <p class="lead text-muted">Purchase quality agricultural products directly from verified farmers.</p>
+        </div>
+        <div class="col-md-4">
+            <div class="input-group">
+                <input type="search" class="form-control" placeholder="Search crops...">
+                <button class="btn btn-success">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select">
+                                <option value="">All Categories</option>
+                                <option>Grains</option>
+                                <option>Vegetables</option>
+                                <option>Fruits</option>
+                                <option>Pulses</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Location</label>
+                            <select class="form-select">
+                                <option value="">All Locations</option>
+                                <option>North</option>
+                                <option>South</option>
+                                <option>East</option>
+                                <option>West</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Price Range</label>
+                            <select class="form-select">
+                                <option value="">Any Price</option>
+                                <option>Under $100</option>
+                                <option>$100 - $500</option>
+                                <option>$500 - $1000</option>
+                                <option>Over $1000</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Sort By</label>
+                            <select class="form-select">
+                                <option>Latest</option>
+                                <option>Price: Low to High</option>
+                                <option>Price: High to Low</option>
+                                <option>Quantity Available</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="row g-4">
+        {% for crop in crops %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <img src="{{ url_for('static', filename=crop.image_url) if crop.image_url else 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60' }}"
+                     class="card-img-top" alt="{{ crop.name }}"
+                     style="height: 200px; object-fit: cover;">
+                <div class="position-absolute top-0 end-0 m-2">
+                    <span class="badge bg-success">Available</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ crop.name }}</h5>
+                    <p class="text-muted mb-2">
+                        <i class="fas fa-map-marker-alt me-1"></i>{{ crop.location }}
+                    </p>
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <small class="text-muted">Price/Unit</small>
+                            <div class="fw-bold text-success">{{ format_currency(crop.price_per_unit) }}</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Available</small>
+                            <div class="fw-bold">{{ crop.quantity }} {{ crop.unit }}</div>
+                        </div>
+                    </div>
+                    <p class="card-text text-muted small">{{ crop.description[:100] }}{% if crop.description|length > 100 %}...{% endif %}</p>
+                    <div class="d-grid">
+                        <a href="{{ url_for('product_detail', crop_id=crop.id) }}" class="btn btn-outline-success">
+                            <i class="fas fa-info-circle me-2"></i>View Details
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <div class="d-flex align-items-center">
+                        <img src="https://ui-avatars.com/api/?name={{ crop.farmer.full_name }}&background=28a745&color=fff" 
+                             class="rounded-circle me-2" width="32" height="32" alt="Farmer">
+                        <div>
+                            <small class="text-muted">Listed by</small><br>
+                            <small class="fw-bold">{{ crop.farmer.full_name }}</small>
+                            {% set seller = crop.farmer %}
+                            {% include 'components/kyc_badge.html' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if not crops %}
+    <div class="text-center py-5">
+        <i class="fas fa-seedling fa-3x text-muted mb-3"></i>
+        <h3 class="text-muted">No crops available</h3>
+        <p class="text-muted">Check back later for fresh listings</p>
+    </div>
+    {% endif %}
+
+    <!-- Pagination -->
+    {% if crops %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item disabled">
+                <a class="page-link" href="#"><i class="fas fa-chevron-left"></i></a>
+            </li>
+            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+            <li class="page-item"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item">
+                <a class="page-link" href="#"><i class="fas fa-chevron-right"></i></a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

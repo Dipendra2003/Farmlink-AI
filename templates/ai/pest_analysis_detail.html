@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Details - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+      <div class="row">
+            <div class="col-lg-10 mx-auto">
+                  <!-- Header -->
+                  <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                              <h1 class="display-6 fw-bold text-success mb-2">
+                                    <i class="fas fa-microscope me-2"></i>Analysis Details
+                              </h1>
+                              <p class="text-muted mb-0">
+                                    Analysis performed on {{ analysis.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                              </p>
+                        </div>
+                        <div>
+                              <a href="{{ url_for('pest_analysis_history') }}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to History
+                              </a>
+                        </div>
+                  </div>
+
+                  <!-- Analysis Overview Card -->
+                  <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-header bg-success text-white">
+                              <h5 class="mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>Analysis Overview
+                              </h5>
+                        </div>
+                        <div class="card-body">
+                              <div class="row">
+                                    <div class="col-md-6">
+                                          <table class="table table-sm table-borderless">
+                                                <tr>
+                                                      <th style="width: 150px;">Crop Type:</th>
+                                                      <td>{{ analysis.crop_type }}</td>
+                                                </tr>
+                                                <tr>
+                                                      <th>Plant Stage:</th>
+                                                      <td>{{ analysis.plant_stage|title or 'Not specified' }}</td>
+                                                </tr>
+                                                <tr>
+                                                      <th>Location:</th>
+                                                      <td>{{ analysis.location or 'Not specified' }}</td>
+                                                </tr>
+                                                <tr>
+                                                      <th>Urgency Level:</th>
+                                                      <td>
+                                                            <span
+                                                                  class="badge bg-{{ 'danger' if analysis.urgency_level == 'critical' else 'warning' if analysis.urgency_level == 'high' else 'info' }}">
+                                                                  {{ analysis.urgency_level|title or 'Medium' }}
+                                                            </span>
+                                                      </td>
+                                                </tr>
+                                          </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                          <table class="table table-sm table-borderless">
+                                                <tr>
+                                                      <th style="width: 150px;">Analysis Mode:</th>
+                                                      <td>
+                                                            <span class="badge bg-primary">{{
+                                                                  analysis.analysis_mode|title }}</span>
+                                                      </td>
+                                                </tr>
+                                                <tr>
+                                                      <th>AI Model:</th>
+                                                      <td>{{ analysis.ai_model_used or 'FarmLink AI' }}</td>
+                                                </tr>
+                                                <tr>
+                                                      <th>Status:</th>
+                                                      <td>
+                                                            <span
+                                                                  class="badge bg-{{ 'success' if analysis.analysis_status == 'completed' else 'warning' if analysis.analysis_status == 'pending' else 'danger' }}">
+                                                                  {{ analysis.analysis_status|title }}
+                                                            </span>
+                                                      </td>
+                                                </tr>
+                                                {% if crop %}
+                                                <tr>
+                                                      <th>Linked Crop:</th>
+                                                      <td>
+                                                            {% if crop.farmer_id == current_user.id %}
+                                                            <a href="{{ url_for('edit_crop', crop_id=crop.id) }}">
+                                                                  {{ crop.name }} - {{ crop.category }}
+                                                            </a>
+                                                            {% else %}
+                                                            {{ crop.name }} - {{ crop.category }}
+                                                            {% endif %}
+                                                      </td>
+                                                </tr>
+                                                {% endif %}
+                                          </table>
+                                    </div>
+                              </div>
+
+                              {% if analysis.symptoms_description %}
+                              <div class="mt-3">
+                                    <h6 class="fw-bold">Symptoms Described:</h6>
+                                    <p class="text-muted mb-0">{{ analysis.symptoms_description }}</p>
+                              </div>
+                              {% endif %}
+                        </div>
+                  </div>
+
+                  <div class="row">
+                        <!-- Left Column: Image and Identification -->
+                        <div class="col-lg-5">
+                              <!-- Plant Image -->
+                              {% if analysis.image_path %}
+                              <div class="card shadow-sm border-0 mb-4">
+                                    <div class="card-header bg-light">
+                                          <h6 class="mb-0">
+                                                <i class="fas fa-image me-2"></i>Plant Image
+                                          </h6>
+                                    </div>
+                                    <div class="card-body p-0">
+                                          <img src="{{ url_for('static', filename=analysis.image_path.replace('static/', '')) }}"
+                                                alt="Plant" class="img-fluid w-100" style="cursor: pointer;"
+                                                data-bs-toggle="modal" data-bs-target="#imageModal">
+                                    </div>
+                              </div>
+                              {% endif %}
+
+                              <!-- Identification Results -->
+                              <div class="card shadow-sm border-0 mb-4">
+                                    <div class="card-header bg-light">
+                                          <h6 class="mb-0">
+                                                <i class="fas fa-search me-2"></i>Identification Results
+                                          </h6>
+                                    </div>
+                                    <div class="card-body">
+                                          <div
+                                                class="alert alert-{{ 'danger' if analysis.severity_level == 'critical' else 'warning' if analysis.severity_level == 'high' else 'info' if analysis.severity_level == 'medium' else 'success' }} mb-3">
+                                                <h5 class="alert-heading mb-2">{{ analysis.identified_issue or 'Unknown
+                                                      Issue' }}</h5>
+                                                <p class="mb-2">
+                                                      <span class="badge bg-secondary me-2">{{ analysis.issue_type|title
+                                                            or 'Unknown' }}</span>
+                                                      <span
+                                                            class="badge bg-{{ 'danger' if analysis.severity_level == 'critical' else 'warning' if analysis.severity_level == 'high' else 'info' if analysis.severity_level == 'medium' else 'success' }}">
+                                                            {{ analysis.severity_level|title or 'Unknown' }} Severity
+                                                      </span>
+                                                </p>
+                                          </div>
+
+                                          <!-- Confidence Score Visualization -->
+                                          <div class="mb-3">
+                                                <div class="d-flex justify-content-between mb-2">
+                                                      <span class="fw-bold">Confidence Score</span>
+                                                      <span class="fw-bold">{{ analysis.confidence_score|round(1) or 0
+                                                            }}%</span>
+                                                </div>
+                                                <div class="progress" style="height: 25px;">
+                                                      <div class="progress-bar bg-{{ 'danger' if analysis.confidence_score < 50 else 'warning' if analysis.confidence_score < 75 else 'success' }}"
+                                                            role="progressbar"
+                                                            style="width: {{ analysis.confidence_score or 0 }}%"
+                                                            aria-valuenow="{{ analysis.confidence_score or 0 }}"
+                                                            aria-valuemin="0" aria-valuemax="100">
+                                                            {{ analysis.confidence_score|round(1) or 0 }}%
+                                                      </div>
+                                                </div>
+                                                <small class="text-muted">
+                                                      {% if analysis.confidence_score >= 75 %}
+                                                      High confidence - Diagnosis is likely accurate
+                                                      {% elif analysis.confidence_score >= 50 %}
+                                                      Moderate confidence - Consider additional verification
+                                                      {% else %}
+                                                      Low confidence - Consult with an expert
+                                                      {% endif %}
+                                                </small>
+                                          </div>
+                                    </div>
+                              </div>
+
+                              <!-- Alternative Diagnoses -->
+                              {% if additional_diagnoses %}
+                              <div class="card shadow-sm border-0 mb-4">
+                                    <div class="card-header bg-light">
+                                          <h6 class="mb-0">
+                                                <i class="fas fa-list-alt me-2"></i>Alternative Diagnoses
+                                          </h6>
+                                    </div>
+                                    <div class="card-body">
+                                          <div class="table-responsive">
+                                                <table class="table table-sm table-hover mb-0">
+                                                      <thead>
+                                                            <tr>
+                                                                  <th>Issue</th>
+                                                                  <th>Confidence</th>
+                                                            </tr>
+                                                      </thead>
+                                                      <tbody>
+                                                            {% for diagnosis in additional_diagnoses %}
+                                                            <tr>
+                                                                  <td>
+                                                                        <div class="fw-bold">{{ diagnosis.issue }}</div>
+                                                                        <small class="text-muted">{{
+                                                                              diagnosis.key_difference }}</small>
+                                                                  </td>
+                                                                  <td>
+                                                                        <span class="badge bg-secondary">{{
+                                                                              diagnosis.confidence|round(1) }}%</span>
+                                                                  </td>
+                                                            </tr>
+                                                            {% endfor %}
+                                                      </tbody>
+                                                </table>
+                                          </div>
+                                    </div>
+                              </div>
+                              {% endif %}
+                        </div>
+
+                        <!-- Right Column: Treatment Recommendations -->
+                        <div class="col-lg-7">
+                              <!-- Treatment Recommendations -->
+                              {% if treatment_recommendations %}
+                              <div class="card shadow-sm border-0 mb-4">
+                                    <div class="card-header bg-light">
+                                          <h6 class="mb-0">
+                                                <i class="fas fa-prescription-bottle-alt me-2"></i>Treatment
+                                                Recommendations
+                                          </h6>
+                                    </div>
+                                    <div class="card-body">
+                                          <!-- Immediate Actions -->
+                                          {% if treatment_recommendations.immediate_actions %}
+                                          <div class="accordion mb-3" id="treatmentAccordion">
+                                                <div class="accordion-item">
+                                                      <h2 class="accordion-header">
+                                                            <button class="accordion-button" type="button"
+                                                                  data-bs-toggle="collapse"
+                                                                  data-bs-target="#immediateActions">
+                                                                  <i class="fas fa-bolt text-danger me-2"></i>
+                                                                  <strong>Immediate Actions Required</strong>
+                                                            </button>
+                                                      </h2>
+                                                      <div id="immediateActions"
+                                                            class="accordion-collapse collapse show"
+                                                            data-bs-parent="#treatmentAccordion">
+                                                            <div class="accordion-body">
+                                                                  <ul class="list-unstyled mb-0">
+                                                                        {% for action in
+                                                                        treatment_recommendations.immediate_actions %}
+                                                                        <li class="mb-2">
+                                                                              <i
+                                                                                    class="fas fa-check-circle text-success me-2"></i>{{
+                                                                              action }}
+                                                                        </li>
+                                                                        {% endfor %}
+                                                                  </ul>
+                                                            </div>
+                                                      </div>
+                                                </div>
+
+                                                <!-- Organic Treatments -->
+                                                {% if treatment_recommendations.organic_treatments %}
+                                                <div class="accordion-item">
+                                                      <h2 class="accordion-header">
+                                                            <button class="accordion-button collapsed" type="button"
+                                                                  data-bs-toggle="collapse"
+                                                                  data-bs-target="#organicTreatments">
+                                                                  <i class="fas fa-leaf text-success me-2"></i>
+                                                                  <strong>Organic Treatment Options</strong>
+                                                            </button>
+                                                      </h2>
+                                                      <div id="organicTreatments" class="accordion-collapse collapse"
+                                                            data-bs-parent="#treatmentAccordion">
+                                                            <div class="accordion-body">
+                                                                  {% for treatment in
+                                                                  treatment_recommendations.organic_treatments %}
+                                                                  <div class="card mb-2">
+                                                                        <div class="card-body p-3">
+                                                                              <h6 class="card-title text-success mb-2">
+                                                                                    {{ treatment.name }}</h6>
+                                                                              <table
+                                                                                    class="table table-sm table-borderless mb-0">
+                                                                                    <tr>
+                                                                                          <th style="width: 100px;">
+                                                                                                Application:</th>
+                                                                                          <td>{{ treatment.application
+                                                                                                }}</td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                          <th>Dosage:</th>
+                                                                                          <td>{{ treatment.dosage }}
+                                                                                          </td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                          <th>Timing:</th>
+                                                                                          <td>{{ treatment.timing }}
+                                                                                          </td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                          <th>Cost:</th>
+                                                                                          <td>{{ treatment.cost_estimate
+                                                                                                or 'N/A' }}</td>
+                                                                                    </tr>
+                                                                              </table>
+                                                                              {% if treatment.precautions %}
+                                                                              <div
+                                                                                    class="alert alert-warning py-2 px-3 mb-0 mt-2">
+                                                                                    <small><i
+                                                                                                class="fas fa-exclamation-triangle me-1"></i>{{
+                                                                                          treatment.precautions
+                                                                                          }}</small>
+                                                                              </div>
+                                                                              {% endif %}
+                                                                        </div>
+                                                                  </div>
+                                                                  {% endfor %}
+                                                            </div>
+                                                      </div>
+                                                </div>
+                                                {% endif %}
+
+                                                <!-- Chemical Treatments -->
+                                                {% if treatment_recommendations.chemical_treatments %}
+                                                <div class="accordion-item">
+                                                      <h2 class="accordion-header">
+                                                            <button class="accordion-button collapsed" type="button"
+                                                                  data-bs-toggle="collapse"
+                                                                  data-bs-target="#chemicalTreatments">
+                                                                  <i class="fas fa-flask text-primary me-2"></i>
+                                                                  <strong>Chemical Treatment Options</strong>
+                                                            </button>
+                                                      </h2>
+                                                      <div id="chemicalTreatments" class="accordion-collapse collapse"
+                                                            data-bs-parent="#treatmentAccordion">
+                                                            <div class="accordion-body">
+                                                                  {% for treatment in
+                                                                  treatment_recommendations.chemical_treatments %}
+                                                                  <div class="card mb-2">
+                                                                        <div class="card-body p-3">
+                                                                              <h6 class="card-title text-primary mb-2">
+                                                                                    {{ treatment.name }}</h6>
+                                                                              <table
+                                                                                    class="table table-sm table-borderless mb-0">
+                                                                                    <tr>
+                                                                                          <th style="width: 100px;">
+                                                                                                Application:</th>
+                                                                                          <td>{{ treatment.application
+                                                                                                }}</td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                          <th>Dosage:</th>
+                                                                                          <td>{{ treatment.dosage }}
+                                                                                          </td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                          <th>Timing:</th>
+                                                                                          <td>{{ treatment.timing }}
+                                                                                          </td>
+                                                                                    </tr>
+                                                                                    <tr>
+                                                                                          <th>Cost:</th>
+                                                                                          <td>{{ treatment.cost_estimate
+                                                                                                or 'N/A' }}</td>
+                                                                                    </tr>
+                                                                              </table>
+                                                                              {% if treatment.precautions %}
+                                                                              <div
+                                                                                    class="alert alert-danger py-2 px-3 mb-0 mt-2">
+                                                                                    <small><i
+                                                                                                class="fas fa-exclamation-triangle me-1"></i>{{
+                                                                                          treatment.precautions
+                                                                                          }}</small>
+                                                                              </div>
+                                                                              {% endif %}
+                                                                        </div>
+                                                                  </div>
+                                                                  {% endfor %}
+                                                            </div>
+                                                      </div>
+                                                </div>
+                                                {% endif %}
+                                          </div>
+                                          {% endif %}
+                                    </div>
+                              </div>
+                              {% endif %}
+
+                              <!-- Preventive Measures -->
+                              {% if preventive_measures %}
+                              <div class="card shadow-sm border-0 mb-4">
+                                    <div class="card-header bg-light">
+                                          <h6 class="mb-0">
+                                                <i class="fas fa-shield-alt me-2"></i>Preventive Measures
+                                          </h6>
+                                    </div>
+                                    <div class="card-body">
+                                          <p class="text-muted small mb-3">Check off measures as you implement them:</p>
+                                          <div class="list-group">
+                                                {% for measure in preventive_measures %}
+                                                <label class="list-group-item">
+                                                      <input class="form-check-input me-2" type="checkbox"
+                                                            id="measure{{ loop.index }}">
+                                                      {{ measure }}
+                                                </label>
+                                                {% endfor %}
+                                          </div>
+                                    </div>
+                              </div>
+                              {% endif %}
+
+                              <!-- Regional Context -->
+                              {% if analysis.location %}
+                              <div class="card shadow-sm border-0 mb-4">
+                                    <div class="card-header bg-light">
+                                          <h6 class="mb-0">
+                                                <i class="fas fa-map-marker-alt me-2"></i>Regional Context
+                                          </h6>
+                                    </div>
+                                    <div class="card-body">
+                                          <p class="mb-2">
+                                                <strong>Location:</strong> {{ analysis.location }}
+                                          </p>
+                                          <p class="mb-2">
+                                                <strong>Season:</strong> {{ analysis.created_at.strftime('%B') }} ({{
+                                                'Monsoon' if analysis.created_at.month in [6,7,8,9] else 'Winter' if
+                                                analysis.created_at.month in [11,12,1,2] else 'Summer' }})
+                                          </p>
+                                          <div class="alert alert-info mb-0">
+                                                <small>
+                                                      <i class="fas fa-info-circle me-1"></i>
+                                                      This issue is common in your region during this season. Consult
+                                                      local agricultural extension services for region-specific advice.
+                                                </small>
+                                          </div>
+                                    </div>
+                              </div>
+                              {% endif %}
+
+                              <!-- Government Schemes -->
+                              <div class="card shadow-sm border-0 mb-4">
+                                    <div class="card-header bg-light">
+                                          <h6 class="mb-0">
+                                                <i class="fas fa-landmark me-2"></i>Government Support Programs
+                                          </h6>
+                                    </div>
+                                    <div class="card-body">
+                                          <ul class="list-unstyled mb-0">
+                                                <li class="mb-2">
+                                                      <i class="fas fa-check-circle text-success me-2"></i>
+                                                      <strong>National Mission for Sustainable Agriculture</strong> -
+                                                      Pest Management Component
+                                                </li>
+                                                <li class="mb-2">
+                                                      <i class="fas fa-check-circle text-success me-2"></i>
+                                                      <strong>Pradhan Mantri Fasal Bima Yojana</strong> - Crop Insurance
+                                                      Coverage
+                                                </li>
+                                                <li class="mb-0">
+                                                      <i class="fas fa-check-circle text-success me-2"></i>
+                                                      <strong>Krishi Vigyan Kendra (KVK)</strong> - Free Expert
+                                                      Consultation
+                                                </li>
+                                          </ul>
+                                    </div>
+                              </div>
+
+                              <!-- Action Buttons -->
+                              <div class="card shadow-sm border-0">
+                                    <div class="card-body">
+                                          <div class="d-grid gap-2">
+                                                <a href="{{ url_for('download_pest_analysis_pdf', analysis_id=analysis.id) }}"
+                                                      class="btn btn-primary btn-lg">
+                                                      <i class="fas fa-download me-2"></i>Download PDF Report
+                                                </a>
+                                                <a href="{{ url_for('pest_disease_analysis') }}"
+                                                      class="btn btn-success">
+                                                      <i class="fas fa-redo me-2"></i>Analyze Again
+                                                </a>
+                                                <a href="{{ url_for('pest_analysis_history') }}"
+                                                      class="btn btn-outline-secondary">
+                                                      <i class="fas fa-arrow-left me-2"></i>Back to History
+                                                </a>
+                                          </div>
+                                    </div>
+                              </div>
+                        </div>
+                  </div>
+            </div>
+      </div>
+</div>
+
+<!-- Image Lightbox Modal -->
+{% if analysis.image_path %}
+<div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                  <div class="modal-header">
+                        <h5 class="modal-title">Plant Image - Full View</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                  </div>
+                  <div class="modal-body text-center p-0">
+                        <img src="{{ url_for('static', filename=analysis.image_path.replace('static/', '')) }}"
+                              alt="Plant" class="img-fluid w-100">
+                  </div>
+            </div>
+      </div>
+</div>
+{% endif %}
+{% endblock %}

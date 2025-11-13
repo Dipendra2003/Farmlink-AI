@@ -1,0 +1,399 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - FarmLink AI{% endblock %}
+
+{% block extra_head %}
+<style>
+:root {
+    --primary-color: #2E7D32;
+    --primary-light: #4CAF50;
+    --primary-dark: #1B5E20;
+    --secondary-color: #FF6F00;
+    --success-color: #388E3C;
+    --warning-color: #F57C00;
+    --danger-color: #D32F2F;
+    --info-color: #1976D2;
+    --light-bg: #F1F8E9;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --card-hover-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    --border-radius: 12px;
+}
+
+body {
+    background: linear-gradient(135deg, #E8F5E8 0%, #F1F8E9 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.page-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    box-shadow: var(--card-shadow);
+}
+
+.detail-card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 2rem;
+}
+
+.card-header-custom {
+    background: var(--light-bg);
+    border-bottom: 1px solid #e9ecef;
+    padding: 1.5rem;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.crop-comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.crop-card {
+    background: var(--light-bg);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    position: relative;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.crop-card.winner {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, #E8F5E8, #F1F8E9);
+}
+
+.crop-card.winner::before {
+    content: "🏆 Best Choice";
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    background: var(--success-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.crop-name {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    text-transform: capitalize;
+}
+
+.comparison-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 8px;
+}
+
+.metric-label {
+    font-weight: 500;
+    color: var(--primary-dark);
+}
+
+.metric-value {
+    font-weight: bold;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.metric-excellent { background: #d4edda; color: #155724; }
+.metric-good { background: #d1ecf1; color: #0c5460; }
+.metric-average { background: #fff3cd; color: #856404; }
+.metric-poor { background: #f8d7da; color: #721c24; }
+
+.score-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+    margin: 0 auto 1rem;
+}
+
+.score-excellent { background: var(--success-color); }
+.score-good { background: var(--info-color); }
+.score-average { background: var(--warning-color); }
+.score-poor { background: var(--danger-color); }
+
+.recommendation-section {
+    background: var(--light-bg);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.breadcrumb-custom {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    padding: 1rem 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+    .crop-comparison-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .action-buttons .btn {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-3">
+                        <i class="fas fa-balance-scale me-3"></i>{{ title }}
+                    </h1>
+                    <p class="lead mb-0">Detailed comparison results from {{ comparison.created_at.strftime('%B %d, %Y') }}</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="{{ url_for('crop_comparison_history') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-arrow-left me-2"></i>Back to History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Breadcrumb -->
+        <nav class="breadcrumb-custom">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ url_for('crop_comparison') }}">Crop Comparison</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('crop_comparison_history') }}">History</a></li>
+                <li class="breadcrumb-item active">{{ ' vs '.join(crop_names) }}</li>
+            </ol>
+        </nav>
+
+        <!-- Comparison Summary -->
+        <div class="detail-card">
+            <div class="card-header-custom">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4 class="mb-0">
+                            <i class="fas fa-seedling me-2"></i>Comparison Summary
+                        </h4>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <span class="badge bg-primary">{{ comparison.comparison_factor or 'General' }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-calendar-alt me-2"></i>Analysis Date</h6>
+                        <p class="text-muted">{{ comparison.created_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-award me-2"></i>Best Recommendation</h6>
+                        {% if comparison.best_crop %}
+                            <p class="text-success fw-bold">{{ comparison.best_crop|title }}</p>
+                        {% else %}
+                            <p class="text-muted">Not specified</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Recommendation -->
+        {% if comparison.overall_recommendation %}
+        <div class="recommendation-section">
+            <h4 class="text-success mb-3">
+                <i class="fas fa-lightbulb me-2"></i>AI Recommendation
+            </h4>
+            <p class="mb-0">{{ comparison.overall_recommendation }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Detailed Comparison Results -->
+        {% if comparison_data.get('comparison', {}).get('crop_analysis') %}
+        <div class="detail-card">
+            <div class="card-header-custom">
+                <h4 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Detailed Analysis
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="crop-comparison-grid">
+                    {% for crop_data in comparison_data.comparison.crop_analysis %}
+                    {% set is_winner = crop_data.crop_name == comparison.best_crop %}
+                    {% set score = crop_data.get('score', 0) %}
+                    {% if score >= 80 %}
+                        {% set score_class = 'score-excellent' %}
+                    {% elif score >= 60 %}
+                        {% set score_class = 'score-good' %}
+                    {% elif score >= 40 %}
+                        {% set score_class = 'score-average' %}
+                    {% else %}
+                        {% set score_class = 'score-poor' %}
+                    {% endif %}
+                    
+                    <div class="crop-card {% if is_winner %}winner{% endif %}">
+                        <div class="score-circle {{ score_class }}">
+                            {{ score|round|int }}%
+                        </div>
+                        <div class="crop-name">{{ crop_data.crop_name|title }}</div>
+                        
+                        {% if crop_data.get('key_metrics') %}
+                            {% for key, value in crop_data.key_metrics.items() %}
+                            <div class="comparison-metric">
+                                <span class="metric-label">{{ key|replace('_', ' ')|title }}</span>
+                                <span class="metric-value metric-good">{{ value }}</span>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                        
+                        {% if crop_data.get('advantages') %}
+                        <div class="mt-3">
+                            <h6 class="text-success"><i class="fas fa-plus-circle me-1"></i>Advantages:</h6>
+                            <ul class="small text-muted">
+                                {% for advantage in crop_data.advantages %}
+                                <li>{{ advantage }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        {% if crop_data.get('disadvantages') %}
+                        <div class="mt-2">
+                            <h6 class="text-warning"><i class="fas fa-minus-circle me-1"></i>Disadvantages:</h6>
+                            <ul class="small text-muted">
+                                {% for disadvantage in crop_data.disadvantages %}
+                                <li>{{ disadvantage }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        {% if crop_data.get('recommendation') %}
+                        <div class="mt-3">
+                            <h6><i class="fas fa-lightbulb me-1"></i>Recommendation:</h6>
+                            <p class="small text-muted">{{ crop_data.recommendation }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Additional Insights -->
+        {% if comparison_data.get('comparison', {}).get('market_insights') or comparison_data.get('comparison', {}).get('risk_assessment') %}
+        <div class="detail-card">
+            <div class="card-header-custom">
+                <h4 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Additional Insights
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if comparison_data.comparison.get('market_insights') %}
+                <div class="mb-4">
+                    <h5 class="text-info"><i class="fas fa-chart-line me-2"></i>Market Insights</h5>
+                    <p>{{ comparison_data.comparison.market_insights }}</p>
+                </div>
+                {% endif %}
+                
+                {% if comparison_data.comparison.get('risk_assessment') %}
+                <div>
+                    <h5 class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Risk Assessment</h5>
+                    <p>{{ comparison_data.comparison.risk_assessment }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{{ url_for('download_crop_comparison', comparison_id=comparison.id) }}" 
+               class="btn btn-success btn-lg">
+                <i class="fas fa-download me-2"></i>Download Report
+            </a>
+            <a href="{{ url_for('crop_comparison') }}" 
+               class="btn btn-primary btn-lg">
+                <i class="fas fa-plus me-2"></i>New Comparison
+            </a>
+            <button onclick="shareComparison()" 
+                    class="btn btn-info btn-lg">
+                <i class="fas fa-share-alt me-2"></i>Share Results
+            </button>
+            <a href="{{ url_for('crop_comparison_history') }}" 
+               class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-arrow-left me-2"></i>Back to History
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function shareComparison() {
+    const shareText = `Check out this crop comparison from FarmLink AI!
+    
+Compared: {{ crop_names|join(' vs ') }}
+{% if comparison.best_crop %}Winner: {{ comparison.best_crop|title }}{% endif %}
+{% if comparison.comparison_factor %}Factor: {{ comparison.comparison_factor }}{% endif %}
+
+{% if comparison.overall_recommendation %}{{ comparison.overall_recommendation }}{% endif %}
+
+Generated by FarmLink AI - Smart farming decisions made easy!`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'FarmLink AI - Crop Comparison',
+            text: shareText,
+            url: window.location.href
+        }).catch(console.error);
+    } else {
+        navigator.clipboard.writeText(shareText).then(() => {
+            alert('Comparison results copied to clipboard!');
+        }).catch(() => {
+            prompt('Copy this text:', shareText);
+        });
+    }
+}
+</script>
+{% endblock %}

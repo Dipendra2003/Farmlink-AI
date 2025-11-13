@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Author Management - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="fas fa-user-edit me-2"></i>Author Management</h2>
+            <p class="text-muted">Manage content authors and their contributions</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-users me-2"></i>Total Authors</h5>
+                    <h2>{{ stats.total_authors }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-user-check me-2"></i>Active (Last 30 Days)</h5>
+                    <h2>{{ stats.active_authors }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Authors List -->
+    {% if authors.items %}
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Author</th>
+                            <th>Email</th>
+                            <th>Articles</th>
+                            <th>Total Views</th>
+                            <th>Total Likes</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for author, article_count, total_views, total_likes in authors.items %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle bg-primary text-white me-2">
+                                        {{ author.username[0]|upper }}
+                                    </div>
+                                    <div>
+                                        <strong>{{ author.username }}</strong>
+                                        {% if author.role == 'admin' %}
+                                        <span class="badge bg-danger ms-1">Admin</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ author.email }}</td>
+                            <td><span class="badge bg-primary">{{ article_count }}</span></td>
+                            <td>{{ total_views or 0 }}</td>
+                            <td>{{ total_likes or 0 }}</td>
+                            <td>{{ author.created_at.strftime('%Y-%m-%d') if author.created_at else 'N/A' }}</td>
+                            <td>
+                                <a href="{{ url_for('admin_author_articles', user_id=author.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-file-alt me-1"></i>View Articles
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if authors.pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if authors.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_authors', page=authors.prev_num) }}">Previous</a>
+            </li>
+            {% endif %}
+            
+            {% for page_num in authors.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    <li class="page-item {% if page_num == authors.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin_authors', page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if authors.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_authors', page=authors.next_num) }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>No authors found.
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+}
+</style>
+{% endblock %}

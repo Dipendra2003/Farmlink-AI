@@ -1,0 +1,503 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings - Admin - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-cog me-2"></i>System Settings
+            </h1>
+            <p class="lead text-muted">Configure and manage system-wide settings for FarmLink AI.</p>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Settings Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4" id="settingsTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general" type="button" role="tab">
+                <i class="fas fa-info-circle me-1"></i>General
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" type="button" role="tab">
+                <i class="fas fa-envelope me-1"></i>Email
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="payment-tab" data-bs-toggle="tab" data-bs-target="#payment" type="button" role="tab">
+                <i class="fas fa-credit-card me-1"></i>Payment
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab">
+                <i class="fas fa-shield-alt me-1"></i>Security
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="features-tab" data-bs-toggle="tab" data-bs-target="#features" type="button" role="tab">
+                <i class="fas fa-toggle-on me-1"></i>Features
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="settingsTabContent">
+        <!-- General Settings -->
+        <div class="tab-pane fade show active" id="general" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>General Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin_system_settings') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="category" value="general">
+                        
+                        <div class="mb-3">
+                            <label for="site_name" class="form-label fw-semibold">Site Name</label>
+                            <input type="text" class="form-control" id="site_name" name="site_name" 
+                                   value="{{ settings.get('site_name', 'FarmLink AI') }}" required>
+                            <small class="form-text text-muted">The name of your platform displayed across the site.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="site_tagline" class="form-label fw-semibold">Site Tagline</label>
+                            <input type="text" class="form-control" id="site_tagline" name="site_tagline" 
+                                   value="{{ settings.get('site_tagline', 'Connecting Farmers and Buyers') }}">
+                            <small class="form-text text-muted">A short description of your platform.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="contact_email" class="form-label fw-semibold">Contact Email</label>
+                            <input type="email" class="form-control" id="contact_email" name="contact_email" 
+                                   value="{{ settings.get('contact_email', 'farmlink76@gmail.com') }}" required>
+                            <small class="form-text text-muted">Primary contact email for support inquiries.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="contact_phone" class="form-label fw-semibold">Contact Phone</label>
+                            <input type="tel" class="form-control" id="contact_phone" name="contact_phone" 
+                                   value="{{ settings.get('contact_phone', '+91-7644868038') }}">
+                            <small class="form-text text-muted">Primary contact phone number.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="support_hours" class="form-label fw-semibold">Support Hours</label>
+                            <input type="text" class="form-control" id="support_hours" name="support_hours" 
+                                   value="{{ settings.get('support_hours', 'Mon-Fri: 9 AM - 6 PM IST') }}">
+                            <small class="form-text text-muted">Business hours for customer support.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="timezone" class="form-label fw-semibold">Timezone</label>
+                            <select class="form-select" id="timezone" name="timezone">
+                                <option value="Asia/Kolkata" {{ 'selected' if settings.get('timezone') == 'Asia/Kolkata' }}>Asia/Kolkata (IST)</option>
+                                <option value="UTC" {{ 'selected' if settings.get('timezone') == 'UTC' }}>UTC</option>
+                                <option value="America/New_York" {{ 'selected' if settings.get('timezone') == 'America/New_York' }}>America/New_York (EST)</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-1"></i>Save General Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Settings -->
+        <div class="tab-pane fade" id="email" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-envelope me-2"></i>Email Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin_system_settings') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="category" value="email">
+                        
+                        <div class="mb-3">
+                            <label for="mail_server" class="form-label fw-semibold">SMTP Server</label>
+                            <input type="text" class="form-control" id="mail_server" name="mail_server" 
+                                   value="{{ settings.get('mail_server', 'smtp.gmail.com') }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="mail_port" class="form-label fw-semibold">SMTP Port</label>
+                            <input type="number" class="form-control" id="mail_port" name="mail_port" 
+                                   value="{{ settings.get('mail_port', '587') }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="mail_username" class="form-label fw-semibold">SMTP Username</label>
+                            <input type="text" class="form-control" id="mail_username" name="mail_username" 
+                                   value="{{ settings.get('mail_username', '') }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="mail_use_tls" class="form-label fw-semibold">Use TLS</label>
+                            <select class="form-select" id="mail_use_tls" name="mail_use_tls">
+                                <option value="true" {{ 'selected' if settings.get('mail_use_tls', 'true') == 'true' }}>Yes</option>
+                                <option value="false" {{ 'selected' if settings.get('mail_use_tls') == 'false' }}>No</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="mail_default_sender" class="form-label fw-semibold">Default Sender Email</label>
+                            <input type="email" class="form-control" id="mail_default_sender" name="mail_default_sender" 
+                                   value="{{ settings.get('mail_default_sender', 'farmlink76@gmail.com') }}">
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> For security reasons, SMTP password must be configured in environment variables.
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>Save Email Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Settings -->
+        <div class="tab-pane fade" id="payment" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>Payment Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin_system_settings') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="category" value="payment">
+                        
+                        <div class="mb-3">
+                            <label for="payment_gateway" class="form-label fw-semibold">Payment Gateway</label>
+                            <select class="form-select" id="payment_gateway" name="payment_gateway">
+                                <option value="razorpay" {{ 'selected' if settings.get('payment_gateway', 'razorpay') == 'razorpay' }}>Razorpay</option>
+                                <option value="stripe" {{ 'selected' if settings.get('payment_gateway') == 'stripe' }}>Stripe</option>
+                                <option value="paypal" {{ 'selected' if settings.get('payment_gateway') == 'paypal' }}>PayPal</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="currency" class="form-label fw-semibold">Default Currency</label>
+                            <select class="form-select" id="currency" name="currency">
+                                <option value="INR" {{ 'selected' if settings.get('currency', 'INR') == 'INR' }}>INR (₹)</option>
+                                <option value="USD" {{ 'selected' if settings.get('currency') == 'USD' }}>USD ($)</option>
+                                <option value="EUR" {{ 'selected' if settings.get('currency') == 'EUR' }}>EUR (€)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="commission_rate" class="form-label fw-semibold">Platform Commission Rate (%)</label>
+                            <input type="number" class="form-control" id="commission_rate" name="commission_rate" 
+                                   value="{{ settings.get('commission_rate', '5') }}" min="0" max="100" step="0.1">
+                            <small class="form-text text-muted">Percentage commission charged on each transaction.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="min_order_amount" class="form-label fw-semibold">Minimum Order Amount</label>
+                            <input type="number" class="form-control" id="min_order_amount" name="min_order_amount" 
+                                   value="{{ settings.get('min_order_amount', '100') }}" min="0">
+                            <small class="form-text text-muted">Minimum order value required for checkout.</small>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Security:</strong> Payment gateway API keys must be configured in environment variables.
+                        </div>
+
+                        <button type="submit" class="btn btn-info text-white">
+                            <i class="fas fa-save me-1"></i>Save Payment Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Settings -->
+        <div class="tab-pane fade" id="security" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Security Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin_system_settings') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="category" value="security">
+                        
+                        <div class="mb-3">
+                            <label for="max_login_attempts" class="form-label fw-semibold">Max Login Attempts</label>
+                            <input type="number" class="form-control" id="max_login_attempts" name="max_login_attempts" 
+                                   value="{{ settings.get('max_login_attempts', '5') }}" min="1" max="10">
+                            <small class="form-text text-muted">Maximum failed login attempts before account lockout.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="lockout_duration" class="form-label fw-semibold">Lockout Duration (minutes)</label>
+                            <input type="number" class="form-control" id="lockout_duration" name="lockout_duration" 
+                                   value="{{ settings.get('lockout_duration', '30') }}" min="5" max="1440">
+                            <small class="form-text text-muted">Duration for which account remains locked after max attempts.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="session_timeout" class="form-label fw-semibold">Session Timeout (hours)</label>
+                            <input type="number" class="form-control" id="session_timeout" name="session_timeout" 
+                                   value="{{ settings.get('session_timeout', '24') }}" min="1" max="168">
+                            <small class="form-text text-muted">Automatic logout after period of inactivity.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password_min_length" class="form-label fw-semibold">Minimum Password Length</label>
+                            <input type="number" class="form-control" id="password_min_length" name="password_min_length" 
+                                   value="{{ settings.get('password_min_length', '8') }}" min="6" max="20">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="require_email_verification" class="form-label fw-semibold">Require Email Verification</label>
+                            <select class="form-select" id="require_email_verification" name="require_email_verification">
+                                <option value="true" {{ 'selected' if settings.get('require_email_verification', 'true') == 'true' }}>Yes</option>
+                                <option value="false" {{ 'selected' if settings.get('require_email_verification') == 'false' }}>No</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-save me-1"></i>Save Security Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Toggles -->
+        <div class="tab-pane fade" id="features" role="tabpanel">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-toggle-on me-2"></i>Feature Management</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('admin_system_settings') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="category" value="features">
+                        
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enable_marketplace" name="enable_marketplace" 
+                                       {{ 'checked' if settings.get('enable_marketplace', 'true') == 'true' }}>
+                                <label class="form-check-label fw-semibold" for="enable_marketplace">
+                                    Enable Marketplace
+                                </label>
+                                <small class="d-block text-muted">Allow users to browse and purchase crops.</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enable_expert_forum" name="enable_expert_forum" 
+                                       {{ 'checked' if settings.get('enable_expert_forum', 'true') == 'true' }}>
+                                <label class="form-check-label fw-semibold" for="enable_expert_forum">
+                                    Enable Expert Forum
+                                </label>
+                                <small class="d-block text-muted">Allow users to ask questions and share knowledge.</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enable_learning_hub" name="enable_learning_hub" 
+                                       {{ 'checked' if settings.get('enable_learning_hub', 'true') == 'true' }}>
+                                <label class="form-check-label fw-semibold" for="enable_learning_hub">
+                                    Enable Learning Hub
+                                </label>
+                                <small class="d-block text-muted">Provide educational articles and tutorials.</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enable_ai_features" name="enable_ai_features" 
+                                       {{ 'checked' if settings.get('enable_ai_features', 'true') == 'true' }}>
+                                <label class="form-check-label fw-semibold" for="enable_ai_features">
+                                    Enable AI Features
+                                </label>
+                                <small class="d-block text-muted">Crop suggestions, pest detection, and FarmLink assistant.</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enable_ratings" name="enable_ratings" 
+                                       {{ 'checked' if settings.get('enable_ratings', 'true') == 'true' }}>
+                                <label class="form-check-label fw-semibold" for="enable_ratings">
+                                    Enable Product Ratings
+                                </label>
+                                <small class="d-block text-muted">Allow buyers to rate products and sellers.</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="enable_messaging" name="enable_messaging" 
+                                       {{ 'checked' if settings.get('enable_messaging', 'true') == 'true' }}>
+                                <label class="form-check-label fw-semibold" for="enable_messaging">
+                                    Enable User Messaging
+                                </label>
+                                <small class="d-block text-muted">Allow direct communication between users.</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="maintenance_mode" name="maintenance_mode" 
+                                       {{ 'checked' if settings.get('maintenance_mode', 'false') == 'true' }}>
+                                <label class="form-check-label fw-semibold text-danger" for="maintenance_mode">
+                                    Maintenance Mode
+                                </label>
+                                <small class="d-block text-muted">Temporarily disable site access for maintenance.</small>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save me-1"></i>Save Feature Settings
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Tools & Information -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-tools me-2"></i>System Tools</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#testEmailModal">
+                            <i class="fas fa-envelope me-2"></i>Test Email Configuration
+                        </button>
+                        <a href="{{ url_for('admin_system_info') }}" class="btn btn-outline-info">
+                            <i class="fas fa-server me-2"></i>View System Information
+                        </a>
+                        <a href="{{ url_for('admin_view_logs') }}" class="btn btn-outline-warning">
+                            <i class="fas fa-file-alt me-2"></i>View Application Logs
+                        </a>
+                        <a href="{{ url_for('admin_api_settings') }}" class="btn btn-outline-success">
+                            <i class="fas fa-plug me-2"></i>API Configuration
+                        </a>
+                        <a href="{{ url_for('admin_settings_audit_log') }}" class="btn btn-outline-dark">
+                            <i class="fas fa-history me-2"></i>Settings Audit Log
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>System Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>Platform Version:</strong> 1.0.0</p>
+                            <p class="mb-2"><strong>Database:</strong> MySQL</p>
+                            <p class="mb-2"><strong>Last Settings Update:</strong> {{ last_updated or 'Never' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2"><strong>Total Users:</strong> {{ total_users or 0 }}</p>
+                            <p class="mb-2"><strong>Total Crops:</strong> {{ total_crops or 0 }}</p>
+                            <p class="mb-2"><strong>Total Orders:</strong> {{ total_orders or 0 }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Email Modal -->
+<div class="modal fade" id="testEmailModal" tabindex="-1" aria-labelledby="testEmailModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="testEmailModalLabel">
+                    <i class="fas fa-envelope me-2"></i>Test Email Configuration
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="testEmailForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label for="test_email" class="form-label">Send test email to:</label>
+                        <input type="email" class="form-control" id="test_email" name="test_email" 
+                               value="{{ current_user.email }}" required>
+                        <small class="form-text text-muted">A test email will be sent to this address.</small>
+                    </div>
+                    <div id="testEmailResult"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="sendTestEmail()">
+                    <i class="fas fa-paper-plane me-1"></i>Send Test Email
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function sendTestEmail() {
+    const form = document.getElementById('testEmailForm');
+    const formData = new FormData(form);
+    const resultDiv = document.getElementById('testEmailResult');
+    const btn = event.target;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
+    
+    fetch('{{ url_for("admin_test_email") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultDiv.innerHTML = `<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i>${data.message}</div>`;
+        } else {
+            resultDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>${data.message}</div>`;
+        }
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Send Test Email';
+    })
+    .catch(error => {
+        resultDiv.innerHTML = `<div class="alert alert-danger"><i class="fas fa-exclamation-circle me-2"></i>Error: ${error.message}</div>`;
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Send Test Email';
+    });
+}
+</script>
+
+{% endblock %}

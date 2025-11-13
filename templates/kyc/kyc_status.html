@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}KYC Status - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-id-card text-primary fa-3x mb-3"></i>
+                        <h2 class="fw-bold">KYC Verification Status</h2>
+                    </div>
+
+                    {% if kyc_record %}
+                        <!-- Status Badge -->
+                        <div class="text-center mb-4">
+                            {% if kyc_record.status == 'pending' %}
+                                <div class="alert alert-warning d-inline-block px-5 py-3">
+                                    <i class="fas fa-clock fa-2x mb-2"></i>
+                                    <h4 class="mb-0">Under Review</h4>
+                                </div>
+                            {% elif kyc_record.status == 'verified' %}
+                                <div class="alert alert-success d-inline-block px-5 py-3">
+                                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                                    <h4 class="mb-0">Verified</h4>
+                                </div>
+                            {% elif kyc_record.status == 'rejected' %}
+                                <div class="alert alert-danger d-inline-block px-5 py-3">
+                                    <i class="fas fa-times-circle fa-2x mb-2"></i>
+                                    <h4 class="mb-0">Rejected</h4>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Status Details -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">Application Details</h5>
+                                
+                                <div class="row mb-2">
+                                    <div class="col-6 text-muted">Submitted On:</div>
+                                    <div class="col-6 text-end fw-semibold">
+                                        {{ kyc_record.created_at.strftime('%B %d, %Y') }}
+                                    </div>
+                                </div>
+
+                                {% if kyc_record.status == 'verified' and kyc_record.verified_at %}
+                                    <div class="row mb-2">
+                                        <div class="col-6 text-muted">Verified On:</div>
+                                        <div class="col-6 text-end fw-semibold">
+                                            {{ kyc_record.verified_at.strftime('%B %d, %Y') }}
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                {% if kyc_record.status == 'rejected' and kyc_record.verified_at %}
+                                    <div class="row mb-2">
+                                        <div class="col-6 text-muted">Reviewed On:</div>
+                                        <div class="col-6 text-end fw-semibold">
+                                            {{ kyc_record.verified_at.strftime('%B %d, %Y') }}
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                <div class="row">
+                                    <div class="col-6 text-muted">Status:</div>
+                                    <div class="col-6 text-end">
+                                        {% if kyc_record.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">Pending Review</span>
+                                        {% elif kyc_record.status == 'verified' %}
+                                            <span class="badge bg-success">Verified</span>
+                                        {% elif kyc_record.status == 'rejected' %}
+                                            <span class="badge bg-danger">Rejected</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status-specific messages -->
+                        {% if kyc_record.status == 'pending' %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Your KYC is under review.</strong><br>
+                                Our team typically reviews applications within 2-3 business days. You will be notified via email once your verification is complete.
+                            </div>
+                        {% elif kyc_record.status == 'verified' %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Congratulations! Your identity is verified.</strong><br>
+                                You can now list crops for sale and access all seller features on FarmLink AI.
+                            </div>
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('add_crop') }}" class="btn btn-success btn-lg">
+                                    <i class="fas fa-plus-circle me-2"></i>List Your First Crop
+                                </a>
+                                <a href="{{ url_for('farmer_dashboard') }}" class="btn btn-outline-primary">
+                                    Go to Dashboard
+                                </a>
+                            </div>
+                        {% elif kyc_record.status == 'rejected' %}
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>Your KYC verification was rejected.</strong>
+                            </div>
+                            
+                            {% if kyc_record.rejection_reason %}
+                                <div class="card border-danger mb-4">
+                                    <div class="card-header bg-danger text-white">
+                                        <strong>Rejection Reason:</strong>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="mb-0">{{ kyc_record.rejection_reason }}</p>
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Please review the rejection reason above and resubmit your KYC with correct documents.
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('kyc_resubmit') }}" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-redo me-2"></i>Resubmit KYC
+                                </a>
+                                <a href="{{ url_for('farmer_dashboard') }}" class="btn btn-outline-secondary">
+                                    Back to Dashboard
+                                </a>
+                            </div>
+                        {% endif %}
+
+                        {% if kyc_record.status == 'pending' %}
+                            <div class="d-grid mt-4">
+                                <a href="{{ url_for('farmer_dashboard') }}" class="btn btn-outline-primary">
+                                    Back to Dashboard
+                                </a>
+                            </div>
+                        {% endif %}
+
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            You have not submitted KYC yet. Please complete your verification to start selling.
+                        </div>
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('seller_kyc') }}" class="btn btn-primary btn-lg">
+                                Submit KYC Now
+                            </a>
+                            <a href="{{ url_for('farmer_dashboard') }}" class="btn btn-outline-secondary">
+                                Back to Dashboard
+                            </a>
+                        </div>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="card mt-4 border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="fas fa-question-circle me-2"></i>Need Help?</h6>
+                    <p class="card-text small text-muted mb-2">
+                        If you have questions about the KYC verification process, please contact our support team.
+                    </p>
+                    <a href="{{ url_for('contact') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-envelope me-1"></i>Contact Support
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,573 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-cog me-2"></i>Admin Dashboard
+            </h1>
+            <p class="lead text-muted">System overview and management tools.</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <!-- Auto-refresh Controls -->
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary" id="refreshBtn" title="Refresh Now">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" title="Auto-refresh Settings">
+                    <i class="fas fa-clock"></i> <span id="refreshIntervalText">30s</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><h6 class="dropdown-header">Auto-refresh Interval</h6></li>
+                    <li><a class="dropdown-item" href="#" data-interval="0">Off</a></li>
+                    <li><a class="dropdown-item active" href="#" data-interval="30">30 seconds</a></li>
+                    <li><a class="dropdown-item" href="#" data-interval="60">1 minute</a></li>
+                    <li><a class="dropdown-item" href="#" data-interval="300">5 minutes</a></li>
+                </ul>
+            </div>
+            <button type="button" class="btn btn-outline-secondary ms-2" id="customizeBtn" title="Customize Dashboard">
+                <i class="fas fa-sliders-h"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-5" id="statsCards">
+        <div class="col-md-2 widget-card" data-widget="total_users">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-2x mb-2"></i>
+                    <h3 class="fw-bold" id="stat-total_users">{{ total_users }}</h3>
+                    <p class="card-title mb-0">Total Users</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-2 widget-card" data-widget="total_farmers">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-user-tie fa-2x mb-2"></i>
+                    <h3 class="fw-bold" id="stat-total_farmers">{{ total_farmers }}</h3>
+                    <p class="card-title mb-0">Farmers</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-2 widget-card" data-widget="total_buyers">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-shopping-bag fa-2x mb-2"></i>
+                    <h3 class="fw-bold" id="stat-total_buyers">{{ total_buyers }}</h3>
+                    <p class="card-title mb-0">Buyers</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-2 widget-card" data-widget="total_crops">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-wheat-awn fa-2x mb-2"></i>
+                    <h3 class="fw-bold" id="stat-total_crops">{{ total_crops }}</h3>
+                    <p class="card-title mb-0">Total Crops</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-2 widget-card" data-widget="total_orders">
+            <div class="card bg-secondary text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                    <h3 class="fw-bold" id="stat-total_orders">{{ total_orders }}</h3>
+                    <p class="card-title mb-0">Total Orders</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-2 widget-card" data-widget="pending_orders">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h3 class="fw-bold" id="stat-pending_orders">{{ pending_orders }}</h3>
+                    <p class="card-title mb-0">Pending Orders</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KYC Statistics -->
+    {% if kyc_stats %}
+    <div class="row g-4 mb-5">
+        <div class="col-12">
+            <h5 class="text-muted mb-3">
+                <i class="fas fa-id-card me-2"></i>KYC Verification Status
+            </h5>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-warning h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                    <h3 class="fw-bold text-warning">{{ kyc_stats.pending }}</h3>
+                    <p class="card-title mb-0">Pending KYC</p>
+                    <a href="{{ url_for('admin_kyc_verification', status='pending') }}" class="btn btn-sm btn-outline-warning mt-2">
+                        Review Now
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-success h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <h3 class="fw-bold text-success">{{ kyc_stats.verified }}</h3>
+                    <p class="card-title mb-0">Verified Sellers</p>
+                    <a href="{{ url_for('admin_kyc_verification', status='verified') }}" class="btn btn-sm btn-outline-success mt-2">
+                        View All
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-danger h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                    <h3 class="fw-bold text-danger">{{ kyc_stats.rejected }}</h3>
+                    <p class="card-title mb-0">Rejected KYC</p>
+                    <a href="{{ url_for('admin_kyc_verification', status='rejected') }}" class="btn btn-sm btn-outline-danger mt-2">
+                        View All
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin_users') }}" class="btn btn-primary w-100 py-3">
+                                <i class="fas fa-users fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">Manage Users</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin_crops') }}" class="btn btn-success w-100 py-3">
+                                <i class="fas fa-wheat-awn fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">Manage Crops</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin_orders') }}" class="btn btn-warning w-100 py-3">
+                                <i class="fas fa-shopping-cart fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">Manage Orders</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('marketplace') }}" class="btn btn-outline-success w-100 py-3">
+                                <i class="fas fa-store fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">View Marketplace</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin_learning_hub_moderation') }}" class="btn btn-info w-100 py-3">
+                                <i class="fas fa-shield-alt fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">Learning Hub Moderation</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin_system_settings') }}" class="btn btn-secondary w-100 py-3">
+                                <i class="fas fa-cog fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">System Settings</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin_analytics_dashboard') }}" class="btn btn-primary w-100 py-3">
+                                <i class="fas fa-chart-line fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">Analytics Dashboard</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('admin_kyc_verification') }}" class="btn btn-warning w-100 py-3">
+                                <i class="fas fa-id-card fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">KYC Verification</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Users -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-users me-2"></i>Recent Users
+                    </h5>
+                    <a href="{{ url_for('admin_users') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_users %}
+                        {% for user in recent_users %}
+                        <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                            <img src="https://ui-avatars.com/api/?name={{ user.full_name }}&background=28a745&color=fff&size=40" 
+                                 class="rounded-circle me-3" width="40" height="40" alt="Profile">
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">{{ user.full_name }}</div>
+                                <small class="text-muted">{{ user.email }}</small>
+                                <div class="small">
+                                    <span class="badge bg-{{ 'success' if user.role == 'farmer' else 'info' if user.role == 'buyer' else 'warning' }}">
+                                        {{ user.role.title() }}
+                                    </span>
+                                    {% if not user.is_active %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No users found</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Crops -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-wheat-awn me-2"></i>Recent Crops
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_crops %}
+                        {% for crop in recent_crops %}
+                        <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                            <img src="{{ crop.image_url or 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&q=60' }}" 
+                                 class="rounded me-3" width="40" height="40" style="object-fit: cover;" alt="{{ crop.name }}">
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">{{ crop.name }}</div>
+                                <small class="text-muted">by {{ crop.farmer.full_name }}</small>
+                                <div class="small">
+                                    <span class="text-success">{{ format_currency(crop.price_per_unit) }}/{{ crop.unit }}</span>
+                                    <span class="badge bg-{{ 'success' if crop.status == 'available' else 'danger' if crop.status == 'sold' else 'warning' }}">
+                                        {{ crop.status.title() }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No crops found</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shopping-cart me-2"></i>Recent Orders
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_orders %}
+                        {% for order in recent_orders %}
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                            <div>
+                                <div class="fw-bold">{{ order.crop.name }}</div>
+                                <small class="text-muted">{{ order.buyer.full_name }} → {{ order.farmer_user.full_name }}</small>
+                                <div class="small">
+                                    <span class="badge {{ get_order_status_badge_class(order.status) }}">
+                                        {{ order.status.title() }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">{{ format_currency(order.total_amount) }}</div>
+                                <small class="text-muted">{{ order.quantity_requested }} {{ order.crop.unit }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">No orders found</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health -->
+    <div class="row widget-card" data-widget="system_health">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-heartbeat me-2"></i>System Health
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center p-3 border rounded">
+                                <i class="fas fa-database fa-2x text-success mb-2"></i>
+                                <h6>Database</h6>
+                                <span class="badge bg-success">Healthy</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 border rounded">
+                                <i class="fas fa-server fa-2x text-success mb-2"></i>
+                                <h6>Server</h6>
+                                <span class="badge bg-success">Running</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 border rounded">
+                                <i class="fas fa-cloud fa-2x text-warning mb-2"></i>
+                                <h6>Weather API</h6>
+                                <span class="badge bg-warning">Demo Mode</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 border rounded">
+                                <i class="fas fa-users fa-2x text-success mb-2"></i>
+                                <h6>Active Users</h6>
+                                <span class="badge bg-success" id="stat-active_users">{{ total_users }} Online</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Widget Customization Modal -->
+<div class="modal fade" id="customizeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-sliders-h me-2"></i>Customize Dashboard</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Toggle widgets to show/hide on your dashboard:</p>
+                <div class="list-group">
+                    <label class="list-group-item">
+                        <input class="form-check-input me-2" type="checkbox" value="total_users" checked>
+                        Total Users Card
+                    </label>
+                    <label class="list-group-item">
+                        <input class="form-check-input me-2" type="checkbox" value="total_farmers" checked>
+                        Farmers Card
+                    </label>
+                    <label class="list-group-item">
+                        <input class="form-check-input me-2" type="checkbox" value="total_buyers" checked>
+                        Buyers Card
+                    </label>
+                    <label class="list-group-item">
+                        <input class="form-check-input me-2" type="checkbox" value="total_crops" checked>
+                        Total Crops Card
+                    </label>
+                    <label class="list-group-item">
+                        <input class="form-check-input me-2" type="checkbox" value="total_orders" checked>
+                        Total Orders Card
+                    </label>
+                    <label class="list-group-item">
+                        <input class="form-check-input me-2" type="checkbox" value="pending_orders" checked>
+                        Pending Orders Card
+                    </label>
+                    <label class="list-group-item">
+                        <input class="form-check-input me-2" type="checkbox" value="system_health" checked>
+                        System Health Panel
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveCustomization">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Admin Dashboard Auto-Refresh and Customization
+(function() {
+    let refreshInterval = 30; // seconds
+    let refreshTimer = null;
+    let lastUpdate = null;
+
+    // Load saved preferences
+    function loadPreferences() {
+        const savedInterval = localStorage.getItem('adminDashboardRefreshInterval');
+        if (savedInterval !== null) {
+            refreshInterval = parseInt(savedInterval);
+            updateRefreshUI();
+        }
+
+        const hiddenWidgets = JSON.parse(localStorage.getItem('adminDashboardHiddenWidgets') || '[]');
+        hiddenWidgets.forEach(widget => {
+            const element = document.querySelector(`[data-widget="${widget}"]`);
+            if (element) element.style.display = 'none';
+        });
+    }
+
+    // Update refresh interval UI
+    function updateRefreshUI() {
+        const text = refreshInterval === 0 ? 'Off' : 
+                     refreshInterval < 60 ? `${refreshInterval}s` : 
+                     `${refreshInterval / 60}m`;
+        document.getElementById('refreshIntervalText').textContent = text;
+        
+        // Update active state in dropdown
+        document.querySelectorAll('.dropdown-menu a').forEach(item => {
+            item.classList.remove('active');
+            if (parseInt(item.dataset.interval) === refreshInterval) {
+                item.classList.add('active');
+            }
+        });
+    }
+
+    // Fetch and update dashboard stats
+    async function refreshDashboard() {
+        const refreshBtn = document.getElementById('refreshBtn');
+        const icon = refreshBtn.querySelector('i');
+        
+        try {
+            icon.classList.add('fa-spin');
+            
+            const response = await fetch('/api/admin/dashboard/stats');
+            const data = await response.json();
+            
+            if (data.success) {
+                // Update stats cards
+                Object.entries(data.stats).forEach(([key, value]) => {
+                    const element = document.getElementById(`stat-${key}`);
+                    if (element) {
+                        // Animate value change
+                        if (element.textContent !== value.toString()) {
+                            element.style.transition = 'all 0.3s';
+                            element.style.transform = 'scale(1.1)';
+                            element.textContent = value;
+                            setTimeout(() => {
+                                element.style.transform = 'scale(1)';
+                            }, 300);
+                        }
+                    }
+                });
+                
+                lastUpdate = new Date(data.timestamp);
+                
+                // Show success toast
+                showToast('Dashboard updated successfully', 'success');
+            }
+        } catch (error) {
+            console.error('Error refreshing dashboard:', error);
+            showToast('Failed to refresh dashboard', 'error');
+        } finally {
+            icon.classList.remove('fa-spin');
+        }
+    }
+
+    // Start auto-refresh
+    function startAutoRefresh() {
+        stopAutoRefresh();
+        if (refreshInterval > 0) {
+            refreshTimer = setInterval(refreshDashboard, refreshInterval * 1000);
+        }
+    }
+
+    // Stop auto-refresh
+    function stopAutoRefresh() {
+        if (refreshTimer) {
+            clearInterval(refreshTimer);
+            refreshTimer = null;
+        }
+    }
+
+    // Show toast notification
+    function showToast(message, type = 'info') {
+        // Simple toast implementation
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed top-0 end-0 m-3`;
+        toast.style.zIndex = '9999';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Event listeners
+    document.getElementById('refreshBtn').addEventListener('click', refreshDashboard);
+
+    document.querySelectorAll('.dropdown-menu a').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+            refreshInterval = parseInt(e.target.dataset.interval);
+            localStorage.setItem('adminDashboardRefreshInterval', refreshInterval);
+            updateRefreshUI();
+            startAutoRefresh();
+        });
+    });
+
+    document.getElementById('customizeBtn').addEventListener('click', () => {
+        const modal = new bootstrap.Modal(document.getElementById('customizeModal'));
+        
+        // Load current widget visibility
+        const hiddenWidgets = JSON.parse(localStorage.getItem('adminDashboardHiddenWidgets') || '[]');
+        document.querySelectorAll('#customizeModal input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = !hiddenWidgets.includes(checkbox.value);
+        });
+        
+        modal.show();
+    });
+
+    document.getElementById('saveCustomization').addEventListener('click', () => {
+        const hiddenWidgets = [];
+        document.querySelectorAll('#customizeModal input[type="checkbox"]').forEach(checkbox => {
+            const widget = checkbox.value;
+            const element = document.querySelector(`[data-widget="${widget}"]`);
+            
+            if (checkbox.checked) {
+                if (element) element.style.display = '';
+            } else {
+                if (element) element.style.display = 'none';
+                hiddenWidgets.push(widget);
+            }
+        });
+        
+        localStorage.setItem('adminDashboardHiddenWidgets', JSON.stringify(hiddenWidgets));
+        bootstrap.Modal.getInstance(document.getElementById('customizeModal')).hide();
+        showToast('Dashboard customization saved', 'success');
+    });
+
+    // Initialize
+    loadPreferences();
+    startAutoRefresh();
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', stopAutoRefresh);
+})();
+</script>
+{% endblock %}

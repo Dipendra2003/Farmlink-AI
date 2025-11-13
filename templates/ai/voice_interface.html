@@ -1,0 +1,3181 @@
+{% extends "base.html" %}
+
+{% block title %}FarmLink AI Assistant{% endblock %}
+
+{% block extra_head %}
+<meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        overflow: hidden;
+    }
+
+    .app-container {
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background: #343541;
+        transition: background 0.3s ease;
+    }
+
+    /* ========== THEME VARIABLES ========== */
+    :root {
+        --sidebar-bg: #202123;
+        --sidebar-border: #000;
+        --main-bg: #343541;
+        --message-user-bg: #343541;
+        --message-ai-bg: #444654;
+        --input-bg: #40414f;
+        --text-primary: #ececf1;
+        --text-secondary: #acacbe;
+        --accent-color: #10a37f;
+        --hover-bg: #2a2b32;
+    }
+
+    .app-container.farmlink-theme {
+        --sidebar-bg: linear-gradient(180deg, #1a5d3a 0%, #0f3a1f 100%);
+        --sidebar-border: #0f3a1f;
+        --main-bg: #f5faf7;
+        --message-user-bg: #e3f2e8;
+        --message-ai-bg: #ffffff;
+        --input-bg: #ffffff;
+        --text-primary: #1a1a1a;
+        --text-secondary: #555555;
+        --accent-color: #28a745;
+        --hover-bg: #2d5f3f;
+    }
+
+    .farmlink-theme .message-avatar {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .farmlink-theme .user-message .message-avatar {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+
+    .farmlink-theme .ai-message .message-avatar {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    }
+
+    .farmlink-theme .empty-icon {
+        filter: drop-shadow(0 4px 8px rgba(40, 167, 69, 0.3));
+    }
+
+    .farmlink-theme .input-btn {
+        color: #666;
+    }
+
+    .farmlink-theme .input-btn:hover:not(:disabled) {
+        background: #f0f0f0;
+        color: #28a745;
+    }
+
+    .app-container.farmlink-theme {
+        background: var(--main-bg);
+    }
+
+    /* ========== SIDEBAR ========== */
+    .sidebar {
+        width: 260px;
+        background: #202123;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid #000;
+        transition: all 0.3s ease;
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        z-index: 1002;
+    }
+
+    body.farmlink-theme .sidebar,
+    .farmlink-theme .sidebar {
+        background: linear-gradient(180deg, #1a5d3a 0%, #0f3a1f 100%) !important;
+        border-right: 1px solid #0f3a1f !important;
+    }
+
+    /* Desktop - sidebar visible and positioned */
+    @media (min-width: 769px) {
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            transition: left 0.3s ease;
+        }
+
+        .sidebar.closed {
+            left: -260px;
+        }
+
+        .app-container {
+            padding-left: 260px;
+            transition: padding-left 0.3s ease;
+        }
+
+        .app-container.sidebar-closed {
+            padding-left: 0;
+        }
+    }
+
+    /* Mobile sidebar - hidden by default */
+    @media (max-width: 768px) {
+        .sidebar {
+            position: fixed;
+            left: -260px;
+            top: 0;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .app-container {
+            padding-left: 0;
+        }
+    }
+
+    .sidebar-header {
+        padding: 80px 8px 8px 8px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        position: relative;
+    }
+
+    /* Mobile sidebar header - add extra top padding for mobile menu */
+    @media (max-width: 768px) {
+        .sidebar-header {
+            padding-top: 80px;
+        }
+    }
+
+    .sidebar-close-btn {
+        display: none;
+        position: absolute;
+        top: 80px;
+        right: 8px;
+        width: 36px;
+        height: 36px;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.2s;
+        z-index: 10;
+    }
+
+    .sidebar-close-btn:hover {
+        background: #2a2b32;
+    }
+
+    .sidebar-close-btn:active {
+        transform: scale(0.95);
+    }
+
+    /* Desktop - hide close button, use toggle button instead */
+    @media (min-width: 769px) {
+        .sidebar-close-btn {
+            display: none !important;
+        }
+    }
+
+    .new-chat-btn {
+        flex: 1;
+        width: 100%;
+        padding: 12px 14px;
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #fff;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .new-chat-btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .new-chat-btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .new-chat-btn:hover {
+        background: #2a2b32;
+        border-color: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px);
+    }
+
+    .new-chat-btn:active {
+        transform: translateY(0);
+    }
+
+    .new-chat-btn i {
+        font-size: 16px;
+    }
+
+    .chat-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .chat-item {
+        padding: 10px 12px;
+        margin: 2px 0;
+        border-radius: 6px;
+        cursor: pointer;
+        color: #ececf1;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: visible;
+        min-height: 44px;
+    }
+
+    .chat-title {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .chat-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 3px;
+        background: var(--accent-color);
+        transform: scaleY(0);
+        transition: transform 0.2s ease;
+    }
+
+    .chat-item:hover {
+        background: #2a2b32;
+        padding-left: 16px;
+    }
+
+    .chat-item:hover::before {
+        transform: scaleY(1);
+    }
+
+    .chat-item.active {
+        background: #343541;
+        padding-left: 16px;
+    }
+
+    .chat-item.active::before {
+        transform: scaleY(1);
+    }
+
+    .chat-item i {
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .chat-item span {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .chat-item-actions {
+        display: none;
+        gap: 4px;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    .chat-item:hover .chat-item-actions {
+        display: flex;
+    }
+
+    /* Show actions on mobile/tablet always */
+    @media (max-width: 1024px) {
+        .chat-item-actions {
+            display: flex !important;
+            opacity: 0.7;
+        }
+
+        .chat-item:active .chat-item-actions {
+            opacity: 1;
+        }
+    }
+
+    .chat-action-btn {
+        background: transparent;
+        border: none;
+        color: #acacbe;
+        padding: 6px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.2s;
+        min-width: 32px;
+        min-height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 10;
+        pointer-events: auto;
+    }
+
+    .chat-action-btn:hover {
+        background: #40414f;
+        color: #fff;
+    }
+
+    .chat-action-btn:active {
+        transform: scale(0.95);
+        background: #40414f;
+    }
+
+    @media (max-width: 1024px) {
+        .chat-action-btn {
+            padding: 8px 10px;
+            min-width: 40px;
+            min-height: 40px;
+            font-size: 14px;
+            background: rgba(64, 65, 79, 0.5);
+        }
+
+        .chat-action-btn:active {
+            background: #40414f;
+        }
+    }
+
+    .chat-edit-input {
+        flex: 1;
+        background: #40414f;
+        border: 1px solid var(--accent-color);
+        color: #fff;
+        padding: 6px 8px;
+        border-radius: 4px;
+        font-size: 13px;
+        outline: none;
+    }
+
+    .sidebar-footer {
+        padding: 8px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        position: relative;
+        z-index: 1;
+    }
+
+    .sidebar-btn {
+        width: 100%;
+        padding: 10px 12px;
+        background: transparent;
+        border: none;
+        color: #ececf1;
+        text-align: left;
+        cursor: pointer;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        transition: background 0.2s;
+        position: relative;
+        z-index: 1;
+        pointer-events: auto;
+    }
+
+    .sidebar-btn:hover {
+        background: var(--hover-bg);
+    }
+
+    .sidebar-btn:active {
+        background: var(--hover-bg);
+    }
+
+    .sidebar-btn i {
+        font-size: 16px;
+        width: 20px;
+    }
+
+    .farmlink-theme .sidebar-btn {
+        color: #fff;
+    }
+
+    .farmlink-theme .sidebar-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .farmlink-theme .new-chat-btn {
+        border-color: rgba(255, 255, 255, 0.3);
+        color: #fff;
+    }
+
+    .farmlink-theme .new-chat-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .farmlink-theme .chat-item {
+        color: #fff;
+    }
+
+    .farmlink-theme .chat-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .farmlink-theme .chat-item.active {
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .farmlink-theme .sidebar-footer {
+        border-top-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* ========== MAIN AREA ========== */
+    .main-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--main-bg);
+        padding-top: 70px;
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        min-width: 0;
+        overflow-x: hidden;
+    }
+
+    /* Desktop - add padding for navbar */
+    @media (min-width: 769px) {
+        .main-area {
+            padding-top: 70px;
+        }
+    }
+
+    /* Mobile - add padding for mobile header */
+    @media (max-width: 768px) {
+        .main-area {
+            padding-top: 130px;
+        }
+    }
+
+    .chat-container {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        padding-top: 20px;
+    }
+
+    .messages-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
+        padding: 20px 0;
+    }
+
+    .messages-wrapper:has(.message-group) {
+        justify-content: flex-start;
+    }
+
+    .messages-wrapper:has(.empty-state) {
+        justify-content: center;
+    }
+
+    /* ========== EMPTY STATE ========== */
+    .empty-state {
+        max-width: 900px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: calc(100vh - 200px);
+        text-align: center;
+        padding: 60px 20px 40px;
+    }
+
+    .empty-icon {
+        font-size: 72px;
+        margin-bottom: 24px;
+        opacity: 0.9;
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0px);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    .empty-title {
+        font-size: 36px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 16px;
+        letter-spacing: -0.5px;
+    }
+
+    .empty-subtitle {
+        font-size: 18px;
+        color: var(--text-secondary);
+        margin-bottom: 48px;
+        max-width: 600px;
+    }
+
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        width: 100%;
+        max-width: 900px;
+    }
+
+    .quick-action-card {
+        background: var(--message-ai-bg);
+        padding: 20px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        text-align: left;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .quick-action-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, var(--accent-color) 0%, transparent 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .quick-action-card:hover {
+        border-color: var(--accent-color);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .quick-action-card:hover::before {
+        opacity: 0.05;
+    }
+
+    .quick-action-card:active {
+        transform: translateY(-2px);
+    }
+
+    .quick-action-icon {
+        font-size: 32px;
+        margin-bottom: 12px;
+        display: block;
+        transition: transform 0.3s ease;
+        position: relative;
+        z-index: 1;
+    }
+
+    .quick-action-card:hover .quick-action-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .quick-action-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 6px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .quick-action-desc {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        position: relative;
+        z-index: 1;
+    }
+
+    .farmlink-theme .quick-action-card {
+        background: #fff;
+        border-color: #d0d0d0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .farmlink-theme .quick-action-card:hover {
+        box-shadow: 0 8px 24px rgba(40, 167, 69, 0.15);
+    }
+
+    /* ========== MESSAGES ========== */
+    .message-group {
+        width: 100%;
+        max-width: 900px;
+        margin-bottom: 0;
+    }
+
+    .message-group:first-child {
+        margin-top: 20px;
+    }
+
+    .message {
+        padding: 24px;
+        display: flex;
+        gap: 24px;
+        width: 100%;
+        animation: slideIn 0.3s ease-out;
+        opacity: 0;
+        animation-fill-mode: forwards;
+        align-items: flex-start;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .message.user-message {
+        background: var(--message-user-bg);
+        justify-content: flex-end;
+    }
+
+    .message.ai-message {
+        background: var(--message-ai-bg);
+    }
+
+    .message-avatar-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+
+    .user-message .message-avatar-wrapper {
+        order: 2;
+    }
+
+    .message-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+        margin-top: 0;
+        position: relative;
+    }
+
+    .message-sender-name {
+        font-size: 11px;
+        color: var(--text-secondary);
+        font-weight: 500;
+        white-space: nowrap;
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .user-message .message-avatar {
+        background: linear-gradient(135deg, #5436da 0%, #8b5cf6 100%);
+    }
+
+    .ai-message .message-avatar {
+        background: linear-gradient(135deg, #19c37d 0%, #10a37f 100%);
+    }
+
+    .message-content {
+        flex: 1;
+        max-width: 800px;
+        min-width: 0;
+        overflow-wrap: break-word;
+    }
+
+    .user-message .message-content {
+        order: 1;
+        text-align: right;
+    }
+
+    .message-text {
+        color: var(--text-primary);
+        font-size: 16px;
+        line-height: 1.75;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        word-break: break-word;
+    }
+
+    .message-actions {
+        display: flex;
+        gap: 4px;
+        margin-top: 12px;
+    }
+
+    .user-message .message-actions {
+        justify-content: flex-end;
+    }
+
+    .msg-action-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        padding: 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    .msg-action-btn::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(-4px);
+        background: rgba(0, 0, 0, 0.9);
+        color: #fff;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+    }
+
+    .msg-action-btn:hover::after {
+        opacity: 1;
+    }
+
+    .msg-action-btn:hover {
+        background: var(--input-bg);
+        color: var(--text-primary);
+        transform: scale(1.1);
+    }
+
+    .msg-action-btn:active {
+        transform: scale(0.95);
+    }
+
+    .farmlink-theme .msg-action-btn:hover {
+        background: #e8f5e9;
+    }
+
+    /* ========== DELETE MODAL ========== */
+    .delete-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 3000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .delete-modal-overlay.show {
+        display: flex;
+        opacity: 1;
+    }
+
+    .delete-modal {
+        background: #fff;
+        border-radius: 12px;
+        padding: 24px;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        transform: scale(0.9);
+        transition: transform 0.2s ease;
+    }
+
+    .delete-modal-overlay.show .delete-modal {
+        transform: scale(1);
+    }
+
+    .delete-modal-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #fee;
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin: 0 auto 16px;
+    }
+
+    .delete-modal-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a1a1a;
+        text-align: center;
+        margin-bottom: 8px;
+    }
+
+    .delete-modal-desc {
+        font-size: 14px;
+        color: #666;
+        text-align: center;
+        margin-bottom: 24px;
+        line-height: 1.5;
+    }
+
+    .delete-modal-actions {
+        display: flex;
+        gap: 12px;
+    }
+
+    .modal-btn {
+        flex: 1;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .modal-btn-cancel {
+        background: #f0f0f0;
+        color: #333;
+    }
+
+    .modal-btn-cancel:hover {
+        background: #e0e0e0;
+    }
+
+    .modal-btn-delete {
+        background: #ef4444;
+        color: #fff;
+    }
+
+    .modal-btn-delete:hover {
+        background: #dc2626;
+    }
+
+    .modal-btn:active {
+        transform: scale(0.98);
+    }
+
+    .app-container.farmlink-theme .delete-modal {
+        background: #fff;
+    }
+
+    /* ========== TYPING INDICATOR ========== */
+    .typing-indicator {
+        display: none;
+        padding: 24px 20px;
+        background: #444654;
+        width: 100%;
+        max-width: 800px;
+    }
+
+    .typing-indicator.show {
+        display: flex;
+        gap: 20px;
+    }
+
+    .typing-dots {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .typing-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #acacbe;
+        animation: typing 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+
+        0%,
+        60%,
+        100% {
+            opacity: 0.3;
+            transform: translateY(0);
+        }
+
+        30% {
+            opacity: 1;
+            transform: translateY(-8px);
+        }
+    }
+
+    /* ========== INPUT AREA ========== */
+    .input-area {
+        padding: 20px;
+        background: var(--main-bg);
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: center;
+    }
+
+    .farmlink-theme .input-area {
+        border-top-color: #d0d0d0;
+    }
+
+    .input-wrapper {
+        width: 100%;
+        max-width: 800px;
+        position: relative;
+    }
+
+    .input-box {
+        width: 100%;
+        background: var(--input-bg);
+        border: none;
+        border-radius: 12px;
+        padding: 14px 100px 14px 16px;
+        color: var(--text-primary);
+        font-size: 16px;
+        resize: none;
+        outline: none;
+        font-family: inherit;
+        min-height: 52px;
+        max-height: 200px;
+        box-shadow: 0 0 0 1px #565869, 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .input-box:focus {
+        box-shadow: 0 0 0 2px var(--accent-color), 0 4px 16px rgba(16, 163, 127, 0.2);
+        transform: translateY(-1px);
+    }
+
+    .input-box:hover:not(:focus) {
+        box-shadow: 0 0 0 1px #6e6f7f, 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .input-box::placeholder {
+        color: var(--text-secondary);
+    }
+
+    .farmlink-theme .input-box {
+        box-shadow: 0 0 0 1px #d0d0d0, 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .farmlink-theme .input-box:focus {
+        box-shadow: 0 0 0 2px #28a745, 0 4px 16px rgba(40, 167, 69, 0.2);
+    }
+
+    .input-actions {
+        position: absolute;
+        right: 8px;
+        bottom: 8px;
+        display: flex;
+        gap: 6px;
+    }
+
+    .input-btn {
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: #acacbe;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        font-size: 16px;
+    }
+
+    .input-btn:hover:not(:disabled) {
+        background: #565869;
+        color: #fff;
+    }
+
+    .input-btn.send-btn {
+        background: var(--accent-color);
+        color: #fff;
+    }
+
+    .input-btn.send-btn:hover:not(:disabled) {
+        background: var(--accent-color);
+        opacity: 0.9;
+    }
+
+    .input-btn.send-btn:disabled {
+        background: #565869;
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    .input-btn.mic-btn.recording {
+        background: #ef4444;
+        color: #fff;
+        animation: pulse 1.5s infinite, glow 2s infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.15);
+        }
+    }
+
+    @keyframes glow {
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+        }
+
+        50% {
+            box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+        }
+    }
+
+    /* ========== SETTINGS PANEL ========== */
+    .settings-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 2000;
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .settings-overlay.show {
+        display: block;
+        opacity: 1;
+    }
+
+    .settings-panel {
+        position: fixed;
+        top: 0;
+        right: -420px;
+        width: 420px;
+        height: 100vh;
+        background: #202123;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
+        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 2001;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .settings-panel.open {
+        right: 0;
+    }
+
+    .settings-header {
+        padding: 20px;
+        border-bottom: 1px solid #2d2d30;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .settings-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .close-btn {
+        background: transparent;
+        border: none;
+        color: #acacbe;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 8px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+        background: #40414f;
+        color: #fff;
+    }
+
+    .settings-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .setting-section {
+        margin-bottom: 32px;
+    }
+
+    .section-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #acacbe;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 16px;
+    }
+
+    .setting-item {
+        margin-bottom: 20px;
+    }
+
+    .setting-label {
+        display: block;
+        font-size: 14px;
+        color: #ececf1;
+        margin-bottom: 8px;
+    }
+
+    .setting-input {
+        width: 100%;
+        padding: 12px;
+        background: #40414f;
+        border: 1px solid #565869;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 14px;
+        outline: none;
+    }
+
+    .setting-input:focus {
+        border-color: #10a37f;
+    }
+
+    .toggle-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px;
+        background: #40414f;
+        border-radius: 8px;
+    }
+
+    .toggle-label {
+        font-size: 14px;
+        color: #ececf1;
+    }
+
+    .toggle-switch {
+        position: relative;
+        width: 48px;
+        height: 24px;
+        background: #565869;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+
+    .toggle-switch.active {
+        background: #10a37f;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 20px;
+        height: 20px;
+        background: #fff;
+        border-radius: 50%;
+        transition: transform 0.3s;
+    }
+
+    .toggle-switch.active .toggle-slider {
+        transform: translateX(24px);
+    }
+
+    .range-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .range-input {
+        flex: 1;
+    }
+
+    .range-value {
+        min-width: 40px;
+        text-align: right;
+        color: #10a37f;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .test-btn {
+        width: 100%;
+        padding: 12px;
+        background: #10a37f;
+        border: none;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .test-btn:hover {
+        background: #0d8c6d;
+    }
+
+    /* ========== MOBILE TOGGLE ========== */
+    .mobile-toggle {
+        display: none;
+        position: fixed;
+        top: 70px;
+        left: 16px;
+        z-index: 999;
+        background: var(--accent-color);
+        border: none;
+        color: #fff;
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 18px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        transition: all 0.2s ease;
+    }
+
+    .mobile-toggle:active {
+        transform: scale(0.95);
+    }
+
+    .mobile-toggle i {
+        transition: all 0.2s ease;
+    }
+
+    .farmlink-theme .mobile-toggle {
+        background: #28a745;
+    }
+
+    .overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 999;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        -webkit-tap-highlight-color: transparent;
+        pointer-events: none;
+    }
+
+    .overlay.show {
+        display: block;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* ========== TOUCH IMPROVEMENTS ========== */
+    button,
+    .chat-item,
+    .quick-action-card {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+
+    @media (hover: none) and (pointer: coarse) {
+        .chat-item:active {
+            background: #2a2b32;
+        }
+
+        .quick-action-card:active {
+            transform: scale(0.98);
+        }
+
+        .input-btn:active {
+            transform: scale(0.95);
+        }
+
+        .msg-action-btn:active {
+            transform: scale(0.9);
+        }
+    }
+
+    /* Desktop toggle - always visible, position changes based on sidebar state */
+    @media (min-width: 769px) {
+        .mobile-toggle {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            top: 80px;
+            left: 276px;
+            z-index: 1003;
+            transition: left 0.3s ease;
+        }
+
+        body.sidebar-closed .mobile-toggle {
+            left: 16px;
+        }
+    }
+
+    /* ========== TABLET (768px - 1024px) ========== */
+    @media (max-width: 1024px) and (min-width: 769px) {
+        .sidebar {
+            width: 220px;
+        }
+
+        .app-container {
+            padding-left: 220px;
+        }
+
+        .empty-title {
+            font-size: 32px;
+        }
+
+        .empty-subtitle {
+            font-size: 16px;
+        }
+
+        .quick-actions {
+            max-width: 700px;
+        }
+
+        .message-content {
+            max-width: 600px;
+        }
+
+        .input-wrapper {
+            max-width: 600px;
+        }
+
+        .settings-panel {
+            width: 360px;
+        }
+    }
+
+    /* ========== MOBILE (max 768px) ========== */
+    @media (max-width: 768px) {
+        .sidebar-close-btn {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mobile-toggle {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            top: 70px;
+        }
+
+        .empty-state {
+            padding: 40px 16px 20px;
+            min-height: calc(100vh - 250px);
+        }
+
+        .empty-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+        }
+
+        .empty-title {
+            font-size: 28px;
+            margin-bottom: 12px;
+        }
+
+        .empty-subtitle {
+            font-size: 15px;
+            margin-bottom: 32px;
+        }
+
+        .quick-actions {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .quick-action-card {
+            padding: 16px;
+        }
+
+        .quick-action-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .quick-action-title {
+            font-size: 14px;
+        }
+
+        .quick-action-desc {
+            font-size: 12px;
+        }
+
+        .message {
+            padding: 16px;
+            gap: 12px;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            font-size: 16px;
+        }
+
+        .message-sender-name {
+            font-size: 10px;
+            max-width: 60px;
+        }
+
+        .message-content {
+            max-width: 100%;
+        }
+
+        .message-text {
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .msg-action-btn {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+        }
+
+        .msg-action-btn::after {
+            display: none;
+        }
+
+        .input-area {
+            padding: 12px;
+        }
+
+        .input-wrapper {
+            max-width: 100%;
+        }
+
+        .input-box {
+            padding: 12px 90px 12px 12px;
+            font-size: 15px;
+            min-height: 48px;
+        }
+
+        .input-btn {
+            width: 32px;
+            height: 32px;
+            font-size: 14px;
+        }
+
+        .settings-panel {
+            width: 100%;
+            right: -100%;
+        }
+
+        .settings-panel.open {
+            right: 0;
+        }
+
+        .settings-content {
+            padding: 16px;
+        }
+
+        .delete-modal {
+            width: 95%;
+            padding: 20px;
+        }
+
+        .delete-modal-title {
+            font-size: 16px;
+        }
+
+        .delete-modal-desc {
+            font-size: 13px;
+        }
+
+        .modal-btn {
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+
+        .chat-item {
+            padding: 12px 10px;
+            font-size: 14px;
+            min-height: 48px;
+            gap: 10px;
+        }
+
+        .chat-item i {
+            font-size: 14px;
+        }
+
+        .chat-item-actions {
+            gap: 6px;
+        }
+
+
+    }
+
+    /* ========== SMALL MOBILE (max 480px) ========== */
+    @media (max-width: 480px) {
+        .empty-title {
+            font-size: 24px;
+        }
+
+        .empty-subtitle {
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+        }
+
+        .quick-action-card {
+            padding: 14px;
+        }
+
+        .quick-action-icon {
+            font-size: 24px;
+        }
+
+        .message {
+            padding: 12px;
+            gap: 10px;
+        }
+
+        .message-avatar {
+            width: 28px;
+            height: 28px;
+            font-size: 14px;
+        }
+
+        .message-sender-name {
+            font-size: 9px;
+            max-width: 50px;
+        }
+
+        .message-text {
+            font-size: 14px;
+        }
+
+        .input-box {
+            padding: 10px 80px 10px 10px;
+            font-size: 14px;
+        }
+
+        .input-btn {
+            width: 30px;
+            height: 30px;
+            font-size: 13px;
+        }
+
+        .settings-header {
+            padding: 16px;
+        }
+
+        .settings-title {
+            font-size: 18px;
+        }
+
+        .setting-label {
+            font-size: 13px;
+        }
+
+        .setting-input {
+            padding: 10px;
+            font-size: 13px;
+        }
+
+        .delete-modal-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+        }
+    }
+
+    /* ========== LANDSCAPE MOBILE ========== */
+    @media (max-height: 500px) and (orientation: landscape) {
+        .empty-state {
+            min-height: auto;
+            padding: 20px 16px;
+        }
+
+        .empty-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .empty-title {
+            font-size: 22px;
+            margin-bottom: 8px;
+        }
+
+        .empty-subtitle {
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .quick-actions {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .quick-action-card {
+            padding: 12px;
+        }
+
+        .main-area {
+            padding-top: 130px;
+        }
+
+
+    }
+
+    /* ========== LARGE DESKTOP (1440px+) ========== */
+    @media (min-width: 1440px) {
+        .sidebar {
+            width: 280px;
+        }
+
+        .empty-state {
+            max-width: 1000px;
+        }
+
+        .quick-actions {
+            max-width: 1000px;
+            gap: 16px;
+        }
+
+        .quick-action-card {
+            padding: 24px;
+        }
+
+        .message-content {
+            max-width: 900px;
+        }
+
+        .input-wrapper {
+            max-width: 900px;
+        }
+    }
+
+    /* ========== SCROLLBAR ========== */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #565869;
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #6e6f7f;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+<div class="settings-overlay" id="settingsOverlay" onclick="closeSettings()"></div>
+
+<!-- Delete Confirmation Modal -->
+<div class="delete-modal-overlay" id="deleteModalOverlay">
+    <div class="delete-modal">
+        <div class="delete-modal-icon">
+            <i class="fas fa-trash-alt"></i>
+        </div>
+        <h3 class="delete-modal-title">Delete chat?</h3>
+        <p class="delete-modal-desc">This will delete the conversation permanently. You cannot undo this action.</p>
+        <div class="delete-modal-actions">
+            <button class="modal-btn modal-btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+            <button class="modal-btn modal-btn-delete" id="confirmDeleteBtn">Delete</button>
+        </div>
+    </div>
+</div>
+
+<button class="mobile-toggle" id="mobileToggle" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+</button>
+
+<!-- Sidebar (Outside app-container for mobile) -->
+<aside class="sidebar" id="sidebar">
+    <button class="sidebar-close-btn" onclick="closeSidebar()">
+        <i class="fas fa-times"></i>
+    </button>
+    <div class="sidebar-header">
+        <button class="new-chat-btn" data-action="newchat">
+            <i class="fas fa-plus"></i>
+            <span>New Chat</span>
+        </button>
+    </div>
+
+    <div class="chat-list" id="chatList">
+        <!-- Chat history will be populated here -->
+    </div>
+
+    <div class="sidebar-footer">
+        <button class="sidebar-btn" id="themeBtn" data-action="theme">
+            <i class="fas fa-moon" id="themeIcon"></i>
+            <span id="themeText">FarmLink Theme</span>
+        </button>
+        <button class="sidebar-btn" data-action="clear">
+            <i class="fas fa-trash-alt"></i>
+            <span>Clear conversations</span>
+        </button>
+        <button class="sidebar-btn" data-action="settings">
+            <i class="fas fa-cog"></i>
+            <span>Settings</span>
+        </button>
+        <button class="sidebar-btn" data-action="dashboard">
+            <i class="fas fa-home"></i>
+            <span>Back to Dashboard</span>
+        </button>
+    </div>
+</aside>
+
+<div class="app-container">
+    <!-- Main Area -->
+    <main class="main-area">
+        <div class="chat-container" id="chatContainer">
+            <div class="messages-wrapper" id="messagesWrapper">
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon">🌱</div>
+                    <h1 class="empty-title">FarmLink AI Assistant</h1>
+                    <p class="empty-subtitle">Your intelligent farming companion. Ask me anything!</p>
+
+                    <div class="quick-actions">
+                        <div class="quick-action-card"
+                            onclick="sendQuick('What is the weather forecast for this week?')">
+                            <div class="quick-action-icon">☀️</div>
+                            <div class="quick-action-title">Weather Forecast</div>
+                            <div class="quick-action-desc">Get weather updates for your crops</div>
+                        </div>
+                        <div class="quick-action-card"
+                            onclick="sendQuick('What are the current market prices for rice?')">
+                            <div class="quick-action-icon">📈</div>
+                            <div class="quick-action-title">Market Prices</div>
+                            <div class="quick-action-desc">Check latest crop prices</div>
+                        </div>
+                        <div class="quick-action-card" onclick="sendQuick('How do I treat tomato blight disease?')">
+                            <div class="quick-action-icon">🍅</div>
+                            <div class="quick-action-title">Disease Help</div>
+                            <div class="quick-action-desc">Identify and treat crop diseases</div>
+                        </div>
+                        <div class="quick-action-card" onclick="sendQuick('What fertilizer should I use for wheat?')">
+                            <div class="quick-action-icon">🌾</div>
+                            <div class="quick-action-title">Fertilizer Guide</div>
+                            <div class="quick-action-desc">Get fertilizer recommendations</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages will be added here -->
+            </div>
+
+            <!-- Typing Indicator -->
+            <div class="typing-indicator" id="typingIndicator">
+                <div class="message-avatar-wrapper">
+                    <div class="message-avatar" style="background: linear-gradient(135deg, #10a37f 0%, #0d8c6d 100%);">
+                        🌱</div>
+                    <div class="message-sender-name">FarmLink AI</div>
+                </div>
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea class="input-box" id="inputBox" placeholder="Ask me anything about farming..." rows="1"
+                    onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
+                <div class="input-actions">
+                    <button class="input-btn mic-btn" id="micBtn" onclick="toggleVoice()" title="Voice Input">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <button class="input-btn send-btn" id="sendBtn" onclick="sendMsg()" title="Send" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Settings Panel (Outside app-container) -->
+<div class="settings-panel" id="settingsPanel">
+    <div class="settings-header">
+        <h2 class="settings-title">Settings</h2>
+        <button class="close-btn" onclick="closeSettings()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div class="settings-content">
+        <div class="setting-section">
+            <div class="section-title">Language & Voice</div>
+
+            <div class="setting-item">
+                <label class="setting-label">Language</label>
+                <select class="setting-input" id="langSelect" onchange="updateLang()">
+                    <option value="en">English</option>
+                    <option value="hi">Hindi (हिंदी)</option>
+                    <option value="hi-en">Hinglish</option>
+                    <option value="bn">Bengali (বাংলা)</option>
+                    <option value="ta">Tamil (தமிழ்)</option>
+                    <option value="te">Telugu (తెలుగు)</option>
+                    <option value="mr">Marathi (मराठी)</option>
+                    <option value="gu">Gujarati (ગુજરાતી)</option>
+                    <option value="pa">Punjabi (ਪੰਜਾਬੀ)</option>
+                    <option value="kn">Kannada (ಕನ್ನಡ)</option>
+                </select>
+            </div>
+
+            <div class="setting-item">
+                <label class="setting-label">Voice Type</label>
+                <select class="setting-input" id="voiceSelect" onchange="updateVoiceType()">
+                    <option value="female">Female Voice</option>
+                    <option value="male">Male Voice</option>
+                </select>
+            </div>
+
+            <div class="setting-item">
+                <label class="setting-label">Speech Speed</label>
+                <div class="range-container">
+                    <input type="range" class="range-input" id="speedRange" min="0.5" max="2" step="0.1" value="1"
+                        oninput="updateSpeed()">
+                    <span class="range-value" id="speedValue">1.0</span>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <label class="setting-label">Voice Pitch</label>
+                <div class="range-container">
+                    <input type="range" class="range-input" id="pitchRange" min="0.5" max="2" step="0.1" value="1"
+                        oninput="updatePitch()">
+                    <span class="range-value" id="pitchValue">1.0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="setting-section">
+            <div class="section-title">Features</div>
+
+            <div class="setting-item">
+                <div class="toggle-container">
+                    <span class="toggle-label">Auto-speak responses</span>
+                    <div class="toggle-switch active" id="autoSpeakToggle" onclick="toggleAutoSpeak()">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <div class="toggle-container">
+                    <span class="toggle-label">Save chat history</span>
+                    <div class="toggle-switch active" id="historyToggle" onclick="toggleHistory()">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <button class="test-btn" onclick="testVoice()">
+                    <i class="fas fa-volume-up"></i> Test Voice Settings
+                </button>
+            </div>
+        </div>
+
+        <div class="setting-section">
+            <div class="section-title">About</div>
+            <div class="setting-item">
+                <p style="color: #acacbe; font-size: 14px; line-height: 1.6;">
+                    FarmLink AI Assistant v1.0<br>
+                    Powered by advanced AI to help farmers with intelligent insights and recommendations.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+    // Global State
+    let state = {
+        isRecording: false,
+        recognition: null,
+        currentLang: 'en',
+        settings: {
+            language: 'en',
+            voiceType: 'female',
+            speed: 1.0,
+            pitch: 1.0,
+            autoSpeak: true,
+            saveHistory: true
+        },
+        currentSpeech: null,
+        messages: [],
+        currentChatId: Date.now(),
+        chats: {},
+        userName: null
+    };
+
+    // Set user name from server-side template
+    {% if current_user and current_user.is_authenticated %}
+    state.userName = "{{ current_user.name or current_user.username }}";
+    {% endif %}
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function () {
+        initSpeechRecognition();
+        initTextToSpeech();
+        loadSettings();
+        loadChats();
+        loadTheme();
+
+        document.getElementById('inputBox').focus();
+        document.getElementById('inputBox').addEventListener('input', function () {
+            document.getElementById('sendBtn').disabled = !this.value.trim();
+        });
+
+        // Setup delete modal overlay click
+        const modalOverlay = document.getElementById('deleteModalOverlay');
+        if (modalOverlay) {
+            modalOverlay.addEventListener('click', function (e) {
+                if (e.target === modalOverlay) {
+                    closeDeleteModal();
+                }
+            });
+        }
+
+        // Setup sidebar button actions
+        setupSidebarActions();
+    });
+
+    // Load saved theme
+    function loadTheme() {
+        const savedTheme = localStorage.getItem('farmlink-theme');
+        const appContainer = document.querySelector('.app-container');
+        const body = document.body;
+        const themeIcon = document.getElementById('themeIcon');
+        const themeText = document.getElementById('themeText');
+
+        if (savedTheme === 'farmlink') {
+            appContainer.classList.add('farmlink-theme');
+            body.classList.add('farmlink-theme');
+            themeIcon.className = 'fas fa-sun';
+            themeText.textContent = 'Dark Theme';
+        }
+    }
+
+    // Setup sidebar button click handlers
+    function setupSidebarActions() {
+        // Get all sidebar buttons with data-action
+        const sidebarButtons = document.querySelectorAll('[data-action]');
+
+        sidebarButtons.forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const action = this.getAttribute('data-action');
+                console.log('Sidebar action clicked:', action);
+
+                // Execute action first
+                switch (action) {
+                    case 'newchat':
+                        startNewChat();
+                        break;
+                    case 'theme':
+                        toggleTheme();
+                        break;
+                    case 'clear':
+                        clearChats();
+                        break;
+                    case 'settings':
+                        openSettings();
+                        break;
+                    case 'dashboard':
+                        window.location.href = '/dashboard';
+                        return; // Don't close sidebar for navigation
+                }
+
+                // Close sidebar on mobile/tablet after action
+                if (window.innerWidth <= 1024) {
+                    setTimeout(() => {
+                        closeSidebar();
+                    }, 200);
+                }
+            });
+        });
+    }
+
+    // Speech Recognition
+    function initSpeechRecognition() {
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            state.recognition = new SpeechRecognition();
+            state.recognition.continuous = false;
+            state.recognition.interimResults = true;
+            state.recognition.lang = getLangCode();
+
+            state.recognition.onstart = () => {
+                document.getElementById('micBtn').classList.add('recording');
+            };
+
+            state.recognition.onresult = (event) => {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                document.getElementById('inputBox').value = transcript;
+                if (event.results[event.results.length - 1].isFinal) {
+                    sendMsg();
+                }
+            };
+
+            state.recognition.onerror = (event) => {
+                console.error('Speech error:', event.error);
+                document.getElementById('micBtn').classList.remove('recording');
+            };
+
+            state.recognition.onend = () => {
+                document.getElementById('micBtn').classList.remove('recording');
+                state.isRecording = false;
+            };
+        }
+    }
+
+    // Text to Speech
+    function initTextToSpeech() {
+        if ('speechSynthesis' in window) {
+            speechSynthesis.getVoices();
+        }
+    }
+
+    // UI Functions
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const appContainer = document.querySelector('.app-container');
+        const toggleBtn = document.getElementById('mobileToggle');
+        const icon = toggleBtn ? toggleBtn.querySelector('i') : null;
+
+        // Desktop behavior
+        if (window.innerWidth > 768) {
+            sidebar.classList.toggle('closed');
+            appContainer.classList.toggle('sidebar-closed');
+            document.body.classList.toggle('sidebar-closed');
+
+            // Update icon for desktop - always show bars icon
+            if (icon) {
+                icon.className = 'fas fa-bars';
+            }
+        } else {
+            // Mobile behavior
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('show');
+
+            // Update icon for mobile
+            if (icon) {
+                if (sidebar.classList.contains('open')) {
+                    icon.className = 'fas fa-times';
+                } else {
+                    icon.className = 'fas fa-bars';
+                }
+            }
+
+            // Prevent body scroll when sidebar is open on mobile
+            if (sidebar.classList.contains('open')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        }
+    }
+
+    function closeSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const appContainer = document.querySelector('.app-container');
+        const toggleBtn = document.getElementById('mobileToggle');
+        const icon = toggleBtn ? toggleBtn.querySelector('i') : null;
+
+        // Desktop behavior
+        if (window.innerWidth > 768) {
+            sidebar.classList.add('closed');
+            appContainer.classList.add('sidebar-closed');
+            document.body.classList.add('sidebar-closed');
+
+            if (icon) {
+                icon.className = 'fas fa-bars';
+            }
+        } else {
+            // Mobile behavior
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+
+            // Reset icon
+            if (icon) {
+                icon.className = 'fas fa-bars';
+            }
+
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
+    }
+
+    // Handle sidebar button actions on mobile
+    function handleSidebarAction(callback) {
+        // Execute the callback function first
+        if (typeof callback === 'function') {
+            try {
+                callback();
+            } catch (error) {
+                console.error('Error executing callback:', error);
+            }
+        }
+
+        // Close sidebar only on mobile after action with delay
+        if (window.innerWidth <= 768) {
+            setTimeout(() => {
+                closeSidebar();
+            }, 300);
+        }
+    }
+
+    // Toggle Theme
+    function toggleTheme() {
+        const appContainer = document.querySelector('.app-container');
+        const body = document.body;
+        const themeIcon = document.getElementById('themeIcon');
+        const themeText = document.getElementById('themeText');
+
+        if (appContainer.classList.contains('farmlink-theme')) {
+            // Switch to dark theme
+            appContainer.classList.remove('farmlink-theme');
+            body.classList.remove('farmlink-theme');
+            themeIcon.className = 'fas fa-moon';
+            themeText.textContent = 'FarmLink Theme';
+            localStorage.setItem('farmlink-theme', 'dark');
+        } else {
+            // Switch to farmlink theme
+            appContainer.classList.add('farmlink-theme');
+            body.classList.add('farmlink-theme');
+            themeIcon.className = 'fas fa-sun';
+            themeText.textContent = 'Dark Theme';
+            localStorage.setItem('farmlink-theme', 'farmlink');
+        }
+    }
+
+    function openSettings() {
+        console.log('Opening settings...');
+        const panel = document.getElementById('settingsPanel');
+        const overlay = document.getElementById('settingsOverlay');
+
+        if (panel && overlay) {
+            panel.classList.add('open');
+            overlay.classList.add('show');
+            console.log('Settings opened successfully');
+        } else {
+            console.error('Settings panel or overlay not found');
+        }
+    }
+
+    function closeSettings() {
+        console.log('Closing settings...');
+        const panel = document.getElementById('settingsPanel');
+        const overlay = document.getElementById('settingsOverlay');
+
+        if (panel && overlay) {
+            panel.classList.remove('open');
+            overlay.classList.remove('show');
+            console.log('Settings closed successfully');
+        }
+    }
+
+    function autoResize(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+    }
+
+    function handleKeyDown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMsg();
+        }
+    }
+
+    // Message Functions
+    function sendMsg() {
+        const input = document.getElementById('inputBox');
+        const text = input.value.trim();
+        if (!text) return;
+
+        // Stop any speech
+        if (state.currentSpeech) {
+            speechSynthesis.cancel();
+        }
+
+        // Hide empty state
+        const emptyState = document.getElementById('emptyState');
+        if (emptyState) {
+            emptyState.style.display = 'none';
+        }
+
+        // Clear input
+        input.value = '';
+        input.style.height = 'auto';
+        document.getElementById('sendBtn').disabled = true;
+
+        // Add user message
+        addMessage('user', text);
+
+        // Show typing
+        showTyping();
+
+        // Send to API
+        processQuery(text);
+    }
+
+    function sendQuick(text) {
+        document.getElementById('inputBox').value = text;
+        sendMsg();
+    }
+
+    function addMessage(type, content, skipSave = false) {
+        const wrapper = document.getElementById('messagesWrapper');
+        const msgGroup = document.createElement('div');
+        msgGroup.className = 'message-group';
+
+        const msg = document.createElement('div');
+        msg.className = `message ${type}-message`;
+
+        // Create avatar wrapper
+        const avatarWrapper = document.createElement('div');
+        avatarWrapper.className = 'message-avatar-wrapper';
+
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+
+        const senderName = document.createElement('div');
+        senderName.className = 'message-sender-name';
+
+        // Set avatar and name based on message type and user state
+        if (type === 'user') {
+            if (state.userName) {
+                avatar.textContent = state.userName.charAt(0).toUpperCase();
+                senderName.textContent = state.userName;
+            } else {
+                avatar.textContent = '👤';
+                senderName.textContent = 'You';
+            }
+        } else {
+            avatar.textContent = '🌱';
+            senderName.textContent = 'FarmLink AI';
+        }
+
+        avatarWrapper.appendChild(avatar);
+        avatarWrapper.appendChild(senderName);
+
+        const msgContent = document.createElement('div');
+        msgContent.className = 'message-content';
+
+        const msgText = document.createElement('div');
+        msgText.className = 'message-text';
+        msgText.innerHTML = formatText(content);
+
+        msgContent.appendChild(msgText);
+
+        if (type === 'ai') {
+            const actions = document.createElement('div');
+            actions.className = 'message-actions';
+            actions.innerHTML = `
+            <button class="msg-action-btn" onclick="speakMsg(this)" data-tooltip="Read aloud"><i class="fas fa-volume-up"></i></button>
+            <button class="msg-action-btn" onclick="copyMsg(this)" data-tooltip="Copy"><i class="fas fa-copy"></i></button>
+            <button class="msg-action-btn" onclick="regenerate()" data-tooltip="Regenerate"><i class="fas fa-redo"></i></button>
+        `;
+            msgContent.appendChild(actions);
+        }
+
+        msg.appendChild(avatarWrapper);
+        msg.appendChild(msgContent);
+        msgGroup.appendChild(msg);
+        wrapper.appendChild(msgGroup);
+
+        scrollToBottom();
+
+        // Save message
+        if (!skipSave) {
+            state.messages.push({ type, content, timestamp: Date.now() });
+            if (state.settings.saveHistory) {
+                saveChat();
+            }
+        }
+    }
+
+    function formatText(text) {
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        text = text.replace(/\n/g, '<br>');
+        return text;
+    }
+
+    function showTyping() {
+        document.getElementById('typingIndicator').classList.add('show');
+        scrollToBottom();
+    }
+
+    function hideTyping() {
+        document.getElementById('typingIndicator').classList.remove('show');
+    }
+
+    function scrollToBottom() {
+        const container = document.getElementById('chatContainer');
+        container.scrollTop = container.scrollHeight;
+    }
+
+    // API Call
+    function processQuery(query) {
+        fetch('/api/voice-assistant', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name=csrf-token]').content
+            },
+            body: JSON.stringify({
+                query: query,
+                language: state.currentLang,
+                include_audio: false
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                hideTyping();
+                if (data.success) {
+                    addMessage('ai', data.response);
+                    if (state.settings.autoSpeak) {
+                        speakText(data.response);
+                    }
+                } else {
+                    addMessage('ai', 'Sorry, I encountered an error. Please try again.');
+                }
+            })
+            .catch(err => {
+                console.error('API Error:', err);
+                hideTyping();
+                addMessage('ai', 'Connection error. Please check your internet and try again.');
+            });
+    }
+
+    // Voice Functions
+    function toggleVoice() {
+        if (!state.recognition) {
+            alert('Speech recognition not available in this browser.');
+            return;
+        }
+
+        if (state.isRecording) {
+            state.recognition.stop();
+        } else {
+            if (state.currentSpeech) {
+                speechSynthesis.cancel();
+            }
+            state.recognition.start();
+            state.isRecording = true;
+        }
+    }
+
+    function speakText(text) {
+        if (!state.settings.autoSpeak || !('speechSynthesis' in window)) return;
+
+        if (state.currentSpeech) {
+            speechSynthesis.cancel();
+        }
+
+        const cleanText = text.replace(/<[^>]*>/g, '').replace(/\*\*/g, '');
+        state.currentSpeech = new SpeechSynthesisUtterance(cleanText);
+        state.currentSpeech.rate = state.settings.speed;
+        state.currentSpeech.pitch = state.settings.pitch;
+        state.currentSpeech.lang = getLangCode();
+
+        const voices = speechSynthesis.getVoices();
+        const voice = voices.find(v =>
+            v.lang.startsWith(getLangCode().substring(0, 2)) &&
+            v.name.toLowerCase().includes(state.settings.voiceType)
+        );
+        if (voice) state.currentSpeech.voice = voice;
+
+        state.currentSpeech.onend = () => { state.currentSpeech = null; };
+        speechSynthesis.speak(state.currentSpeech);
+    }
+
+    function speakMsg(btn) {
+        const text = btn.closest('.message-content').querySelector('.message-text').textContent;
+        speakText(text);
+    }
+
+    function copyMsg(btn) {
+        const text = btn.closest('.message-content').querySelector('.message-text').textContent;
+        navigator.clipboard.writeText(text).then(() => {
+            const icon = btn.querySelector('i');
+            icon.className = 'fas fa-check';
+            setTimeout(() => { icon.className = 'fas fa-copy'; }, 2000);
+        });
+    }
+
+    function regenerate() {
+        const userMsgs = state.messages.filter(m => m.type === 'user');
+        if (userMsgs.length > 0) {
+            const lastQuery = userMsgs[userMsgs.length - 1].content;
+            const wrapper = document.getElementById('messagesWrapper');
+            const lastMsg = wrapper.lastElementChild;
+            if (lastMsg) wrapper.removeChild(lastMsg);
+            state.messages.pop();
+            showTyping();
+            processQuery(lastQuery);
+        }
+    }
+
+    // Settings Functions
+    function updateLang() {
+        state.settings.language = document.getElementById('langSelect').value;
+        state.currentLang = state.settings.language;
+        if (state.recognition) {
+            state.recognition.lang = getLangCode();
+        }
+        saveSettings();
+    }
+
+    function updateVoiceType() {
+        state.settings.voiceType = document.getElementById('voiceSelect').value;
+        saveSettings();
+    }
+
+    function updateSpeed() {
+        const val = document.getElementById('speedRange').value;
+        state.settings.speed = parseFloat(val);
+        document.getElementById('speedValue').textContent = val;
+        saveSettings();
+    }
+
+    function updatePitch() {
+        const val = document.getElementById('pitchRange').value;
+        state.settings.pitch = parseFloat(val);
+        document.getElementById('pitchValue').textContent = val;
+        saveSettings();
+    }
+
+    function toggleAutoSpeak() {
+        const toggle = document.getElementById('autoSpeakToggle');
+        state.settings.autoSpeak = !state.settings.autoSpeak;
+        toggle.classList.toggle('active');
+        if (!state.settings.autoSpeak && state.currentSpeech) {
+            speechSynthesis.cancel();
+        }
+        saveSettings();
+    }
+
+    function toggleHistory() {
+        const toggle = document.getElementById('historyToggle');
+        state.settings.saveHistory = !state.settings.saveHistory;
+        toggle.classList.toggle('active');
+        saveSettings();
+    }
+
+    function testVoice() {
+        speakText('This is a test of your voice settings. How does this sound?');
+    }
+
+    function getLangCode() {
+        const map = {
+            'en': 'en-US', 'hi': 'hi-IN', 'hi-en': 'en-IN',
+            'bn': 'bn-IN', 'ta': 'ta-IN', 'te': 'te-IN',
+            'mr': 'mr-IN', 'gu': 'gu-IN', 'pa': 'pa-IN', 'kn': 'kn-IN'
+        };
+        return map[state.currentLang] || 'en-US';
+    }
+
+    // Storage Functions
+    function saveSettings() {
+        localStorage.setItem('farmlink-settings', JSON.stringify(state.settings));
+    }
+
+    function loadSettings() {
+        const saved = localStorage.getItem('farmlink-settings');
+        if (saved) {
+            state.settings = { ...state.settings, ...JSON.parse(saved) };
+            document.getElementById('langSelect').value = state.settings.language;
+            document.getElementById('voiceSelect').value = state.settings.voiceType;
+            document.getElementById('speedRange').value = state.settings.speed;
+            document.getElementById('pitchRange').value = state.settings.pitch;
+            document.getElementById('speedValue').textContent = state.settings.speed;
+            document.getElementById('pitchValue').textContent = state.settings.pitch;
+
+            if (!state.settings.autoSpeak) {
+                document.getElementById('autoSpeakToggle').classList.remove('active');
+            }
+            if (!state.settings.saveHistory) {
+                document.getElementById('historyToggle').classList.remove('active');
+            }
+
+            state.currentLang = state.settings.language;
+        }
+    }
+
+    function saveChat() {
+        if (!state.settings.saveHistory || state.messages.length === 0) return;
+
+        const title = state.messages.find(m => m.type === 'user')?.content.substring(0, 30) || 'New Chat';
+        state.chats[state.currentChatId] = {
+            id: state.currentChatId,
+            title: title,
+            messages: state.messages,
+            timestamp: Date.now()
+        };
+        localStorage.setItem('farmlink-chats', JSON.stringify(state.chats));
+        updateChatList();
+    }
+
+    function loadChats() {
+        const saved = localStorage.getItem('farmlink-chats');
+        if (saved) {
+            state.chats = JSON.parse(saved);
+            updateChatList();
+        }
+    }
+
+    function updateChatList() {
+        const list = document.getElementById('chatList');
+        list.innerHTML = '';
+
+        const sorted = Object.values(state.chats).sort((a, b) => b.timestamp - a.timestamp);
+        sorted.forEach(chat => {
+            const item = document.createElement('div');
+            item.className = 'chat-item' + (chat.id === state.currentChatId ? ' active' : '');
+
+            // Create elements
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-message';
+
+            const titleSpan = document.createElement('span');
+            titleSpan.className = 'chat-title';
+            titleSpan.setAttribute('data-id', chat.id);
+            titleSpan.textContent = chat.title;
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'chat-item-actions';
+
+            const editBtn = document.createElement('button');
+            editBtn.className = 'chat-action-btn';
+            editBtn.title = 'Edit';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            editBtn.onclick = (e) => {
+                console.log('Edit button clicked');
+                e.stopPropagation();
+                e.preventDefault();
+                editChatTitle(e, chat.id);
+            };
+            editBtn.ontouchend = (e) => {
+                console.log('Edit button touched');
+                e.stopPropagation();
+                e.preventDefault();
+                editChatTitle(e, chat.id);
+            };
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'chat-action-btn';
+            deleteBtn.title = 'Delete';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            deleteBtn.onclick = (e) => {
+                console.log('Delete button clicked');
+                e.stopPropagation();
+                e.preventDefault();
+                deleteChat(e, chat.id);
+            };
+            deleteBtn.ontouchend = (e) => {
+                console.log('Delete button touched');
+                e.stopPropagation();
+                e.preventDefault();
+                deleteChat(e, chat.id);
+            };
+
+            actionsDiv.appendChild(editBtn);
+            actionsDiv.appendChild(deleteBtn);
+
+            item.appendChild(icon);
+            item.appendChild(titleSpan);
+            item.appendChild(actionsDiv);
+
+            // Click handler for chat item
+            item.onclick = (e) => {
+                if (!e.target.closest('.chat-item-actions') && !e.target.closest('.chat-edit-input')) {
+                    loadChat(chat.id);
+                }
+            };
+
+            list.appendChild(item);
+        });
+    }
+
+    function loadChat(id) {
+        const chat = state.chats[id];
+        if (!chat) return;
+
+        // Save current chat before switching
+        if (state.messages.length > 0 && state.currentChatId !== id) {
+            saveChat();
+        }
+
+        state.currentChatId = id;
+        state.messages = [...chat.messages]; // Create a copy
+
+        const wrapper = document.getElementById('messagesWrapper');
+        wrapper.innerHTML = '';
+
+        // Create empty state element if it doesn't exist
+        let emptyState = document.getElementById('emptyState');
+        if (!emptyState) {
+            emptyState = document.createElement('div');
+            emptyState.id = 'emptyState';
+            emptyState.className = 'empty-state';
+            emptyState.innerHTML = `
+                <div class="empty-icon">🌱</div>
+                <h1 class="empty-title">FarmLink AI Assistant</h1>
+                <p class="empty-subtitle">Your intelligent farming companion. Ask me anything!</p>
+                <div class="quick-actions">
+                    <div class="quick-action-card" onclick="sendQuick('What is the weather forecast for this week?')">
+                        <div class="quick-action-icon">☀️</div>
+                        <div class="quick-action-title">Weather Forecast</div>
+                        <div class="quick-action-desc">Get weather updates for your crops</div>
+                    </div>
+                    <div class="quick-action-card" onclick="sendQuick('What are the current market prices for rice?')">
+                        <div class="quick-action-icon">📈</div>
+                        <div class="quick-action-title">Market Prices</div>
+                        <div class="quick-action-desc">Check latest crop prices</div>
+                    </div>
+                    <div class="quick-action-card" onclick="sendQuick('How do I treat tomato blight disease?')">
+                        <div class="quick-action-icon">🍅</div>
+                        <div class="quick-action-title">Disease Help</div>
+                        <div class="quick-action-desc">Identify and treat crop diseases</div>
+                    </div>
+                    <div class="quick-action-card" onclick="sendQuick('What fertilizer should I use for wheat?')">
+                        <div class="quick-action-icon">🌾</div>
+                        <div class="quick-action-title">Fertilizer Guide</div>
+                        <div class="quick-action-desc">Get fertilizer recommendations</div>
+                    </div>
+                </div>
+            `;
+            wrapper.appendChild(emptyState);
+        }
+
+        emptyState.style.display = 'none';
+
+        // Recreate all messages
+        state.messages.forEach(msg => {
+            const msgGroup = document.createElement('div');
+            msgGroup.className = 'message-group';
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${msg.type}-message`;
+
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = msg.type === 'user' ? '👤' : '🌱';
+
+            const msgContent = document.createElement('div');
+            msgContent.className = 'message-content';
+
+            const msgText = document.createElement('div');
+            msgText.className = 'message-text';
+            msgText.innerHTML = formatText(msg.content);
+
+            msgContent.appendChild(msgText);
+
+            if (msg.type === 'ai') {
+                const actions = document.createElement('div');
+                actions.className = 'message-actions';
+                actions.innerHTML = `
+                    <button class="msg-action-btn" onclick="speakMsg(this)" data-tooltip="Read aloud"><i class="fas fa-volume-up"></i></button>
+                    <button class="msg-action-btn" onclick="copyMsg(this)" data-tooltip="Copy"><i class="fas fa-copy"></i></button>
+                    <button class="msg-action-btn" onclick="regenerate()" data-tooltip="Regenerate"><i class="fas fa-redo"></i></button>
+                `;
+                msgContent.appendChild(actions);
+            }
+
+            msgDiv.appendChild(avatar);
+            msgDiv.appendChild(msgContent);
+            msgGroup.appendChild(msgDiv);
+            wrapper.appendChild(msgGroup);
+        });
+
+        updateChatList();
+        closeSidebar();
+        scrollToBottom();
+    }
+
+    function startNewChat() {
+        if (state.messages.length > 0) {
+            saveChat();
+        }
+
+        state.currentChatId = Date.now();
+        state.messages = [];
+
+        const wrapper = document.getElementById('messagesWrapper');
+        wrapper.innerHTML = '';
+
+        // Recreate empty state if it doesn't exist
+        let emptyState = document.getElementById('emptyState');
+        if (!emptyState) {
+            emptyState = document.createElement('div');
+            emptyState.id = 'emptyState';
+            emptyState.className = 'empty-state';
+            emptyState.innerHTML = `
+                <div class="empty-icon">🌱</div>
+                <h1 class="empty-title">FarmLink AI Assistant</h1>
+                <p class="empty-subtitle">Your intelligent farming companion. Ask me anything!</p>
+                <div class="quick-actions">
+                    <div class="quick-action-card" onclick="sendQuick('What is the weather forecast for this week?')">
+                        <div class="quick-action-icon">☀️</div>
+                        <div class="quick-action-title">Weather Forecast</div>
+                        <div class="quick-action-desc">Get weather updates for your crops</div>
+                    </div>
+                    <div class="quick-action-card" onclick="sendQuick('What are the current market prices for rice?')">
+                        <div class="quick-action-icon">📈</div>
+                        <div class="quick-action-title">Market Prices</div>
+                        <div class="quick-action-desc">Check latest crop prices</div>
+                    </div>
+                    <div class="quick-action-card" onclick="sendQuick('How do I treat tomato blight disease?')">
+                        <div class="quick-action-icon">🍅</div>
+                        <div class="quick-action-title">Disease Help</div>
+                        <div class="quick-action-desc">Identify and treat crop diseases</div>
+                    </div>
+                    <div class="quick-action-card" onclick="sendQuick('What fertilizer should I use for wheat?')">
+                        <div class="quick-action-icon">🌾</div>
+                        <div class="quick-action-title">Fertilizer Guide</div>
+                        <div class="quick-action-desc">Get fertilizer recommendations</div>
+                    </div>
+                </div>
+            `;
+            wrapper.appendChild(emptyState);
+        }
+
+        emptyState.style.display = 'flex';
+
+        updateChatList();
+        closeSidebar();
+    }
+
+    function clearChats() {
+        if (confirm('Clear all conversations? This cannot be undone.')) {
+            state.chats = {};
+            localStorage.removeItem('farmlink-chats');
+            startNewChat();
+        }
+    }
+
+    function editChatTitle(event, chatId) {
+        event.stopPropagation();
+
+        const chat = state.chats[chatId];
+        if (!chat) return;
+
+        const chatItem = event.target.closest('.chat-item');
+        const titleSpan = chatItem.querySelector('.chat-title');
+        const actionsDiv = chatItem.querySelector('.chat-item-actions');
+
+        const currentTitle = titleSpan.textContent;
+
+        // Create input
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'chat-edit-input';
+        input.value = currentTitle;
+
+        // Replace span with input
+        titleSpan.style.display = 'none';
+        actionsDiv.style.display = 'none';
+        chatItem.insertBefore(input, actionsDiv);
+        input.focus();
+        input.select();
+
+        const saveEdit = () => {
+            const newTitle = input.value.trim();
+            if (newTitle && newTitle !== currentTitle) {
+                chat.title = newTitle;
+                state.chats[chatId] = chat;
+                localStorage.setItem('farmlink-chats', JSON.stringify(state.chats));
+            }
+            updateChatList();
+        };
+
+        input.addEventListener('blur', saveEdit);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                saveEdit();
+            } else if (e.key === 'Escape') {
+                updateChatList();
+            }
+        });
+    }
+
+    function deleteChat(event, chatId) {
+        event.stopPropagation();
+
+        // Show delete modal
+        const modal = document.getElementById('deleteModalOverlay');
+        if (!modal) return;
+
+        modal.classList.add('show');
+
+        // Set up confirm button - remove old listeners first
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        if (!confirmBtn) return;
+
+        // Clone button to remove all old event listeners
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+        // Add new click handler
+        newConfirmBtn.onclick = function () {
+            console.log('Deleting chat:', chatId);
+
+            // Delete from state and localStorage
+            delete state.chats[chatId];
+            localStorage.setItem('farmlink-chats', JSON.stringify(state.chats));
+
+            // Update chat list immediately
+            updateChatList();
+
+            // Close modal
+            closeDeleteModal();
+
+            // Start new chat with empty state
+            state.currentChatId = Date.now();
+            state.messages = [];
+
+            const wrapper = document.getElementById('messagesWrapper');
+            wrapper.innerHTML = '';
+
+            // Show empty state
+            const emptyState = document.createElement('div');
+            emptyState.id = 'emptyState';
+            emptyState.className = 'empty-state';
+            emptyState.style.display = 'flex';
+            emptyState.innerHTML = `
+                <div class="empty-icon">🌱</div>
+                <h1 class="empty-title">FarmLink AI Assistant</h1>
+                <p class="empty-subtitle">Your intelligent farming companion. Ask me anything!</p>
+                <div class="quick-actions">
+                    <div class="quick-action-card" onclick="sendQuick('What is the weather forecast for this week?')">
+                        <div class="quick-action-icon">☀️</div>
+                        <div class="quick-action-title">Weather Forecast</div>
+                        <div class="quick-action-desc">Get weather updates for your crops</div>
+                    </div>
+                    <div class="quick-action-card" onclick="sendQuick('What are the current market prices for rice?')">
+                        <div class="quick-action-icon">📈</div>
+                        <div class="quick-action-title">Market Prices</div>
+                        <div class="quick-action-desc">Check latest crop prices</div>
+                    </div>
+                    <div class="quick-action-card" onclick="sendQuick('How do I treat tomato blight disease?')">
+                        <div class="quick-action-icon">🍅</div>
+                        <div class="quick-action-title">Disease Help</div>
+                        <div class="quick-action-desc">Identify and treat crop diseases</div>
+                    </div>
+                    <div class="quick-action-card" onclick="sendQuick('What fertilizer should I use for wheat?')">
+                        <div class="quick-action-icon">🌾</div>
+                        <div class="quick-action-title">Fertilizer Guide</div>
+                        <div class="quick-action-desc">Get fertilizer recommendations</div>
+                    </div>
+                </div>
+            `;
+            wrapper.appendChild(emptyState);
+
+            console.log('Chat deleted and new chat started');
+        };
+    }
+
+    function closeDeleteModal() {
+        const modal = document.getElementById('deleteModalOverlay');
+        if (modal) {
+            modal.classList.remove('show');
+        }
+    }
+
+    // Theme Toggle
+    function toggleTheme() {
+        const container = document.querySelector('.app-container');
+        const icon = document.getElementById('themeIcon');
+        const text = document.getElementById('themeText');
+
+        container.classList.toggle('farmlink-theme');
+
+        if (container.classList.contains('farmlink-theme')) {
+            icon.className = 'fas fa-sun';
+            text.textContent = 'Dark Theme';
+            localStorage.setItem('farmlink-theme', 'farmlink');
+        } else {
+            icon.className = 'fas fa-moon';
+            text.textContent = 'FarmLink Theme';
+            localStorage.setItem('farmlink-theme', 'dark');
+        }
+    }
+
+    // Load saved theme
+    function loadTheme() {
+        const savedTheme = localStorage.getItem('farmlink-theme');
+        if (savedTheme === 'farmlink') {
+            const container = document.querySelector('.app-container');
+            const icon = document.getElementById('themeIcon');
+            const text = document.getElementById('themeText');
+
+            container.classList.add('farmlink-theme');
+            icon.className = 'fas fa-sun';
+            text.textContent = 'Dark Theme';
+        }
+    }
+
+    // Load theme on page load
+    setTimeout(loadTheme, 100);
+
+    // Keyboard Shortcuts
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            startNewChat();
+        }
+
+        // Ctrl/Cmd + Shift + T for theme toggle
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'T') {
+            e.preventDefault();
+            toggleTheme();
+        }
+        if (e.key === 'Escape') {
+            closeSettings();
+            closeSidebar();
+            closeDeleteModal();
+        }
+    });
+
+    // Cleanup
+    window.addEventListener('beforeunload', () => {
+        if (state.currentSpeech) speechSynthesis.cancel();
+        if (state.isRecording && state.recognition) state.recognition.stop();
+    });
+
+    // Mobile Swipe Gestures for Sidebar
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    document.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        const horizontalSwipe = Math.abs(touchEndX - touchStartX);
+        const verticalSwipe = Math.abs(touchEndY - touchStartY);
+
+        // Only trigger if horizontal swipe is dominant
+        if (horizontalSwipe > verticalSwipe && horizontalSwipe > swipeThreshold) {
+            const sidebar = document.getElementById('sidebar');
+
+            // Swipe right to open (from left edge)
+            if (touchEndX > touchStartX && touchStartX < 50) {
+                sidebar.classList.add('open');
+                document.getElementById('overlay').classList.add('show');
+            }
+
+            // Swipe left to close
+            if (touchEndX < touchStartX && sidebar.classList.contains('open')) {
+                closeSidebar();
+            }
+        }
+    }
+
+    // Prevent body scroll when modal is open
+    function preventBodyScroll(prevent) {
+        if (prevent) {
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
+        } else {
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.width = '';
+        }
+    }
+
+    // Update modal functions to prevent body scroll
+    const originalOpenSettings = openSettings;
+    openSettings = function () {
+        originalOpenSettings();
+        preventBodyScroll(true);
+    };
+
+    const originalCloseSettings = closeSettings;
+    closeSettings = function () {
+        originalCloseSettings();
+        preventBodyScroll(false);
+    };
+
+    const originalDeleteChat = deleteChat;
+    deleteChat = function (event, chatId) {
+        originalDeleteChat(event, chatId);
+        preventBodyScroll(true);
+    };
+
+    const originalCloseDeleteModal = closeDeleteModal;
+    closeDeleteModal = function () {
+        originalCloseDeleteModal();
+        preventBodyScroll(false);
+    };
+
+    // Responsive textarea height adjustment
+    function adjustTextareaForMobile() {
+        const textarea = document.getElementById('inputBox');
+        if (window.innerWidth <= 768) {
+            textarea.setAttribute('rows', '1');
+        }
+    }
+
+    window.addEventListener('resize', adjustTextareaForMobile);
+    adjustTextareaForMobile();
+
+    // Prevent zoom on input focus (iOS)
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+        const viewportMeta = document.querySelector('meta[name="viewport"]');
+        if (viewportMeta) {
+            viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+        }
+    }
+
+    // Handle orientation change
+    window.addEventListener('orientationchange', () => {
+        setTimeout(() => {
+            scrollToBottom();
+        }, 300);
+    });
+
+    // Optimize scroll performance on mobile
+    let scrollTimeout;
+    const chatContainer = document.getElementById('chatContainer');
+    if (chatContainer) {
+        chatContainer.addEventListener('scroll', () => {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                // Scroll ended
+            }, 150);
+        }, { passive: true });
+    }
+</script>
+{% endblock %}

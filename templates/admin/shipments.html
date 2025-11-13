@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Shipment Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-shipping-fast"></i> Shipment Management
+                <a href="{{ url_for('admin_tracking_analytics') }}" class="btn btn-info btn-sm float-end">
+                    <i class="fas fa-chart-line"></i> View Analytics
+                </a>
+            </h2>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Shipments</h5>
+                    <h2>{{ total_shipments }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">In Transit</h5>
+                    <h2>{{ status_counts.get('in_transit', 0) }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Delivered</h5>
+                    <h2>{{ status_counts.get('delivered', 0) }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Failed</h5>
+                    <h2>{{ status_counts.get('failed', 0) }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('admin_shipments') }}" class="row g-3">
+                <div class="col-md-2">
+                    <label for="status" class="form-label">Shipment Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Statuses</option>
+                        <option value="packed" {% if status_filter == 'packed' %}selected{% endif %}>Packed</option>
+                        <option value="shipped" {% if status_filter == 'shipped' %}selected{% endif %}>Shipped</option>
+                        <option value="in_transit" {% if status_filter == 'in_transit' %}selected{% endif %}>In Transit</option>
+                        <option value="out_for_delivery" {% if status_filter == 'out_for_delivery' %}selected{% endif %}>Out for Delivery</option>
+                        <option value="delivered" {% if status_filter == 'delivered' %}selected{% endif %}>Delivered</option>
+                        <option value="failed" {% if status_filter == 'failed' %}selected{% endif %}>Failed</option>
+                        <option value="returned" {% if status_filter == 'returned' %}selected{% endif %}>Returned</option>
+                        <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="courier" class="form-label">Courier</label>
+                    <select name="courier" id="courier" class="form-select">
+                        <option value="all" {% if courier_filter == 'all' %}selected{% endif %}>All Couriers</option>
+                        {% for courier in courier_list %}
+                        <option value="{{ courier }}" {% if courier_filter == courier %}selected{% endif %}>{{ courier|title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="date_from" class="form-label">Date From</label>
+                    <input type="date" name="date_from" id="date_from" class="form-control" value="{{ date_from }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="date_to" class="form-label">Date To</label>
+                    <input type="date" name="date_to" id="date_to" class="form-control" value="{{ date_to }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" name="search" id="search" class="form-control" 
+                           placeholder="Tracking #, Buyer, Farmer" value="{{ search_query }}">
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Filter
+                    </button>
+                </div>
+            </form>
+            <div class="mt-2">
+                <a href="{{ url_for('admin_shipments') }}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-redo"></i> Reset Filters
+                </a>
+                <a href="{{ url_for('admin_export_shipments', status=status_filter, courier=courier_filter, search=search_query, date_from=date_from, date_to=date_to) }}" 
+                   class="btn btn-success btn-sm">
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </a>
+                <a href="{{ url_for('admin_tracking_analytics') }}" class="btn btn-info btn-sm">
+                    <i class="fas fa-chart-bar"></i> View Analytics
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shipments Table -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Tracking Number</th>
+                            <th>Courier</th>
+                            <th>Buyer</th>
+                            <th>Farmer</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th>Est. Delivery</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in shipments.items %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('admin_order_detail', order_id=order.id) }}">#{{ order.id }}</a>
+                            </td>
+                            <td>
+                                <strong>{{ order.tracking_number }}</strong><br>
+                                <small class="text-muted">{{ order.awb_code or 'N/A' }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ order.courier_name|title if order.courier_name else 'N/A' }}</span>
+                            </td>
+                            <td>
+                                {{ order.buyer.full_name or order.buyer.username }}<br>
+                                <small class="text-muted">{{ order.buyer.email }}</small>
+                            </td>
+                            <td>
+                                {{ order.farmer_user.full_name or order.farmer_user.username }}<br>
+                                <small class="text-muted">{{ order.farmer_user.email }}</small>
+                            </td>
+                            <td>
+                                {% if order.shipment_status == 'delivered' %}
+                                <span class="badge bg-success">Delivered</span>
+                                {% elif order.shipment_status == 'in_transit' %}
+                                <span class="badge bg-info">In Transit</span>
+                                {% elif order.shipment_status == 'out_for_delivery' %}
+                                <span class="badge bg-warning">Out for Delivery</span>
+                                {% elif order.shipment_status == 'failed' %}
+                                <span class="badge bg-danger">Failed</span>
+                                {% elif order.shipment_status == 'cancelled' %}
+                                <span class="badge bg-dark">Cancelled</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ order.shipment_status|title if order.shipment_status else 'N/A' }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ format_datetime(order.shipment_created_at) if order.shipment_created_at else 'N/A' }}
+                            </td>
+                            <td>
+                                {{ order.estimated_delivery_date.strftime('%Y-%m-%d') if order.estimated_delivery_date else 'N/A' }}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" 
+                                            data-bs-target="#updateStatusModal{{ order.id }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-info" data-bs-toggle="modal" 
+                                            data-bs-target="#updateTrackingModal{{ order.id }}">
+                                        <i class="fas fa-barcode"></i>
+                                    </button>
+                                    <a href="{{ url_for('track_order', order_id=order.id) }}" 
+                                       class="btn btn-success" target="_blank">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Update Status Modal -->
+                        <div class="modal fade" id="updateStatusModal{{ order.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form method="POST" action="{{ url_for('admin_update_shipment_status', order_id=order.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Update Shipment Status - Order #{{ order.id }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label for="status{{ order.id }}" class="form-label">New Status</label>
+                                                <select name="status" id="status{{ order.id }}" class="form-select" required>
+                                                    <option value="packed" {% if order.shipment_status == 'packed' %}selected{% endif %}>Packed</option>
+                                                    <option value="shipped" {% if order.shipment_status == 'shipped' %}selected{% endif %}>Shipped</option>
+                                                    <option value="in_transit" {% if order.shipment_status == 'in_transit' %}selected{% endif %}>In Transit</option>
+                                                    <option value="out_for_delivery" {% if order.shipment_status == 'out_for_delivery' %}selected{% endif %}>Out for Delivery</option>
+                                                    <option value="delivered" {% if order.shipment_status == 'delivered' %}selected{% endif %}>Delivered</option>
+                                                    <option value="failed" {% if order.shipment_status == 'failed' %}selected{% endif %}>Failed</option>
+                                                    <option value="returned" {% if order.shipment_status == 'returned' %}selected{% endif %}>Returned</option>
+                                                    <option value="cancelled" {% if order.shipment_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="description{{ order.id }}" class="form-label">Description</label>
+                                                <textarea name="description" id="description{{ order.id }}" 
+                                                          class="form-control" rows="2" 
+                                                          placeholder="Optional status description"></textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="location{{ order.id }}" class="form-label">Location</label>
+                                                <input type="text" name="location" id="location{{ order.id }}" 
+                                                       class="form-control" placeholder="Optional location">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Update Status</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Update Tracking Modal -->
+                        <div class="modal fade" id="updateTrackingModal{{ order.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form method="POST" action="{{ url_for('admin_update_tracking_number', order_id=order.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Update Tracking Info - Order #{{ order.id }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label for="tracking_number{{ order.id }}" class="form-label">Tracking Number</label>
+                                                <input type="text" name="tracking_number" id="tracking_number{{ order.id }}" 
+                                                       class="form-control" value="{{ order.tracking_number }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="awb_code{{ order.id }}" class="form-label">AWB Code</label>
+                                                <input type="text" name="awb_code" id="awb_code{{ order.id }}" 
+                                                       class="form-control" value="{{ order.awb_code or '' }}">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="courier_name{{ order.id }}" class="form-label">Courier Name</label>
+                                                <select name="courier_name" id="courier_name{{ order.id }}" class="form-select">
+                                                    <option value="shiprocket" {% if order.courier_name == 'shiprocket' %}selected{% endif %}>Shiprocket</option>
+                                                    <option value="india_post" {% if order.courier_name == 'india_post' %}selected{% endif %}>India Post</option>
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="tracking_url{{ order.id }}" class="form-label">Tracking URL</label>
+                                                <input type="url" name="tracking_url" id="tracking_url{{ order.id }}" 
+                                                       class="form-control" value="{{ order.courier_tracking_url or '' }}">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Update Tracking</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if shipments.pages > 1 %}
+            <nav aria-label="Shipments pagination">
+                <ul class="pagination justify-content-center">
+                    {% if shipments.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin_shipments', page=shipments.prev_num, status=status_filter, courier=courier_filter, search=search_query, date_from=date_from, date_to=date_to) }}">Previous</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in shipments.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                        {% if page_num %}
+                            {% if page_num == shipments.page %}
+                            <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                            {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin_shipments', page=page_num, status=status_filter, courier=courier_filter, search=search_query, date_from=date_from, date_to=date_to) }}">{{ page_num }}</a>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if shipments.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('admin_shipments', page=shipments.next_num, status=status_filter, courier=courier_filter, search=search_query, date_from=date_from, date_to=date_to) }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

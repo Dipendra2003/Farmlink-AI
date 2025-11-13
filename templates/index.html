@@ -1,0 +1,623 @@
+{% extends "base.html" %}
+
+{% block title %}FarmLink AI - Connecting Agriculture{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section bg-success text-white py-5 position-relative">
+    <!-- Testing Mode Badge -->
+    <div class="position-absolute top-0 end-0 m-3">
+        <span class="badge bg-warning text-dark fs-6 px-3 py-2 shadow-lg testing-mode-badge">
+            <i class="fas fa-flask me-2"></i>TESTING MODE
+        </span>
+    </div>
+    
+    <div class="container">
+        <div class="row align-items-center min-vh-50">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    Connecting Farmers with the Future
+                </h1>
+                <p class="lead mb-4">
+                    FarmLink AI bridges the gap between farmers, buyers, and agricultural experts. 
+                    Sell your produce directly, get expert advice, and access modern agricultural solutions.
+                </p>
+                <div class="d-flex gap-3 flex-wrap">
+                    {% if not current_user.is_authenticated %}
+                        <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>Join as Farmer
+                        </a>
+                        <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+                            <i class="fas fa-shopping-cart me-2"></i>Join as Buyer
+                        </a>
+                        <a href="{{ url_for('marketplace') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-store me-2"></i>Browse Marketplace
+                        </a>
+                        <a href="{{ url_for('crop_suggestions') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-seedling me-2"></i>AI Crop Suggestions
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg">
+                            <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                        </a>
+                        <a href="{{ url_for('crop_suggestions') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-seedling me-2"></i>AI Crop Suggestions
+                        </a>
+                        <a href="{{ url_for('marketplace') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-store me-2"></i>Browse Marketplace
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <div class="hero-stats bg-white bg-opacity-10 rounded-4 p-4 mt-4 mt-lg-0">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h3 class="fw-bold">{{ total_farmers }}</h3>
+                            <p class="mb-0">Verified Farmers</p>
+                            <small class="text-white-50">Active & Verified</small>
+                        </div>
+                        <div class="col-4">
+                            <h3 class="fw-bold">{{ total_buyers }}</h3>
+                            <p class="mb-0">Active Buyers</p>
+                            <small class="text-white-50">Verified Members</small>
+                        </div>
+                        <div class="col-4">
+                            <h3 class="fw-bold">{{ total_crops }}</h3>
+                            <p class="mb-0">Available Crops</p>
+                            <small class="text-white-50">Ready to Purchase</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-lg-10 mx-auto text-center">
+                <div class="mb-4">
+                    <span class="badge bg-success bg-opacity-10 text-success px-4 py-2 rounded-pill mb-3">
+                        <i class="fas fa-star me-2"></i>Our Features
+                    </span>
+                </div>
+                <h2 class="display-4 fw-bold mb-4">
+                    <span class="gradient-title">Why Choose FarmLink AI?</span>
+                </h2>
+                <p class="lead text-muted mb-2 lead-large">
+                    Experience the power of technology in agriculture with our comprehensive platform.
+                </p>
+                <p class="text-muted">
+                    <i class="fas fa-check-circle text-success me-2"></i>Trusted by 1000+ farmers
+                    <i class="fas fa-check-circle text-success ms-3 me-2"></i>AI-Powered Solutions
+                    <i class="fas fa-check-circle text-success ms-3 me-2"></i>24/7 Support
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4 h-100 border rounded-3 shadow-sm">
+                    <div class="feature-icon bg-success bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+                        <i class="fas fa-handshake text-success fa-2x"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Direct Trading</h5>
+                    <p class="text-muted">
+                        Connect directly with farmers and buyers. No middlemen, better prices, fair trade for everyone.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4 h-100 border rounded-3 shadow-sm">
+                    <div class="feature-icon bg-success bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+                        <i class="fas fa-brain text-success fa-2x"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">AI-Powered Insights</h5>
+                    <p class="text-muted">
+                        Get intelligent recommendations for crop selection, pricing, and market trends using advanced AI.
+                    </p>
+                    <div class="mt-3">
+                        <a href="{{ url_for('crop_suggestions') }}" class="btn btn-sm btn-success me-2">
+                            <i class="fas fa-seedling me-1"></i>Crop AI
+                        </a>
+                        <a href="{{ url_for('pest_disease_analysis') }}" class="btn btn-sm btn-outline-success me-2">
+                            <i class="fas fa-bug me-1"></i>Pest AI
+                        </a>
+                        <a href="{{ url_for('voice_interface') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-microphone me-1"></i>Voice AI
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4 h-100 border rounded-3 shadow-sm">
+                    <div class="feature-icon bg-success bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+                        <i class="fas fa-users text-success fa-2x"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Expert Network</h5>
+                    <p class="text-muted">
+                        Access a network of agricultural experts for advice, tips, and solutions to farming challenges.
+                    </p>
+                    <div class="mt-3">
+                        <a href="{{ url_for('expert_forum') }}" class="btn btn-sm btn-outline-success me-2">
+                            <i class="fas fa-users me-1"></i>Join Forum
+                        </a>
+                        <a href="{{ url_for('learning_hub') }}" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-graduation-cap me-1"></i>Learn
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4 h-100 border rounded-3 shadow-sm">
+                    <div class="feature-icon bg-success bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+                        <i class="fas fa-cloud-sun text-success fa-2x"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Weather Integration</h5>
+                    <p class="text-muted">
+                        Stay informed with real-time weather data and forecasts to make better farming decisions.
+                    </p>
+                    <div class="mt-3">
+                        <a href="{{ url_for('weather_dashboard') }}" class="btn btn-sm btn-outline-success me-2">
+                            <i class="fas fa-cloud-sun me-1"></i>Weather
+                        </a>
+                        <a href="{{ url_for('price_forecast_dashboard') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-chart-line me-1"></i>Forecasts
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4 h-100 border rounded-3 shadow-sm">
+                    <div class="feature-icon bg-success bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+                        <i class="fas fa-shield-alt text-success fa-2x"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Secure Transactions</h5>
+                    <p class="text-muted">
+                        Safe and secure payment processing with buyer protection and farmer guarantees.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="feature-card text-center p-4 h-100 border rounded-3 shadow-sm">
+                    <div class="feature-icon bg-success bg-opacity-10 rounded-circle p-3 d-inline-flex mb-3">
+                        <i class="fas fa-mobile-alt text-success fa-2x"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">Mobile Friendly</h5>
+                    <p class="text-muted">
+                        Access the platform anywhere, anytime with our responsive mobile-friendly design.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- AI Services Showcase Section -->
+<section class="py-5 ai-section position-relative ai-section-bg">
+    <!-- Floating Particles -->
+    <div class="ai-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+    
+    <div class="container position-relative">
+        <div class="row mb-5">
+            <div class="col-lg-10 mx-auto text-center text-white">
+                <div class="mb-4">
+                    <span class="badge bg-white bg-opacity-20 text-white px-4 py-2 rounded-pill mb-3 ai-badge-blur">
+                        <i class="fas fa-robot me-2"></i>AI Technology
+                    </span>
+                </div>
+                <h2 class="display-4 fw-bold mb-4 ai-title-glow">
+                    Powered by Artificial Intelligence
+                </h2>
+                <p class="lead mb-2 lead-large">
+                    Experience the future of farming with our AI-driven tools and services.
+                </p>
+                <p class="mb-0 text-opacity-90">
+                    <i class="fas fa-brain me-2"></i>Advanced Machine Learning
+                    <i class="fas fa-language ms-3 me-2"></i>Multi-Language Support
+                    <i class="fas fa-mobile-alt ms-3 me-2"></i>Mobile Optimized
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="card ai-card h-100 border-0 shadow-lg">
+                    <div class="card-body text-center p-4">
+                        <div class="ai-icon-wrapper bg-success bg-opacity-10 rounded-circle mb-3">
+                            <i class="fas fa-microphone fa-2x text-success"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">FarmLink Assistant</h5>
+                        <p class="text-muted mb-4">Ask questions in your language and get instant farming advice</p>
+                        <a href="{{ url_for('voice_interface') }}" class="btn btn-success w-100">
+                            <i class="fas fa-microphone me-2"></i>Try Now
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3">
+                <div class="card ai-card h-100 border-0 shadow-lg">
+                    <div class="card-body text-center p-4">
+                        <div class="ai-icon-wrapper bg-warning bg-opacity-10 rounded-circle mb-3">
+                            <i class="fas fa-bug fa-2x text-warning"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">Pest Detection</h5>
+                        <p class="text-muted mb-4">Get AI-powered pest and disease detection for your crops</p>
+                        <a href="{{ url_for('pest_disease_analysis') }}" class="btn btn-warning w-100">
+                            <i class="fas fa-bug me-2"></i>Explore
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3">
+                <div class="card ai-card h-100 border-0 shadow-lg">
+                    <div class="card-body text-center p-4">
+                        <div class="ai-icon-wrapper bg-success bg-opacity-10 rounded-circle mb-3">
+                            <i class="fas fa-seedling fa-2x text-success"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">Crop Suggestions</h5>
+                        <p class="text-muted mb-4">Get AI-powered crop recommendations based on your conditions</p>
+                        <a href="{{ url_for('crop_suggestions') }}" class="btn btn-success w-100">
+                            <i class="fas fa-seedling me-2"></i>Get Suggestions
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-3">
+                <div class="card ai-card h-100 border-0 shadow-lg">
+                    <div class="card-body text-center p-4">
+                        <div class="ai-icon-wrapper bg-info bg-opacity-10 rounded-circle mb-3">
+                            <i class="fas fa-chart-line fa-2x text-info"></i>
+                        </div>
+                        <h5 class="fw-bold mb-3">Price Forecast</h5>
+                        <p class="text-muted mb-4">Predict market prices with AI-powered analytics</p>
+                        <a href="{{ url_for('price_forecast_dashboard') }}" class="btn btn-info w-100">
+                            <i class="fas fa-chart-line me-2"></i>Forecast
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Crops Section -->
+{% if recent_crops %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row mb-4">
+            <div class="col-lg-8 mx-auto text-center">
+                <h2 class="display-6 fw-bold mb-3">Fresh from the Farm</h2>
+                <p class="lead text-muted">
+                    Discover the latest crops available in our marketplace.
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            {% for crop in recent_crops %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card crop-card h-100 shadow-sm border-0">
+                    <div class="card-img-container position-relative">
+                        <img src="{{ url_for('static', filename=crop.image_url) if crop.image_url else 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60' }}" 
+                             class="card-img-top crop-card-img" alt="{{ crop.name }}">
+                        <div class="position-absolute top-0 end-0 m-2">
+                            <span class="badge bg-success">{{ crop.category.title() }}</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold">{{ crop.name }}</h5>
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-map-marker-alt me-1"></i>{{ crop.location }}
+                        </p>
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-user me-1"></i>{{ crop.farmer.full_name }}
+                            {% set seller = crop.farmer %}
+                            {% include 'components/kyc_badge.html' %}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="h5 text-success mb-0">{{ format_currency(crop.price_per_unit) }}/{{ crop.unit }}</span>
+                            <small class="text-muted">{{ crop.quantity }} {{ crop.unit }} available</small>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-0">
+                        <div class="d-flex gap-2">
+                            <a href="{{ url_for('product_detail', crop_id=crop.id) }}" class="btn btn-success flex-fill">
+                                <i class="fas fa-eye me-2"></i>View Details
+                            </a>
+                            <a href="{{ url_for('marketplace') }}" class="btn btn-outline-primary" title="Browse Marketplace">
+                                <i class="fas fa-store"></i>
+                            </a>
+                            <a href="{{ url_for('voice_interface') }}" class="btn btn-outline-success" title="Ask AI about this crop">
+                                <i class="fas fa-microphone"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{{ url_for('marketplace') }}" class="btn btn-outline-success btn-lg">
+                <i class="fas fa-store me-2"></i>View All Crops
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- CTA Section -->
+
+<!-- AI Success Stories Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-lg-8 mx-auto text-center">
+                <h2 class="display-6 fw-bold mb-3">AI Success Stories</h2>
+                <p class="lead text-muted">
+                    See how our AI tools are transforming farming experiences across India.
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="text-success mb-3">
+                            <i class="fas fa-quote-left fa-2x"></i>
+                        </div>
+                        <blockquote class="mb-3">
+                            "The Voice AI helped me identify a pest problem early. Saved my entire tomato crop!"
+                        </blockquote>
+                        <div class="d-flex align-items-center">
+                            <img src="https://ui-avatars.com/api/?name=Ravi+Kumar&background=28a745&color=fff&size=40" 
+                                 class="rounded-circle me-3" alt="Farmer">
+                            <div>
+                                <h6 class="mb-0">Ravi Kumar</h6>
+                                <small class="text-muted">Farmer, Maharashtra</small>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <a href="{{ url_for('voice_interface') }}" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-microphone me-1"></i>Try Voice AI
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="text-warning mb-3">
+                            <i class="fas fa-quote-left fa-2x"></i>
+                        </div>
+                        <blockquote class="mb-3">
+                            "FarmLink AI's pest detection helped me save my crops early this season. Great technology!"
+                        </blockquote>
+                        <div class="d-flex align-items-center">
+                            <img src="https://ui-avatars.com/api/?name=Priya+Sharma&background=ffc107&color=000&size=40" 
+                                 class="rounded-circle me-3" alt="Farmer">
+                            <div>
+                                <h6 class="mb-0">Priya Sharma</h6>
+                                <small class="text-muted">Farmer, Punjab</small>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <a href="{{ url_for('pest_disease_analysis') }}" class="btn btn-sm btn-outline-warning">
+                                <i class="fas fa-bug me-1"></i>Try Pest AI
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <div class="text-info mb-3">
+                            <i class="fas fa-quote-left fa-2x"></i>
+                        </div>
+                        <blockquote class="mb-3">
+                            "Price forecasting AI helped me time my sales perfectly. Made 25% more profit!"
+                        </blockquote>
+                        <div class="d-flex align-items-center">
+                            <img src="https://ui-avatars.com/api/?name=Amit+Singh&background=17a2b8&color=fff&size=40" 
+                                 class="rounded-circle me-3" alt="Farmer">
+                            <div>
+                                <h6 class="mb-0">Amit Singh</h6>
+                                <small class="text-muted">Farmer, Uttar Pradesh</small>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <a href="{{ url_for('price_forecast_dashboard') }}" class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-chart-line me-1"></i>Try Price AI
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Interactive AI Demo Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h2 class="display-6 fw-bold mb-4">Experience AI-Powered Farming</h2>
+                <p class="lead mb-4">
+                    Try our AI tools instantly and see how technology can transform your farming experience.
+                </p>
+                
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-center p-3 bg-white rounded-3 shadow-sm">
+                            <div class="bg-success bg-opacity-10 rounded-circle p-2 me-3">
+                                <i class="fas fa-microphone text-success"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Voice Commands</h6>
+                                <small class="text-muted">Speak naturally</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-center p-3 bg-white rounded-3 shadow-sm">
+                            <div class="bg-warning bg-opacity-10 rounded-circle p-2 me-3">
+                                <i class="fas fa-camera text-warning"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Image Analysis</h6>
+                                <small class="text-muted">Upload & analyze</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-center p-3 bg-white rounded-3 shadow-sm">
+                            <div class="bg-info bg-opacity-10 rounded-circle p-2 me-3">
+                                <i class="fas fa-brain text-info"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Smart Insights</h6>
+                                <small class="text-muted">AI predictions</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-center p-3 bg-white rounded-3 shadow-sm">
+                            <div class="bg-danger bg-opacity-10 rounded-circle p-2 me-3">
+                                <i class="fas fa-globe text-danger"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">Multi-language</h6>
+                                <small class="text-muted">13+ languages</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="{{ url_for('voice_interface') }}" class="btn btn-success btn-lg">
+                        <i class="fas fa-microphone me-2"></i>Try Voice AI
+                    </a>
+                    <a href="{{ url_for('pest_disease_analysis') }}" class="btn btn-outline-danger btn-lg">
+                        <i class="fas fa-camera me-2"></i>Analyze Crop
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="bg-gradient rounded-4 p-4 text-white ai-demo-box">
+                    <h4 class="fw-bold mb-3">🎯 Quick AI Demo</h4>
+                    <div class="space-y-3">
+                        <div class="bg-white bg-opacity-20 rounded-3 p-3 mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-user me-2"></i>
+                                <strong>You:</strong>
+                            </div>
+                            <em>"What's the best crop for monsoon season?"</em>
+                        </div>
+                        
+                        <div class="bg-white bg-opacity-20 rounded-3 p-3 mb-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-robot me-2"></i>
+                                <strong>FarmLink AI:</strong>
+                            </div>
+                            <em>"Based on your location and current weather, I recommend rice and sugarcane. These crops thrive in monsoon conditions and have high market demand..."</em>
+                        </div>
+                        
+                        <div class="text-center">
+                            <a href="{{ url_for('voice_interface') }}" class="btn btn-light btn-lg">
+                                <i class="fas fa-play me-2"></i>Start AI Conversation
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Ready to Transform Agriculture? -->
+<section class="py-5 bg-success text-white">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h2 class="display-6 fw-bold mb-3">Ready to Transform Agriculture?</h2>
+                <p class="lead mb-4">
+                    Join thousands of farmers and buyers who are already using FarmLink AI to grow their business.
+                </p>
+                {% if not current_user.is_authenticated %}
+                    <div class="d-flex flex-wrap justify-content-center gap-3">
+                        <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>Get Started Today
+                        </a>
+                        <a href="{{ url_for('marketplace') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-store me-2"></i>Explore Marketplace
+                        </a>
+                        <a href="{{ url_for('voice_interface') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-microphone me-2"></i>Try Voice AI
+                        </a>
+                    </div>
+                    <div class="d-flex flex-wrap justify-content-center gap-3 mt-3">
+                        <a href="{{ url_for('expert_forum') }}" class="btn btn-outline-light">
+                            <i class="fas fa-users me-2"></i>Expert Forum
+                        </a>
+                        <a href="{{ url_for('learning_hub') }}" class="btn btn-outline-light">
+                            <i class="fas fa-graduation-cap me-2"></i>Learning Hub
+                        </a>
+                        <a href="{{ url_for('weather_dashboard') }}" class="btn btn-outline-light">
+                            <i class="fas fa-cloud-sun me-2"></i>Weather Info
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="d-flex flex-wrap justify-content-center gap-3">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-light btn-lg">
+                            <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                        </a>
+                        <a href="{{ url_for('voice_interface') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-microphone me-2"></i>FarmLink Assistant
+                        </a>
+                        <a href="{{ url_for('marketplace') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-store me-2"></i>Marketplace
+                        </a>
+                    </div>
+                    <div class="d-flex flex-wrap justify-content-center gap-3 mt-3">
+                        <a href="{{ url_for('my_crops') }}" class="btn btn-outline-light">
+                            <i class="fas fa-wheat-awn me-2"></i>My Crops
+                        </a>
+                        <a href="{{ url_for('expert_forum') }}" class="btn btn-outline-light">
+                            <i class="fas fa-users me-2"></i>Expert Forum
+                        </a>
+                        <a href="{{ url_for('my_orders') }}" class="btn btn-outline-light">
+                            <i class="fas fa-shopping-cart me-2"></i>Orders
+                        </a>
+                    </div>-light">
+                            <i class="fas fa-shopping-cart me-2"></i>Orders
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

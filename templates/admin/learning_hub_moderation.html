@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}Learning Hub Moderation - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-shield-alt me-2"></i>Learning Hub Moderation
+            </h1>
+            <p class="lead text-muted">Manage flagged comments and articles</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-flag fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ stats.pending }}</h3>
+                    <p class="mb-0">Pending</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ stats.approved }}</h3>
+                    <p class="mb-0">Approved</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-times-circle fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ stats.removed }}</h3>
+                    <p class="mb-0">Removed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-list fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ stats.total }}</h3>
+                    <p class="mb-0">Total</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link {% if status == 'pending' %}active{% endif %}" 
+               href="{{ url_for('admin_learning_hub_moderation', status='pending') }}">
+                Pending ({{ stats.pending }})
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if status == 'all' %}active{% endif %}" 
+               href="{{ url_for('admin_learning_hub_moderation', status='all') }}">
+                All Reports
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if status == 'approved' %}active{% endif %}" 
+               href="{{ url_for('admin_learning_hub_moderation', status='approved') }}">
+                Approved
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if status == 'removed' %}active{% endif %}" 
+               href="{{ url_for('admin_learning_hub_moderation', status='removed') }}">
+                Removed
+            </a>
+        </li>
+    </ul>
+
+    <!-- Flagged Items -->
+    {% if flags.items %}
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-flag me-2"></i>Flagged Content
+            </h5>
+        </div>
+        <div class="card-body">
+            {% for flag in flags.items %}
+            <div class="border-bottom pb-3 mb-3">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5>
+                            {% if flag.comment %}
+                            <i class="fas fa-comment text-primary me-2"></i>Comment Report
+                            {% else %}
+                            <i class="fas fa-file-alt text-info me-2"></i>Article Report
+                            {% endif %}
+                        </h5>
+                        
+                        {% if flag.comment %}
+                        <div class="alert alert-light">
+                            <strong>Comment by {{ flag.comment.user.username }}:</strong>
+                            <p class="mb-0 mt-2">{{ flag.comment.content }}</p>
+                            <small class="text-muted">
+                                On article: <a href="{{ url_for('view_article', article_id=flag.comment.article_id) }}" target="_blank">
+                                    {{ flag.comment.article.title }}
+                                </a>
+                            </small>
+                        </div>
+                        {% elif flag.article %}
+                        <div class="alert alert-light">
+                            <strong>Article: {{ flag.article.title }}</strong>
+                            <p class="mb-0 mt-2">{{ flag.article.summary }}</p>
+                            <small class="text-muted">By {{ flag.article.author.username }}</small>
+                        </div>
+                        {% endif %}
+
+                        <div class="mt-2">
+                            <span class="badge bg-danger">{{ flag.reason }}</span>
+                            <span class="text-muted ms-2">
+                                Reported by {{ flag.reporter.username }} on {{ flag.created_at.strftime('%B %d, %Y') }}
+                            </span>
+                        </div>
+                        
+                        {% if flag.description %}
+                        <div class="mt-2">
+                            <strong>Details:</strong> {{ flag.description }}
+                        </div>
+                        {% endif %}
+
+                        {% if flag.status != 'pending' %}
+                        <div class="mt-2">
+                            <span class="badge 
+                                {% if flag.status == 'approved' %}bg-success
+                                {% elif flag.status == 'removed' %}bg-danger
+                                {% else %}bg-secondary{% endif %}">
+                                {{ flag.status|title }}
+                            </span>
+                            {% if flag.moderator %}
+                            <span class="text-muted ms-2">
+                                by {{ flag.moderator.username }} on {{ flag.moderated_at.strftime('%B %d, %Y') }}
+                            </span>
+                            {% endif %}
+                            {% if flag.moderator_notes %}
+                            <div class="mt-1"><em>{{ flag.moderator_notes }}</em></div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-4">
+                        {% if flag.status == 'pending' %}
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success" onclick="moderateFlag({{ flag.id }}, 'approved')">
+                                <i class="fas fa-check me-1"></i>Approve
+                            </button>
+                            <button class="btn btn-danger" onclick="showRemoveModal({{ flag.id }})">
+                                <i class="fas fa-trash me-1"></i>Remove Content
+                            </button>
+                            <button class="btn btn-secondary" onclick="showDismissModal({{ flag.id }})">
+                                <i class="fas fa-times me-1"></i>Dismiss Report
+                            </button>
+                        </div>
+                        {% else %}
+                        <div class="text-muted text-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                            <p class="mt-2">Already moderated</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if flags.pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if flags.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_learning_hub_moderation', status=status, page=flags.prev_num) }}">Previous</a>
+            </li>
+            {% endif %}
+            
+            {% for page_num in flags.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    <li class="page-item {% if page_num == flags.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin_learning_hub_moderation', status=status, page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if flags.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_learning_hub_moderation', status=status, page=flags.next_num) }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>No flagged content to review.
+    </div>
+    {% endif %}
+</div>
+
+<!-- Remove Modal -->
+<div class="modal fade" id="removeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Remove Content</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Moderator Notes (optional)</label>
+                    <textarea class="form-control" id="removeNotes" rows="3" 
+                              placeholder="Reason for removal..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmRemove()">Remove Content</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dismiss Modal -->
+<div class="modal fade" id="dismissModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Dismiss Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Moderator Notes (optional)</label>
+                    <textarea class="form-control" id="dismissNotes" rows="3" 
+                              placeholder="Reason for dismissal..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="confirmDismiss()">Dismiss Report</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentFlagId = null;
+
+function showRemoveModal(flagId) {
+    currentFlagId = flagId;
+    new bootstrap.Modal(document.getElementById('removeModal')).show();
+}
+
+function showDismissModal(flagId) {
+    currentFlagId = flagId;
+    new bootstrap.Modal(document.getElementById('dismissModal')).show();
+}
+
+function confirmRemove() {
+    const notes = document.getElementById('removeNotes').value;
+    moderateFlag(currentFlagId, 'removed', notes);
+    bootstrap.Modal.getInstance(document.getElementById('removeModal')).hide();
+}
+
+function confirmDismiss() {
+    const notes = document.getElementById('dismissNotes').value;
+    moderateFlag(currentFlagId, 'dismissed', notes);
+    bootstrap.Modal.getInstance(document.getElementById('dismissModal')).hide();
+}
+
+function moderateFlag(flagId, action, notes = '') {
+    fetch(`/admin/learning-hub/moderate/${flagId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            action: action,
+            notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+</script>
+{% endblock %}

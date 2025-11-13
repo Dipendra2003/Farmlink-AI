@@ -1,0 +1,583 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users - Admin - FarmLink AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Glassmorphic User Details Modal */
+    .user-details-modal .modal-content {
+        border-radius: 24px;
+        overflow: hidden;
+        background: #ffffff;
+        transform: translate3d(0, 0, 0) !important;
+        -webkit-transform: translate3d(0, 0, 0) !important;
+        position: relative;
+    }
+
+    .user-modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 40px 20px;
+        position: relative;
+        overflow: hidden;
+        transform: translate3d(0, 0, 0) !important;
+        -webkit-transform: translate3d(0, 0, 0) !important;
+    }
+
+    .user-modal-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at top left, rgba(255,255,255,0.1) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .user-profile-img {
+        object-fit: cover;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .user-status-badge {
+        padding: 8px 12px;
+        font-size: 0.75rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .user-role-badge {
+        padding: 10px 24px;
+        font-size: 0.95rem;
+        border-radius: 50px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .user-modal-body {
+        background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+        transform: translate3d(0, 0, 0) !important;
+        -webkit-transform: translate3d(0, 0, 0) !important;
+    }
+
+    /* Glass Card Effect */
+    .glass-card {
+        background: #ffffff;
+        border-radius: 16px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        transform: translate3d(0, 0, 0) !important;
+        -webkit-transform: translate3d(0, 0, 0) !important;
+    }
+
+    .section-title {
+        color: #2d3748;
+        font-weight: 700;
+        font-size: 1.1rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        border-bottom: 3px solid #667eea;
+        padding-bottom: 8px;
+        display: inline-block;
+    }
+
+    /* Info Items */
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 12px;
+        border-radius: 12px;
+        background: #f8f9fa;
+        transform: translate3d(0, 0, 0) !important;
+        -webkit-transform: translate3d(0, 0, 0) !important;
+        will-change: background;
+    }
+
+    .info-item:hover {
+        background: #e9ecef;
+    }
+
+    .info-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .info-content {
+        flex: 1;
+    }
+
+    .info-content label {
+        display: block;
+        font-size: 0.75rem;
+        color: #718096;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+
+    .info-content p {
+        margin: 0;
+        color: #2d3748;
+        font-weight: 500;
+        font-size: 0.95rem;
+        word-break: break-word;
+    }
+
+    /* Stat Cards */
+    .stat-card {
+        padding: 24px;
+        border-radius: 16px;
+        color: white;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transform: translate3d(0, 0, 0) !important;
+        -webkit-transform: translate3d(0, 0, 0) !important;
+        backface-visibility: hidden !important;
+        -webkit-backface-visibility: hidden !important;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at top right, rgba(255,255,255,0.15) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    }
+
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 12px;
+        opacity: 0.9;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-label {
+        font-size: 0.85rem;
+        opacity: 0.95;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+
+    /* Activity Timeline */
+    .activity-timeline {
+        position: relative;
+    }
+
+    .activity-item {
+        display: flex;
+        gap: 16px;
+        padding: 16px 8px;
+        border-bottom: 1px solid #f1f3f5;
+        border-radius: 8px;
+        transform: translate3d(0, 0, 0) !important;
+        -webkit-transform: translate3d(0, 0, 0) !important;
+        will-change: background;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-item:hover {
+        background: #f8f9fa;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 1rem;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-title {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 4px;
+        font-size: 0.95rem;
+    }
+
+    .activity-description {
+        color: #718096;
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+    }
+
+    .activity-time {
+        color: #a0aec0;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    /* Modal Animation - Override Bootstrap completely */
+    .modal.fade .modal-dialog {
+        opacity: 0;
+        transition: opacity 0.15s linear;
+        transform: none !important;
+    }
+
+    .modal.show .modal-dialog {
+        opacity: 1;
+        transform: none !important;
+    }
+    
+    /* Prevent modal content shift and vibration - CRITICAL FIX */
+    .modal-dialog {
+        transform: none !important;
+        -webkit-transform: none !important;
+        margin: 1.75rem auto !important;
+    }
+    
+    .modal-dialog-centered {
+        display: flex !important;
+        align-items: center !important;
+        min-height: calc(100% - 3.5rem) !important;
+    }
+    
+    .modal-dialog-scrollable .modal-body {
+        overflow-y: auto !important;
+        max-height: calc(100vh - 200px) !important;
+    }
+    
+    /* Force GPU acceleration and prevent repaints */
+    .user-details-modal,
+    .user-details-modal *,
+    .modal-backdrop,
+    .modal-content {
+        transform: translate3d(0, 0, 0) !important;
+        -webkit-transform: translate3d(0, 0, 0) !important;
+        backface-visibility: hidden !important;
+        -webkit-backface-visibility: hidden !important;
+        -webkit-font-smoothing: subpixel-antialiased !important;
+        perspective: 1000px !important;
+    }
+    
+    /* Prevent scrollbar from causing layout shift */
+    body.modal-open {
+        overflow: hidden !important;
+        padding-right: 0 !important;
+    }
+    
+    .modal {
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .user-modal-header {
+            padding: 30px 15px;
+        }
+
+        .stat-card {
+            padding: 16px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+        }
+
+        .stat-icon {
+            font-size: 1.5rem;
+        }
+
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-users me-2"></i>User Management
+            </h1>
+            <p class="lead text-muted">Manage all users in the FarmLink AI platform.</p>
+        </div>
+    </div>
+
+    <!-- User Statistics -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3 class="fw-bold">{{ users|length }}</h3>
+                    <p class="mb-0">Total Users</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3 class="fw-bold">{{ users|selectattr('role', 'equalto', 'farmer')|list|length }}</h3>
+                    <p class="mb-0">Farmers</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h3 class="fw-bold">{{ users|selectattr('role', 'equalto', 'buyer')|list|length }}</h3>
+                    <p class="mb-0">Buyers</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3 class="fw-bold">{{ users|selectattr('role', 'in', ['manager_farmer', 'manager_buyer', 'manager_crop'])|list|length }}</h3>
+                    <p class="mb-0">Managers</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <h3 class="fw-bold">{{ users|selectattr('role', 'equalto', 'admin')|list|length }}</h3>
+                    <p class="mb-0">Admins</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Stats -->
+    <div class="card mb-4">
+        <div class="card-header bg-danger text-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-shield-alt me-2"></i>Security Overview
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="border rounded p-3">
+                        <h6 class="text-muted mb-2">Recent Failed Logins</h6>
+                        <h3 class="text-danger mb-0">{{ failed_logins|default(0) }}</h3>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-3">
+                        <h6 class="text-muted mb-2">Inactive Users</h6>
+                        <h3 class="text-warning mb-0">{{ users|selectattr('active', 'equalto', false)|list|length }}</h3>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="border rounded p-3">
+                        <h6 class="text-muted mb-2">Unverified Emails</h6>
+                        <h3 class="text-info mb-0">{{ users|selectattr('email_verified', 'equalto', false)|list|length }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Filter by Role</label>
+                    <select name="role" class="form-select">
+                        <option value="">All Roles</option>
+                        <optgroup label="Basic Roles">
+                            <option value="farmer" {{ 'selected' if request.args.get('role')=='farmer' }}>Farmers</option>
+                            <option value="buyer" {{ 'selected' if request.args.get('role')=='buyer' }}>Buyers</option>
+                            <option value="admin" {{ 'selected' if request.args.get('role')=='admin' }}>Admins</option>
+                        </optgroup>
+                        <optgroup label="Manager Roles">
+                            <option value="manager_farmer" {{ 'selected' if request.args.get('role')=='manager_farmer' }}>Farmer Managers</option>
+                            <option value="manager_buyer" {{ 'selected' if request.args.get('role')=='manager_buyer' }}>Buyer Managers</option>
+                            <option value="manager_crop" {{ 'selected' if request.args.get('role')=='manager_crop' }}>Crop Managers</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Filter by Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="active" {{ 'selected' if request.args.get('status')=='active' }}>Active</option>
+                        <option value="inactive" {{ 'selected' if request.args.get('status')=='inactive' }}>Inactive</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Search</label>
+                    <input type="text" name="search" class="form-control" placeholder="Search by name, email, or username..." value="{{ request.args.get('search', '') }}">
+                </div>
+
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-1"></i>Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card shadow-sm border-0">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2"></i>All Users
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>User</th>
+                            <th>Contact</th>
+                            <th>Role</th>
+                            <th>Location</th>
+                            <th>Joined</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr class="{{ 'table-warning' if not user.is_active else '' }}">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ url_for('static', filename=user.profile_image) if user.profile_image and user.profile_image != 'default.jpg' else 'https://ui-avatars.com/api/?name=' + (user.full_name or user.username or 'User') + '&background=28a745&color=fff&size=40' }}"
+                                        class="rounded-circle me-3" width="40" height="40" alt="Profile" style="object-fit: cover;">
+                                    <div>
+                                        <div class="fw-bold">{{ user.full_name or user.username or 'Unknown User' }}</div>
+                                        <small class="text-muted">@{{ user.username }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>{{ user.email }}</div>
+                                {% if user.phone %}
+                                <small class="text-muted">{{ user.phone }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 
+                                    'success' if user.role == 'farmer' 
+                                    else 'info' if user.role == 'buyer' 
+                                    else 'warning' if user.role == 'admin'
+                                    else 'primary' if user.role.startswith('manager_')
+                                    else 'secondary' }}">
+                                    {% if user.role == 'manager_farmer' %}
+                                    Farmer Manager
+                                    {% elif user.role == 'manager_buyer' %}
+                                    Buyer Manager
+                                    {% elif user.role == 'manager_crop' %}
+                                    Crop Manager
+                                    {% else %}
+                                    {{ user.role.title() }}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ user.location or 'Not specified' }}</small>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ user.created_at.strftime('%b %d, %Y') }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if user.is_active else 'danger' }}">
+                                    {{ 'Active' if user.is_active else 'Inactive' }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group" aria-label="User actions">
+                                    <a href="{{ url_for('admin_user_details', user_id=user.id) }}" class="btn btn-outline-info btn-sm" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+
+                                    {% if user.role != 'admin' %}
+                                    {% set action = 'deactivate' if user.is_active else 'activate' %}
+                                    <a href="{{ url_for('toggle_user_status', user_id=user.id) }}" class="btn btn-outline-{{ 'danger' if user.is_active else 'success' }} btn-sm"
+                                        onclick="return confirm('Are you sure you want to {{ action }} this user?')">
+                                        <i class="fas fa-{{ 'ban' if user.is_active else 'check' }}"></i>
+                                    </a>
+                                    {% endif %}
+
+                                    {% if current_user.id != user.id %}
+                                    <a href="{{ url_for('send_message', user_id=user.id) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-envelope"></i>
+                                    </a>
+                                    {% endif %}
+
+                                    {% if user.role.startswith('manager_') %}
+                                    <a href="#" class="btn btn-outline-info btn-sm" data-bs-toggle="tooltip" title="{% if user.role == 'manager_farmer' %}Can manage farmer accounts and approve crop listings{% elif user.role == 'manager_buyer' %}Can manage buyer accounts and review orders{% else %}Can manage crop listings and categories{% endif %}">
+                                        <i class="fas fa-info-circle"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if not users %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <i class="fas fa-users fa-5x text-muted mb-4"></i>
+        <h3 class="text-muted mb-3">No users found</h3>
+        <p class="text-muted">Try adjusting your search criteria.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

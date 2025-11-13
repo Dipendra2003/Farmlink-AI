@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Rate Product - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-star"></i> Rate Your Purchase
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if order %}
+                    <!-- Order Details -->
+                    <div class="alert alert-info mb-4">
+                        <h5 class="alert-heading">Order Details</h5>
+                        <p class="mb-1"><strong>Product:</strong> {{ order.crop.name }}</p>
+                        <p class="mb-1"><strong>Quantity:</strong> {{ order.quantity_requested }} {{ order.crop.unit }}</p>
+                        <p class="mb-1"><strong>Order Date:</strong> {{ order.created_at.strftime('%B %d, %Y') }}</p>
+                        <p class="mb-0"><strong>Seller:</strong> {{ order.farmer_user.full_name or order.farmer_user.username }}</p>
+                    </div>
+
+                    <!-- Rating Form -->
+                    <form method="POST" action="{{ url_for('rating.rate_product', order_id=order.id) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Star Rating -->
+                        <div class="form-group mb-4">
+                            <label class="form-label"><strong>Your Rating *</strong></label>
+                            <div class="star-rating-input" id="starRating">
+                                <i class="far fa-star" data-rating="1"></i>
+                                <i class="far fa-star" data-rating="2"></i>
+                                <i class="far fa-star" data-rating="3"></i>
+                                <i class="far fa-star" data-rating="4"></i>
+                                <i class="far fa-star" data-rating="5"></i>
+                            </div>
+                            {{ form.rating(class="form-control d-none", id="ratingValue") }}
+                            {% if form.rating.errors %}
+                                <div class="text-danger mt-2">
+                                    {% for error in form.rating.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Review Text -->
+                        <div class="form-group mb-4">
+                            {{ form.review_text.label(class="form-label") }}
+                            {{ form.review_text(class="form-control", rows="5", placeholder="Share your experience with this product (optional, minimum 10 characters)") }}
+                            <small class="form-text text-muted">
+                                Help other buyers by sharing details about quality, delivery, and your overall experience.
+                            </small>
+                            {% if form.review_text.errors %}
+                                <div class="text-danger mt-2">
+                                    {% for error in form.review_text.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Hidden order_id field -->
+                        <input type="hidden" name="order_id" value="{{ order.id }}">
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-success btn-lg") }}
+                            <a href="{{ url_for('order_detail', order_id=order.id) }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.star-rating-input {
+    font-size: 2.5rem;
+    cursor: pointer;
+    color: #ddd;
+    user-select: none;
+}
+
+.star-rating-input i {
+    transition: color 0.2s, transform 0.2s;
+    margin: 0 5px;
+}
+
+.star-rating-input i:hover,
+.star-rating-input i.active {
+    color: #ffc107;
+    transform: scale(1.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .star-rating-input {
+        font-size: 2rem;
+    }
+    
+    .star-rating-input i {
+        margin: 0 3px;
+    }
+}
+
+@media (max-width: 480px) {
+    .star-rating-input {
+        font-size: 1.8rem;
+    }
+    
+    .star-rating-input i {
+        margin: 0 2px;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const stars = document.querySelectorAll('#starRating i');
+    const ratingInput = document.getElementById('ratingValue');
+    
+    // Function to update star display
+    function updateStars(rating) {
+        stars.forEach(s => {
+            const starRating = parseInt(s.getAttribute('data-rating'));
+            if (starRating <= rating) {
+                s.classList.remove('far');
+                s.classList.add('fas', 'active');
+            } else {
+                s.classList.remove('fas', 'active');
+                s.classList.add('far');
+            }
+        });
+    }
+    
+    stars.forEach(star => {
+        // Click event
+        star.addEventListener('click', function() {
+            const rating = parseInt(this.getAttribute('data-rating'));
+            ratingInput.value = rating;
+            updateStars(rating);
+            
+            // Add animation feedback
+            this.style.transform = 'scale(1.3)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 200);
+        });
+        
+        // Hover effect (desktop only)
+        if (window.innerWidth > 768) {
+            star.addEventListener('mouseenter', function() {
+                const rating = parseInt(this.getAttribute('data-rating'));
+                stars.forEach(s => {
+                    const starRating = parseInt(s.getAttribute('data-rating'));
+                    if (starRating <= rating) {
+                        s.classList.add('active');
+                    }
+                });
+            });
+        }
+        
+        // Touch support for mobile
+        star.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            const rating = parseInt(this.getAttribute('data-rating'));
+            ratingInput.value = rating;
+            updateStars(rating);
+        });
+    });
+    
+    // Reset hover effect
+    document.getElementById('starRating').addEventListener('mouseleave', function() {
+        const currentRating = parseInt(ratingInput.value) || 0;
+        stars.forEach(s => {
+            const starRating = parseInt(s.getAttribute('data-rating'));
+            if (starRating > currentRating) {
+                s.classList.remove('active');
+            }
+        });
+    });
+    
+    // Character counter for review text
+    const reviewText = document.querySelector('textarea[name="review_text"]');
+    if (reviewText) {
+        const counterDiv = document.createElement('div');
+        counterDiv.className = 'text-muted small mt-1';
+        counterDiv.id = 'charCounter';
+        reviewText.parentNode.insertBefore(counterDiv, reviewText.nextSibling);
+        
+        function updateCounter() {
+            const length = reviewText.value.length;
+            counterDiv.textContent = `${length} / 1000 characters`;
+            if (length < 10 && length > 0) {
+                counterDiv.classList.add('text-danger');
+                counterDiv.classList.remove('text-muted');
+            } else {
+                counterDiv.classList.remove('text-danger');
+                counterDiv.classList.add('text-muted');
+            }
+        }
+        
+        reviewText.addEventListener('input', updateCounter);
+        updateCounter();
+    }
+    
+    // Form submission validation
+    const ratingForm = document.querySelector('form');
+    if (ratingForm) {
+        ratingForm.addEventListener('submit', function(e) {
+            const ratingValue = parseInt(ratingInput.value);
+            
+            // Check if rating is selected
+            if (!ratingValue || ratingValue < 1 || ratingValue > 5) {
+                e.preventDefault();
+                alert('Please select a rating (1-5 stars) before submitting.');
+                return false;
+            }
+            
+            // Check review text length if provided
+            if (reviewText && reviewText.value.trim().length > 0) {
+                if (reviewText.value.trim().length < 10) {
+                    e.preventDefault();
+                    alert('Review text must be at least 10 characters long.');
+                    return false;
+                }
+            }
+            
+            // Show loading state
+            const submitBtn = ratingForm.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+            }
+            
+            return true;
+        });
+    }
+});
+</script>
+{% endblock %}

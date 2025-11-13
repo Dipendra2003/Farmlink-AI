@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}System Information - Admin - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-server me-2"></i>System Information
+            </h1>
+            <p class="lead text-muted">View system diagnostics and server information.</p>
+            <a href="{{ url_for('admin_system_settings') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Settings
+            </a>
+        </div>
+    </div>
+
+    <!-- System Information -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>System Details</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr>
+                            <th width="40%"><i class="fas fa-code text-primary me-2"></i>Python Version:</th>
+                            <td><code>{{ system_info.python_version.split()[0] }}</code></td>
+                        </tr>
+                        <tr>
+                            <th><i class="fas fa-flask text-success me-2"></i>Flask Version:</th>
+                            <td><code>{{ system_info.flask_version }}</code></td>
+                        </tr>
+                        <tr>
+                            <th><i class="fas fa-database text-info me-2"></i>SQLAlchemy Version:</th>
+                            <td><code>{{ system_info.sqlalchemy_version }}</code></td>
+                        </tr>
+                        <tr>
+                            <th><i class="fas fa-desktop text-secondary me-2"></i>Platform:</th>
+                            <td>{{ system_info.platform }}</td>
+                        </tr>
+                        <tr>
+                            <th><i class="fas fa-microchip text-warning me-2"></i>Processor:</th>
+                            <td>{{ system_info.processor or 'N/A' }}</td>
+                        </tr>
+                        {% if resources and resources.cpu_count %}
+                        <tr>
+                            <th><i class="fas fa-server text-danger me-2"></i>CPU Cores:</th>
+                            <td><span class="badge bg-secondary">{{ resources.cpu_count }} cores</span></td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <th><i class="fas fa-database text-success me-2"></i>Database:</th>
+                            <td><code class="small">{{ system_info.database_url }}</code></td>
+                        </tr>
+                        {% if system_info.boot_time %}
+                        <tr>
+                            <th><i class="fas fa-power-off text-primary me-2"></i>System Uptime:</th>
+                            <td><span class="badge bg-info text-dark">{{ system_info.uptime }}</span></td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <th><i class="fas fa-calendar-alt text-info me-2"></i>Application Age:</th>
+                            <td><span class="badge bg-primary">{{ app_age }} days</span></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-database me-2"></i>Database Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <tr>
+                            <th width="40%"><i class="fas fa-users text-primary me-2"></i>Total Users:</th>
+                            <td><span class="badge bg-primary fs-6">{{ db_stats.total_users }}</span></td>
+                        </tr>
+                        <tr>
+                            <th><i class="fas fa-user-check text-success me-2"></i>Active Users:</th>
+                            <td><span class="badge bg-success fs-6">{{ db_stats.active_users }}</span></td>
+                        </tr>
+                        <tr>
+                            <th><i class="fas fa-user-shield text-info me-2"></i>Verified Users:</th>
+                            <td><span class="badge bg-info text-dark fs-6">{{ db_stats.verified_users }}</span></td>
+                        </tr>
+                        <tr>
+                            <th><i class="fas fa-seedling text-warning me-2"></i>Total Crops:</th>
+                            <td><span class="badge bg-warning text-dark fs-6">{{ db_stats.total_crops }}</span></td>
+                        </tr>
+                        <tr>
+                            <th><i class="fas fa-shopping-cart text-danger me-2"></i>Total Orders:</th>
+                            <td><span class="badge bg-danger fs-6">{{ db_stats.total_orders }}</span></td>
+                        </tr>
+                        <tr>
+                            <th><i class="fas fa-book text-secondary me-2"></i>Learning Articles:</th>
+                            <td><span class="badge bg-secondary fs-6">{{ db_stats.total_articles }}</span></td>
+                        </tr>
+                        <tr>
+                            <th><i class="fas fa-comments text-dark me-2"></i>Forum Posts:</th>
+                            <td><span class="badge bg-dark fs-6">{{ db_stats.total_forum_posts }}</span></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Server Resources -->
+    {% if resources %}
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-microchip me-2"></i>CPU Usage</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h2 class="display-4 {% if resources.cpu_percent > 80 %}text-danger{% elif resources.cpu_percent > 60 %}text-warning{% else %}text-success{% endif %}">
+                        {{ "%.1f"|format(resources.cpu_percent) }}%
+                    </h2>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar {% if resources.cpu_percent > 80 %}bg-danger{% elif resources.cpu_percent > 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ resources.cpu_percent }}%">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-memory me-2"></i>Memory Usage</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h2 class="display-4 {% if resources.memory_percent > 80 %}text-danger{% elif resources.memory_percent > 60 %}text-warning{% else %}text-success{% endif %}">
+                        {{ "%.1f"|format(resources.memory_percent) }}%
+                    </h2>
+                    <p class="mb-2">
+                        <strong>Used:</strong> {{ "%.2f"|format(resources.memory_used) }} GB<br>
+                        <strong>Available:</strong> {{ "%.2f"|format(resources.memory_available) }} GB<br>
+                        <strong>Total:</strong> {{ "%.2f"|format(resources.memory_total) }} GB
+                    </p>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar {% if resources.memory_percent > 80 %}bg-danger{% elif resources.memory_percent > 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ resources.memory_percent }}%"
+                             aria-valuenow="{{ resources.memory_percent }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-hdd me-2"></i>Disk Usage</h5>
+                </div>
+                <div class="card-body text-center">
+                    <h2 class="display-4 {% if resources.disk_percent > 80 %}text-danger{% elif resources.disk_percent > 60 %}text-warning{% else %}text-success{% endif %}">
+                        {{ "%.1f"|format(resources.disk_percent) }}%
+                    </h2>
+                    <p class="mb-2">
+                        <strong>Used:</strong> {{ "%.2f"|format(resources.disk_used) }} GB<br>
+                        <strong>Free:</strong> {{ "%.2f"|format(resources.disk_free) }} GB<br>
+                        <strong>Total:</strong> {{ "%.2f"|format(resources.disk_total) }} GB
+                    </p>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar {% if resources.disk_percent > 80 %}bg-danger{% elif resources.disk_percent > 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                             role="progressbar" 
+                             style="width: {{ resources.disk_percent }}%"
+                             aria-valuenow="{{ resources.disk_percent }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        Server resource monitoring is not available. Install <code>psutil</code> package to enable this feature.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

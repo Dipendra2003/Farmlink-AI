@@ -1,0 +1,38 @@
+{# KYC Verification Badge Component
+   Usage: {% set seller = seller_object %}{% include 'components/kyc_badge.html' %}
+   The seller object must have an is_kyc_verified property
+#}
+{% if seller and seller.is_kyc_verified %}
+<span class="kyc-badge" 
+      data-bs-toggle="tooltip" 
+      data-bs-placement="top" 
+      title="This seller is identity-verified by FarmLink AI">
+    <i class="fas fa-check-circle text-success"></i>
+    <span class="kyc-badge-text">Verified Farmer</span>
+</span>
+
+<style>
+.kyc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #28a745;
+    cursor: help;
+    white-space: nowrap;
+}
+
+.kyc-badge i {
+    font-size: 1rem;
+}
+
+.kyc-badge-text {
+    color: #28a745;
+}
+
+.kyc-badge:hover {
+    opacity: 0.8;
+}
+</style>
+{% endif %}

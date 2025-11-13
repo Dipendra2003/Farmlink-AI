@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% block title %}Buyer Dashboard - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-tachometer-alt me-2"></i>Buyer Dashboard
+            </h1>
+            <p class="lead text-muted">Welcome back, {{ current_user.full_name }}! Find the best crops from local farmers.</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">My Orders</h6>
+                            <h2 class="fw-bold">{{ my_orders|length }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-shopping-cart fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Unread Messages</h6>
+                            <h2 class="fw-bold">{{ unread_messages }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-envelope fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Nearby Crops</h6>
+                            <h2 class="fw-bold">{{ nearby_crops|length }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-map-marker-alt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-dark text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Spent</h6>
+                            <h2 class="fw-bold">{{ format_currency(total_spent) }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-rupee-sign fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="{{ url_for('marketplace') }}" class="btn btn-success w-100 py-3">
+                                <i class="fas fa-store fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">Browse Marketplace</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('my_orders') }}" class="btn btn-outline-primary w-100 py-3">
+                                <i class="fas fa-shopping-cart fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">My Orders</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('inbox') }}" class="btn btn-outline-warning w-100 py-3">
+                                <i class="fas fa-envelope fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">Messages</span>
+                                {% if unread_messages > 0 %}
+                                    <span class="badge bg-danger">{{ unread_messages }}</span>
+                                {% endif %}
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{{ url_for('edit_profile') }}" class="btn btn-outline-info w-100 py-3">
+                                <i class="fas fa-user fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">My Profile</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Ratings Section -->
+    {% if pending_ratings and pending_ratings|length > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-star me-2"></i>Pending Ratings
+                        <span class="badge bg-dark ms-2">{{ pending_ratings|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">You have completed orders that haven't been rated yet. Share your experience!</p>
+                    <div class="row g-3">
+                        {% for order in pending_ratings[:3] %}
+                        <div class="col-md-4">
+                            <div class="card h-100 border-warning">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <img src="{{ url_for('static', filename=order.crop.image_url) if order.crop.image_url else 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=60' }}" 
+                                             class="rounded me-2" width="50" height="50" style="object-fit: cover;">
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">{{ order.crop.name }}</h6>
+                                            <small class="text-muted">{{ order.farmer_user.full_name }}</small>
+                                        </div>
+                                    </div>
+                                    <p class="text-muted small mb-2">
+                                        Completed: {{ order.updated_at.strftime('%b %d, %Y') }}
+                                    </p>
+                                    <a href="{{ url_for('rating.rate_product', order_id=order.id) }}" class="btn btn-warning btn-sm w-100">
+                                        <i class="fas fa-star me-1"></i>Rate Now
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if pending_ratings|length > 3 %}
+                        <div class="text-center mt-3">
+                            <small class="text-muted">+ {{ pending_ratings|length - 3 }} more order{{ 's' if pending_ratings|length - 3 != 1 else '' }} to rate</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Nearby Crops -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-map-marker-alt me-2"></i>Crops Near You - {{ current_user.location }}
+                    </h5>
+                    <a href="{{ url_for('marketplace') }}" class="btn btn-sm btn-outline-success">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if nearby_crops %}
+                        <div class="row g-3">
+                            {% for crop in nearby_crops %}
+                            <div class="col-md-6">
+                                <div class="card crop-card h-100 shadow-sm">
+                                    <div class="row g-0">
+                                        <div class="col-4">
+                                            <img src="{{ crop.image_url or 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=60' }}" 
+                                                 class="img-fluid rounded-start h-100" alt="{{ crop.name }}" style="object-fit: cover;">
+                                        </div>
+                                        <div class="col-8">
+                                            <div class="card-body p-3">
+                                                <h6 class="card-title fw-bold">{{ crop.name }}</h6>
+                                                <p class="text-muted small mb-1">{{ crop.farmer.full_name }}</p>
+                                                <p class="text-success fw-bold mb-1">{{ format_currency(crop.price_per_unit) }}/{{ crop.unit }}</p>
+                                                <p class="text-muted small">{{ crop.quantity }} {{ crop.unit }} available</p>
+                                                <a href="{{ url_for('product_detail', crop_id=crop.id) }}" class="btn btn-sm btn-success">
+                                                    View Details
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-map-marker-alt fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No crops available in your area</h5>
+                            <p class="text-muted">Check our marketplace for crops from other regions.</p>
+                            <a href="{{ url_for('marketplace') }}" class="btn btn-success">
+                                <i class="fas fa-store me-2"></i>Browse All Crops
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shopping-cart me-2"></i>My Recent Orders
+                    </h5>
+                    <a href="{{ url_for('my_orders') }}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if my_orders %}
+                        {% for order in my_orders[:5] %}
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                            <div>
+                                <div class="fw-bold">{{ order.crop.name }}</div>
+                                <small class="text-muted">{{ order.farmer_user.full_name }}</small>
+                                <div class="small">
+                                    <span class="badge {{ get_order_status_badge_class(order.status) }}">
+                                        {{ order.status.title() }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">{{ format_currency(order.total_amount) }}</div>
+                                <small class="text-muted">{{ order.quantity_requested }} {{ order.crop.unit }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-shopping-cart fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No orders yet</p>
+                            <small class="text-muted">Start browsing the marketplace</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Marketplace Categories -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-th-large me-2"></i>Browse by Category
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-2">
+                            <a href="{{ url_for('marketplace', category='grains') }}" class="btn btn-outline-success w-100 py-3">
+                                <i class="fas fa-wheat-awn fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">Grains</span>
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{{ url_for('marketplace', category='vegetables') }}" class="btn btn-outline-success w-100 py-3">
+                                <i class="fas fa-carrot fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">Vegetables</span>
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{{ url_for('marketplace', category='fruits') }}" class="btn btn-outline-success w-100 py-3">
+                                <i class="fas fa-apple-alt fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">Fruits</span>
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{{ url_for('marketplace', category='pulses') }}" class="btn btn-outline-success w-100 py-3">
+                                <i class="fas fa-circle fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">Pulses</span>
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{{ url_for('marketplace', category='spices') }}" class="btn btn-outline-success w-100 py-3">
+                                <i class="fas fa-pepper-hot fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">Spices</span>
+                            </a>
+                        </div>
+                        <div class="col-md-2">
+                            <a href="{{ url_for('marketplace', category='others') }}" class="btn btn-outline-success w-100 py-3">
+                                <i class="fas fa-seedling fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">Others</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

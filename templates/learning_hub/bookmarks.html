@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}My Bookmarks - Learning Hub{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('learning_hub') }}">Learning Hub</a></li>
+            <li class="breadcrumb-item active">My Bookmarks</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary text-white">
+                <div class="card-body text-center py-4">
+                    <h1 class="display-5 mb-0">
+                        <i class="fas fa-bookmark me-3"></i>My Bookmarks
+                    </h1>
+                    <p class="lead mb-0">Articles you've saved for later</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bookmarked Articles -->
+    <div class="row">
+        {% if articles %}
+        {% for article in articles %}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm hover-lift">
+                {% if article.featured_image %}
+                <img src="{{ article.featured_image }}" class="card-img-top" alt="{{ article.title }}" 
+                     style="height: 200px; object-fit: cover;" loading="lazy">
+                {% else %}
+                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                    <i class="fas fa-leaf fa-3x text-success"></i>
+                </div>
+                {% endif %}
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ article.title }}</h5>
+                    <p class="card-text flex-grow-1">{{ article.summary[:120] if article.summary else '' }}...</p>
+                    
+                    <div class="mb-2">
+                        <span class="badge bg-primary">{{ article.category|replace('_', ' ')|title }}</span>
+                        <span class="badge bg-{{ 'success' if article.difficulty_level == 'beginner' else 'warning' if article.difficulty_level == 'intermediate' else 'danger' }}">
+                            {{ article.difficulty_level|title }}
+                        </span>
+                    </div>
+                    
+                    <div class="row text-muted small mb-2">
+                        <div class="col-6">
+                            <i class="fas fa-clock me-1"></i>{{ article.reading_time or 5 }} min
+                        </div>
+                        <div class="col-6 text-end">
+                            <i class="fas fa-eye me-1"></i>{{ article.views or 0 }} views
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('view_article', article_id=article.id) }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-book-open me-1"></i>Read
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeBookmark({{ article.id }})">
+                            <i class="fas fa-trash me-1"></i>Remove
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <div class="card text-center">
+                <div class="card-body py-5">
+                    <i class="fas fa-bookmark fa-3x text-muted mb-3"></i>
+                    <h4>No Bookmarks Yet</h4>
+                    <p class="text-muted">Start bookmarking articles to save them for later reading.</p>
+                    <a href="{{ url_for('learning_hub') }}" class="btn btn-primary">
+                        <i class="fas fa-book me-1"></i>Browse Articles
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if bookmarks.pages > 1 %}
+    <nav aria-label="Bookmarks pagination">
+        <ul class="pagination justify-content-center">
+            {% if bookmarks.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('my_bookmarks', page=bookmarks.prev_num) }}">Previous</a>
+            </li>
+            {% endif %}
+            
+            {% for page_num in bookmarks.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != bookmarks.page %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('my_bookmarks', page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_num }}</span>
+                    </li>
+                    {% endif %}
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">…</span>
+                </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if bookmarks.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('my_bookmarks', page=bookmarks.next_num) }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+
+<script>
+function removeBookmark(articleId) {
+    if (confirm('Remove this bookmark?')) {
+        fetch(`/learning-hub/article/${articleId}/bookmark`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+}
+</script>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.hover-lift {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
+}
+</style>
+{% endblock %}

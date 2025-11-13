@@ -1,0 +1,484 @@
+{% extends "base.html" %}
+
+{% block title %}KYC Verification Dashboard - Admin - FarmLink AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        border-radius: 16px;
+        padding: 24px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at top right, rgba(255,255,255,0.15) 0%, transparent 70%);
+        pointer-events: none;
+    }
+    
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 12px;
+        opacity: 0.9;
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.95;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+    
+    .bg-gradient-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+    }
+    
+    .bg-gradient-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+    
+    .bg-gradient-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+    
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    }
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-top: 20px;
+    }
+    
+    .kyc-table-row:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 24px;
+    }
+    
+    .oldest-pending-item {
+        padding: 12px;
+        border-left: 4px solid #ffc107;
+        background: #fff3cd;
+        border-radius: 8px;
+        margin-bottom: 8px;
+    }
+    
+    .oldest-pending-item:hover {
+        background: #ffe69c;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-id-card me-2"></i>KYC Verification Dashboard
+            </h1>
+            <p class="lead text-muted">Manage and verify seller KYC applications</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-success btn-lg dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-download me-2"></i>Export Data
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item" href="{{ url_for('admin_kyc_export_csv', status=status_filter, date_from=date_from, date_to=date_to) }}">
+                            <i class="fas fa-file-csv me-2 text-success"></i>Export to CSV
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{{ url_for('admin_kyc_export_excel', status=status_filter, date_from=date_from, date_to=date_to) }}">
+                            <i class="fas fa-file-excel me-2 text-success"></i>Export to Excel
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{{ url_for('admin_kyc_export_pdf', status=status_filter, date_from=date_from, date_to=date_to) }}">
+                            <i class="fas fa-file-pdf me-2 text-danger"></i>Export to PDF
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="stat-card bg-gradient-warning">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-value">{{ stats.pending_count }}</div>
+                <div class="stat-label">Pending Applications</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-gradient-success">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-value">{{ stats.verified_count }}</div>
+                <div class="stat-label">Verified Sellers</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-gradient-danger">
+                <div class="stat-icon">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="stat-value">{{ stats.rejected_count }}</div>
+                <div class="stat-label">Rejected Applications</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card bg-gradient-info">
+                <div class="stat-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="stat-value">{{ stats.total_submissions }}</div>
+                <div class="stat-label">Total Submissions</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-tachometer-alt text-primary me-2"></i>Performance Metrics
+                    </h5>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="border rounded p-3 text-center">
+                                <h6 class="text-muted mb-2">Avg. Verification Time</h6>
+                                <h3 class="text-primary mb-0">
+                                    {{ "%.1f"|format(stats.avg_verification_time_hours) }} hrs
+                                </h3>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="border rounded p-3 text-center">
+                                <h6 class="text-muted mb-2">Oldest Pending</h6>
+                                <h3 class="text-warning mb-0">
+                                    {{ stats.oldest_pending_days }} days
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>Oldest Pending Applications
+                    </h5>
+                    <div style="max-height: 250px; overflow-y: auto;">
+                        {% if stats.oldest_pending_applications %}
+                            {% for kyc in stats.oldest_pending_applications[:10] %}
+                            <div class="oldest-pending-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ kyc.user.full_name }}</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            Submitted {{ kyc.created_at.strftime('%b %d, %Y') }}
+                                            ({{ ((now() - kyc.created_at).days) }} days ago)
+                                        </small>
+                                    </div>
+                                    <a href="{{ url_for('admin_kyc_detail', kyc_id=kyc.id) }}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-eye"></i> Review
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted text-center mb-0">No pending applications</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submissions Chart -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">
+                <i class="fas fa-chart-line text-success me-2"></i>KYC Submissions - Last 30 Days
+            </h5>
+            <div class="chart-container">
+                <canvas id="submissionsChart" 
+                        data-labels="{{ chart_labels|tojson|escape }}"
+                        data-values="{{ chart_data|tojson|escape }}"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">
+                    <i class="fas fa-filter me-1"></i>Filter by Status
+                </label>
+                <select name="status" class="form-select">
+                    <option value="all" {{ 'selected' if status_filter == 'all' }}>All Statuses</option>
+                    <option value="pending" {{ 'selected' if status_filter == 'pending' }}>Pending</option>
+                    <option value="verified" {{ 'selected' if status_filter == 'verified' }}>Verified</option>
+                    <option value="rejected" {{ 'selected' if status_filter == 'rejected' }}>Rejected</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">
+                    <i class="fas fa-calendar me-1"></i>From Date
+                </label>
+                <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">
+                    <i class="fas fa-calendar me-1"></i>To Date
+                </label>
+                <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+            </div>
+
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-search me-1"></i>Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- KYC Applications Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2"></i>KYC Applications
+                <span class="badge bg-secondary ms-2">{{ kyc_list|length }} records</span>
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Seller</th>
+                            <th>Contact</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                            <th>Verified By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for kyc in kyc_list %}
+                        <tr class="kyc-table-row" id="kyc-{{ kyc.id }}">
+                            <td>
+                                <span class="badge bg-light text-dark">#{{ kyc.id }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ url_for('static', filename=kyc.user.profile_image) if kyc.user.profile_image and kyc.user.profile_image != 'default.jpg' else 'https://ui-avatars.com/api/?name=' + (kyc.user.full_name or kyc.user.username) + '&background=28a745&color=fff&size=40' }}"
+                                        class="rounded-circle me-2" width="40" height="40" alt="Profile" style="object-fit: cover;">
+                                    <div>
+                                        <div class="fw-bold">{{ kyc.user.full_name }}</div>
+                                        <small class="text-muted">@{{ kyc.user.username }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>{{ kyc.user.email }}</div>
+                                {% if kyc.user.phone %}
+                                <small class="text-muted">{{ kyc.user.phone }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div>{{ kyc.created_at.strftime('%b %d, %Y') }}</div>
+                                <small class="text-muted">{{ kyc.created_at.strftime('%I:%M %p') }}</small>
+                                {% if kyc.status == 'pending' %}
+                                <br><small class="text-warning">
+                                    <i class="fas fa-clock"></i> {{ ((now() - kyc.created_at).days) }} days ago
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if kyc.status == 'pending' %}
+                                <span class="status-badge bg-warning text-dark">
+                                    <i class="fas fa-clock"></i> Pending
+                                </span>
+                                {% elif kyc.status == 'verified' %}
+                                <span class="status-badge bg-success text-white">
+                                    <i class="fas fa-check-circle"></i> Verified
+                                </span>
+                                {% elif kyc.status == 'rejected' %}
+                                <span class="status-badge bg-danger text-white">
+                                    <i class="fas fa-times-circle"></i> Rejected
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if kyc.verifier %}
+                                <div>{{ kyc.verifier.full_name }}</div>
+                                <small class="text-muted">{{ kyc.verified_at.strftime('%b %d, %Y') if kyc.verified_at }}</small>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin_kyc_detail', kyc_id=kyc.id) }}" class="btn btn-sm btn-primary" title="View Details">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if not kyc_list %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <i class="fas fa-id-card fa-5x text-muted mb-4"></i>
+        <h3 class="text-muted mb-3">No KYC applications found</h3>
+        <p class="text-muted">Try adjusting your filters or wait for sellers to submit their KYC documents.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+    // KYC Submissions Chart
+    document.addEventListener('DOMContentLoaded', function() {
+        const canvas = document.getElementById('submissionsChart');
+        const chartLabels = JSON.parse(canvas.dataset.labels);
+        const chartData = JSON.parse(canvas.dataset.values);
+        
+        const ctx = canvas.getContext('2d');
+        const submissionsChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartLabels,
+                datasets: [{
+                    label: 'KYC Submissions',
+                    data: chartData,
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#28a745',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleFont: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 13
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                return 'Submissions: ' + context.parsed.y;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                            font: {
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: {
+                                size: 11
+                            },
+                            maxRotation: 45,
+                            minRotation: 45
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

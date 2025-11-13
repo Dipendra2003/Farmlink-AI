@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}KYC Details - Admin{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>KYC Verification Details</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_kyc_verification') }}">KYC Verification</a></li>
+                    <li class="breadcrumb-item active">KYC #{{ kyc.id }}</li>
+                </ol>
+            </nav>
+        </div>
+        <div>
+            <a href="{{ url_for('admin_kyc_verification') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Badge -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5 class="mb-2">
+                        Seller: <strong>{{ kyc.user.full_name }}</strong>
+                        <span class="badge 
+                            {% if kyc.status == 'verified' %}badge-success
+                            {% elif kyc.status == 'rejected' %}badge-danger
+                            {% else %}badge-warning{% endif %}">
+                            {{ kyc.status|upper }}
+                        </span>
+                    </h5>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-user"></i> Username: {{ kyc.user.username }} | 
+                        <i class="fas fa-envelope"></i> {{ kyc.user.email }} | 
+                        <i class="fas fa-phone"></i> {{ kyc.user.phone }}
+                    </p>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-calendar"></i> Submitted: {{ kyc.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                    </p>
+                    {% if kyc.verified_at %}
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-check-circle"></i> 
+                        {% if kyc.status == 'verified' %}Verified{% else %}Reviewed{% endif %}: 
+                        {{ kyc.verified_at.strftime('%B %d, %Y at %I:%M %p') }}
+                        {% if kyc.verifier %}by {{ kyc.verifier.full_name }}{% endif %}
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 text-right">
+                    {% if kyc.status == 'pending' %}
+                    <button type="button" class="btn btn-success btn-lg" data-bs-toggle="modal" data-bs-target="#approveModal">
+                        <i class="fas fa-check"></i> Approve
+                    </button>
+                    <button type="button" class="btn btn-danger btn-lg" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                        <i class="fas fa-times"></i> Reject
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Reason (if rejected) -->
+    {% if kyc.status == 'rejected' and kyc.rejection_reason %}
+    <div class="alert alert-danger">
+        <h5><i class="fas fa-exclamation-triangle"></i> Rejection Reason</h5>
+        <p class="mb-0">{{ kyc.rejection_reason }}</p>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- KYC Information -->
+        <div class="col-md-8">
+            <!-- Personal Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-id-card"></i> Personal Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tbody>
+                            <tr>
+                                <th width="30%">Full Name:</th>
+                                <td>{{ kyc.user.full_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Aadhaar Number:</th>
+                                <td>
+                                    <span class="badge badge-secondary">{{ decrypted_data.aadhaar_masked }}</span>
+                                    <small class="text-muted ml-2">(Masked for security)</small>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>PAN Number:</th>
+                                <td><strong>{{ decrypted_data.pan }}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Bank Details -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-university"></i> Bank Details</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tbody>
+                            <tr>
+                                <th width="30%">Bank Account:</th>
+                                <td>
+                                    <span class="badge badge-secondary">{{ decrypted_data.bank_account_masked }}</span>
+                                    <small class="text-muted ml-2">(Masked for security)</small>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>IFSC Code:</th>
+                                <td><strong>{{ decrypted_data.ifsc }}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Uploaded Documents -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-alt"></i> Uploaded Documents</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% if kyc.document_paths and kyc.document_paths.aadhaar_front %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-id-card fa-3x text-primary mb-2"></i>
+                                    <h6>Aadhaar Front</h6>
+                                    <a href="{{ url_for('admin_kyc_document', kyc_id=kyc.id, doc_type='aadhaar_front') }}" 
+                                       class="btn btn-sm btn-primary" target="_blank">
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if kyc.document_paths and kyc.document_paths.aadhaar_back %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-id-card fa-3x text-primary mb-2"></i>
+                                    <h6>Aadhaar Back</h6>
+                                    <a href="{{ url_for('admin_kyc_document', kyc_id=kyc.id, doc_type='aadhaar_back') }}" 
+                                       class="btn btn-sm btn-primary" target="_blank">
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if kyc.document_paths and kyc.document_paths.pan_card %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-credit-card fa-3x text-success mb-2"></i>
+                                    <h6>PAN Card</h6>
+                                    <a href="{{ url_for('admin_kyc_document', kyc_id=kyc.id, doc_type='pan_card') }}" 
+                                       class="btn btn-sm btn-primary" target="_blank">
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if kyc.document_paths and kyc.document_paths.land_proof %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file-alt fa-3x text-warning mb-2"></i>
+                                    <h6>Land Ownership Proof</h6>
+                                    <a href="{{ url_for('admin_kyc_document', kyc_id=kyc.id, doc_type='land_proof') }}" 
+                                       class="btn btn-sm btn-primary" target="_blank">
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Quick Actions -->
+            {% if kyc.status == 'pending' %}
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-tasks"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <button type="button" class="btn btn-success w-100 mb-2" data-bs-toggle="modal" data-bs-target="#approveModal">
+                        <i class="fas fa-check"></i> Approve KYC
+                    </button>
+                    <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                        <i class="fas fa-times"></i> Reject KYC
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Audit Log -->
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-history"></i> Audit Log</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if audit_logs %}
+                    <ul class="list-unstyled">
+                        {% for log in audit_logs|reverse %}
+                        <li class="mb-3">
+                            <div class="d-flex align-items-start">
+                                <div class="mr-2">
+                                    {% if log.action == 'submitted' or log.action == 'resubmitted' %}
+                                    <i class="fas fa-upload text-info"></i>
+                                    {% elif log.action == 'approved' %}
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    {% elif log.action == 'rejected' %}
+                                    <i class="fas fa-times-circle text-danger"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <strong>{{ log.action|title }}</strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        {{ log.created_at.strftime('%b %d, %Y %I:%M %p') }}
+                                        {% if log.user %}by {{ log.user.full_name }}{% endif %}
+                                    </small>
+                                    {% if log.notes %}
+                                    <br>
+                                    <small>{{ log.notes }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted">No audit logs available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approve Modal -->
+{% include 'admin/kyc_review_modal.html' %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-hide flash messages after 5 seconds
+    setTimeout(function() {
+        $('.alert').fadeOut('slow');
+    }, 5000);
+</script>
+{% endblock %}

@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block title %}Notification Preferences - FarmLink AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .preference-section {
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        background: #fff;
+    }
+    .preference-section h5 {
+        color: #495057;
+        border-bottom: 2px solid #28a745;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .form-check {
+        margin-bottom: 0.75rem;
+    }
+    .form-check-label {
+        font-weight: 500;
+    }
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    .notification-preview {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    .frequency-options {
+        display: none;
+    }
+    .frequency-options.show {
+        display: block;
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 0.375rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-cog"></i> Notification Preferences</h2>
+                <a href="{{ url_for('expert_notifications') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Notifications
+                </a>
+            </div>
+
+            <form method="POST" id="preferencesForm">
+                {{ form.hidden_tag() }}
+
+                <!-- Forum Activity Notifications -->
+                <div class="preference-section">
+                    <h5><i class="fas fa-comments"></i> Forum Activity</h5>
+                    
+                    <div class="form-check">
+                        {{ form.new_replies(class="form-check-input") }}
+                        {{ form.new_replies.label(class="form-check-label") }}
+                        <div class="help-text">Get notified when someone replies to your posts</div>
+                    </div>
+
+                    <div class="form-check">
+                        {{ form.post_votes(class="form-check-input") }}
+                        {{ form.post_votes.label(class="form-check-label") }}
+                        <div class="help-text">Get notified when your posts receive votes</div>
+                    </div>
+
+                    <div class="form-check">
+                        {{ form.reply_votes(class="form-check-input") }}
+                        {{ form.reply_votes.label(class="form-check-label") }}
+                        <div class="help-text">Get notified when your replies receive votes</div>
+                    </div>
+
+                    <div class="form-check">
+                        {{ form.mentions(class="form-check-input") }}
+                        {{ form.mentions.label(class="form-check-label") }}
+                        <div class="help-text">Get notified when someone mentions you in posts or replies</div>
+                    </div>
+                </div>
+
+                <!-- Social Notifications -->
+                <div class="preference-section">
+                    <h5><i class="fas fa-users"></i> Social Activity</h5>
+                    
+                    <div class="form-check">
+                        {{ form.new_followers(class="form-check-input") }}
+                        {{ form.new_followers.label(class="form-check-label") }}
+                        <div class="help-text">Get notified when someone follows you</div>
+                    </div>
+
+                    <div class="form-check">
+                        {{ form.user_ratings(class="form-check-input") }}
+                        {{ form.user_ratings.label(class="form-check-label") }}
+                        <div class="help-text">Get notified when someone rates your expertise</div>
+                    </div>
+
+                    <div class="form-check">
+                        {{ form.followed_user_posts(class="form-check-input") }}
+                        {{ form.followed_user_posts.label(class="form-check-label") }}
+                        <div class="help-text">Get notified when users you follow create new posts</div>
+                    </div>
+                </div>
+
+                <!-- Moderation Notifications -->
+                <div class="preference-section">
+                    <h5><i class="fas fa-shield-alt"></i> Moderation & System</h5>
+                    
+                    <div class="form-check">
+                        {{ form.post_featured(class="form-check-input") }}
+                        {{ form.post_featured.label(class="form-check-label") }}
+                        <div class="help-text">Get notified when your posts are featured</div>
+                    </div>
+
+                    <div class="form-check">
+                        {{ form.content_reported(class="form-check-input") }}
+                        {{ form.content_reported.label(class="form-check-label") }}
+                        <div class="help-text">Get notified when your content is reported (for review)</div>
+                    </div>
+
+                    <div class="form-check">
+                        {{ form.system_announcements(class="form-check-input") }}
+                        {{ form.system_announcements.label(class="form-check-label") }}
+                        <div class="help-text">Get notified about important system updates and announcements</div>
+                    </div>
+                </div>
+
+                <!-- Email Digest Settings -->
+                <div class="preference-section">
+                    <h5><i class="fas fa-envelope"></i> Email Digest</h5>
+                    
+                    <div class="form-check">
+                        {{ form.email_notifications(class="form-check-input email-toggle") }}
+                        {{ form.email_notifications.label(class="form-check-label") }}
+                        <div class="help-text">Receive notification summaries via email</div>
+                    </div>
+
+                    <div class="frequency-options" id="emailFrequency">
+                        <label class="form-label">Email Frequency:</label>
+                        {{ form.email_frequency(class="form-select") }}
+                        <div class="help-text">Choose how often you want to receive email summaries</div>
+                    </div>
+                </div>
+
+                <!-- Quiet Hours -->
+                <div class="preference-section">
+                    <h5><i class="fas fa-moon"></i> Quiet Hours</h5>
+                    
+                    <div class="form-check">
+                        {{ form.quiet_hours_enabled(class="form-check-input quiet-toggle") }}
+                        {{ form.quiet_hours_enabled.label(class="form-check-label") }}
+                        <div class="help-text">Pause notifications during specific hours</div>
+                    </div>
+
+                    <div class="frequency-options" id="quietHoursSettings">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Start Time:</label>
+                                {{ form.quiet_hours_start(class="form-control") }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">End Time:</label>
+                                {{ form.quiet_hours_end(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="help-text">Notifications will be delayed during these hours</div>
+                    </div>
+                </div>
+
+                <!-- Notification Preview -->
+                <div class="notification-preview">
+                    <h6><i class="fas fa-eye"></i> Preview</h6>
+                    <p class="mb-0">With your current settings, you will receive notifications for:</p>
+                    <ul id="previewList" class="mt-2 mb-0">
+                        <!-- Preview items will be populated by JavaScript -->
+                    </ul>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-save"></i> Save Preferences
+                    </button>
+                    <a href="{{ url_for('expert_notifications') }}" class="btn btn-outline-secondary btn-lg ms-2">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Toggle email frequency options
+    $('.email-toggle').change(function() {
+        if ($(this).is(':checked')) {
+            $('#emailFrequency').addClass('show');
+        } else {
+            $('#emailFrequency').removeClass('show');
+        }
+    });
+
+    // Toggle quiet hours options
+    $('.quiet-toggle').change(function() {
+        if ($(this).is(':checked')) {
+            $('#quietHoursSettings').addClass('show');
+        } else {
+            $('#quietHoursSettings').removeClass('show');
+        }
+    });
+
+    // Initialize toggles based on current state
+    if ($('.email-toggle').is(':checked')) {
+        $('#emailFrequency').addClass('show');
+    }
+    if ($('.quiet-toggle').is(':checked')) {
+        $('#quietHoursSettings').addClass('show');
+    }
+
+    // Update preview when preferences change
+    function updatePreview() {
+        const previewList = $('#previewList');
+        previewList.empty();
+
+        const preferences = {
+            'New Replies': '#new_replies',
+            'Post Votes': '#post_votes',
+            'Reply Votes': '#reply_votes',
+            'Mentions': '#mentions',
+            'New Followers': '#new_followers',
+            'User Ratings': '#user_ratings',
+            'Followed User Posts': '#followed_user_posts',
+            'Featured Posts': '#post_featured',
+            'Content Reports': '#content_reported',
+            'System Announcements': '#system_announcements'
+        };
+
+        let activeCount = 0;
+        for (const [label, selector] of Object.entries(preferences)) {
+            if ($(selector).is(':checked')) {
+                previewList.append(`<li>${label}</li>`);
+                activeCount++;
+            }
+        }
+
+        if (activeCount === 0) {
+            previewList.append('<li class="text-muted">No notifications enabled</li>');
+        }
+
+        // Add email notification info
+        if ($('#email_notifications').is(':checked')) {
+            const frequency = $('#email_frequency').val();
+            previewList.append(`<li><strong>Email summaries: ${frequency}</strong></li>`);
+        }
+
+        // Add quiet hours info
+        if ($('#quiet_hours_enabled').is(':checked')) {
+            const start = $('#quiet_hours_start').val();
+            const end = $('#quiet_hours_end').val();
+            previewList.append(`<li><strong>Quiet hours: ${start} - ${end}</strong></li>`);
+        }
+    }
+
+    // Update preview on any change
+    $('input[type="checkbox"], select').change(updatePreview);
+    $('input[type="time"]').change(updatePreview);
+
+    // Initial preview update
+    updatePreview();
+
+    // Form submission
+    $('#preferencesForm').submit(function(e) {
+        e.preventDefault();
+        
+        const formData = $(this).serialize();
+        
+        $.post($(this).attr('action') || window.location.href, formData)
+        .done(function(response) {
+            if (response.success) {
+                // Show success message
+                const alert = $(`
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle"></i> Notification preferences saved successfully!
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `);
+                $('.container').prepend(alert);
+                
+                // Scroll to top
+                $('html, body').animate({ scrollTop: 0 }, 300);
+            } else {
+                alert('Failed to save preferences. Please try again.');
+            }
+        })
+        .fail(function() {
+            alert('Failed to save preferences. Please try again.');
+        });
+    });
+
+    // Quick preset buttons
+    function addPresetButtons() {
+        const presetSection = $(`
+            <div class="preference-section">
+                <h5><i class="fas fa-magic"></i> Quick Presets</h5>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary preset-btn" data-preset="all">
+                        Enable All
+                    </button>
+                    <button type="button" class="btn btn-outline-warning preset-btn" data-preset="essential">
+                        Essential Only
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary preset-btn" data-preset="none">
+                        Disable All
+                    </button>
+                </div>
+            </div>
+        `);
+        
+        $('.preference-section').first().before(presetSection);
+    }
+
+    addPresetButtons();
+
+    // Handle preset buttons
+    $('.preset-btn').click(function() {
+        const preset = $(this).data('preset');
+        
+        if (preset === 'all') {
+            $('input[type="checkbox"]').prop('checked', true);
+        } else if (preset === 'essential') {
+            $('input[type="checkbox"]').prop('checked', false);
+            $('#new_replies, #mentions, #new_followers').prop('checked', true);
+        } else if (preset === 'none') {
+            $('input[type="checkbox"]').prop('checked', false);
+        }
+        
+        // Trigger change events
+        $('input[type="checkbox"]').trigger('change');
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Application Logs - Admin - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+      <!-- Header -->
+      <div class="row mb-4">
+            <div class="col">
+                  <h1 class="display-6 fw-bold text-success">
+                        <i class="fas fa-file-alt me-2"></i>Application Logs
+                  </h1>
+                  <p class="lead text-muted">View and monitor application logs.</p>
+                  <div class="btn-group mt-2">
+                        <a href="{{ url_for('admin_system_settings') }}" class="btn btn-outline-secondary">
+                              <i class="fas fa-arrow-left me-1"></i>Back to Settings
+                        </a>
+                        <a href="{{ url_for('admin_download_logs') }}" class="btn btn-outline-primary">
+                              <i class="fas fa-download me-1"></i>Download Logs
+                        </a>
+                  </div>
+            </div>
+      </div>
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                  {% for category, message in messages %}
+                        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'error' else 'warning' if category == 'warning' else 'info' }} alert-dismissible fade show" role="alert">
+                              <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' if category == 'warning' else 'info-circle' }} me-2"></i>
+                              {{ message }}
+                              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                  {% endfor %}
+            {% endif %}
+      {% endwith %}
+
+      <!-- Filter Controls -->
+      {% if logs %}
+      <div class="card shadow-sm mb-3">
+            <div class="card-body py-3">
+                  <form method="GET" action="{{ url_for('admin_view_logs') }}" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                              <label for="level" class="form-label fw-semibold mb-1">Log Level</label>
+                              <select name="level" id="level" class="form-select" onchange="this.form.submit()">
+                                    <option value="all" {{ 'selected' if log_level=='all' }}>All Levels</option>
+                                    <option value="ERROR" {{ 'selected' if log_level=='ERROR' }}>Error</option>
+                                    <option value="WARNING" {{ 'selected' if log_level=='WARNING' }}>Warning</option>
+                                    <option value="INFO" {{ 'selected' if log_level=='INFO' }}>Info</option>
+                                    <option value="DEBUG" {{ 'selected' if log_level=='DEBUG' }}>Debug</option>
+                              </select>
+                        </div>
+                        <div class="col-md-3">
+                              <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-1"></i>Apply Filter
+                              </button>
+                        </div>
+                  </form>
+            </div>
+      </div>
+      {% endif %}
+
+      <!-- Logs Display -->
+      <div class="card shadow-sm">
+                        <div class="card-header bg-dark text-white py-2">
+                              <h5 class="mb-0"><i class="fas fa-list me-2"></i>Log Entries</h5>
+                        </div>
+                        <div class="card-body p-0">
+                              {% if logs %}
+                              <div class="table-responsive">
+                                    <table class="table table-sm table-hover mb-0"
+                                          style="font-family: 'Courier New', monospace; font-size: 0.875rem;">
+                                          <thead class="table-light sticky-top">
+                                                <tr>
+                                                      <th width="180" class="text-nowrap">Timestamp</th>
+                                                      <th width="100" class="text-center">Level</th>
+                                                      <th>Message</th>
+                                                </tr>
+                                          </thead>
+                                          <tbody>
+                                                {% for log in logs %}
+                                                <tr
+                                                      class="{% if 'ERROR' in log.level %}table-danger{% elif 'WARNING' in log.level %}table-warning{% elif 'INFO' in log.level %}table-info{% endif %}">
+                                                      <td class="text-muted text-nowrap small">{{ log.timestamp }}</td>
+                                                      <td class="text-center">
+                                                            <span
+                                                                  class="badge {% if 'ERROR' in log.level %}bg-danger{% elif 'WARNING' in log.level %}bg-warning text-dark{% elif 'INFO' in log.level %}bg-info text-dark{% else %}bg-secondary{% endif %}">
+                                                                  {{ log.level }}
+                                                            </span>
+                                                      </td>
+                                                      <td style="word-break: break-word; white-space: pre-wrap;">{{
+                                                            log.message }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                          </tbody>
+                                    </table>
+                              </div>
+
+                              <!-- Pagination -->
+                              {% if pagination and pagination.pages > 1 %}
+                              <div class="card-footer bg-light py-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                          <small class="text-muted">
+                                                Showing {{ ((pagination.page-1) * pagination.per_page) + 1 }} - {{
+                                                [pagination.page * pagination.per_page, pagination.total]|min }} of {{
+                                                pagination.total }} entries
+                                          </small>
+                                          <nav>
+                                                <ul class="pagination pagination-sm mb-0">
+                                                      <li
+                                                            class="page-item {% if pagination.page == 1 %}disabled{% endif %}">
+                                                            <a class="page-link"
+                                                                  href="{{ url_for('admin_view_logs', page=pagination.page-1, level=log_level) }}">
+                                                                  <i class="fas fa-chevron-left"></i>
+                                                            </a>
+                                                      </li>
+                                                      {% for p in range(1, pagination.pages + 1) %}
+                                                      {% if p == pagination.page %}
+                                                      <li class="page-item active"><span class="page-link">{{ p
+                                                                  }}</span></li>
+                                                      {% elif p <= 3 or p> pagination.pages - 3 or (p >= pagination.page
+                                                            - 1 and p <= pagination.page + 1) %} <li class="page-item">
+                                                                  <a class="page-link"
+                                                                        href="{{ url_for('admin_view_logs', page=p, level=log_level) }}">{{
+                                                                        p }}</a></li>
+                                                                  {% elif p == 4 or p == pagination.pages - 3 %}
+                                                                  <li class="page-item disabled"><span
+                                                                              class="page-link">...</span></li>
+                                                                  {% endif %}
+                                                                  {% endfor %}
+                                                                  <li
+                                                                        class="page-item {% if pagination.page == pagination.pages %}disabled{% endif %}">
+                                                                        <a class="page-link"
+                                                                              href="{{ url_for('admin_view_logs', page=pagination.page+1, level=log_level) }}">
+                                                                              <i class="fas fa-chevron-right"></i>
+                                                                        </a>
+                                                                  </li>
+                                                </ul>
+                                          </nav>
+                                    </div>
+                              </div>
+                              {% endif %}
+                              {% else %}
+                              <div class="p-5 text-center text-muted">
+                                    <i class="fas fa-inbox fa-4x mb-3 opacity-50"></i>
+                                    <h5>No Log Entries Found</h5>
+                                    <p class="mb-0">There are no log entries to display at this time.</p>
+                              </div>
+                              {% endif %}
+                        </div>
+                  </div>
+</div>
+{% endblock %}

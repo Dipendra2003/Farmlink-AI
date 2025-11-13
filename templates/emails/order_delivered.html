@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            color: #333; 
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 20px auto; 
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header { 
+            background: #28a745; 
+            color: white; 
+            padding: 30px 20px; 
+            text-align: center; 
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .content { 
+            padding: 30px; 
+        }
+        .order-summary { 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin: 20px 0;
+        }
+        .order-summary h3 {
+            color: #28a745;
+            margin-top: 0;
+        }
+        .order-summary p {
+            margin: 10px 0;
+        }
+        .rating-notice {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .rating-notice p {
+            margin: 0;
+        }
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        .button-primary {
+            background: #28a745;
+            color: white;
+        }
+        .button-secondary {
+            background: #ffc107;
+            color: #333;
+        }
+        .footer {
+            background: #343a40;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .footer p {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 Order Delivered!</h1>
+        </div>
+        
+        <div class="content">
+            <h2>Hello {{ order.buyer.full_name or order.buyer.username }},</h2>
+            
+            <p>Your order has been successfully delivered! We hope you're satisfied with your purchase.</p>
+            
+            <div class="order-summary">
+                <h3>Order Summary:</h3>
+                <p><strong>Order ID:</strong> #{{ order.id }}</p>
+                <p><strong>Crop:</strong> {{ order.crop.name }}</p>
+                <p><strong>Quantity:</strong> {{ order.quantity_requested }} {{ order.crop.unit }}</p>
+                <p><strong>Total Amount:</strong> ₹{{ "%.2f"|format(order.total_amount) }}</p>
+                {% if order.delivered_at %}
+                <p><strong>Delivered At:</strong> {{ order.delivered_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                {% endif %}
+                <p><strong>Farmer:</strong> {{ order.farmer_user.full_name or order.farmer_user.username }}</p>
+            </div>
+            
+            <div class="rating-notice">
+                <p><strong>📝 Rate Your Experience:</strong> Help other buyers by rating this farmer and sharing your experience!</p>
+            </div>
+            
+            <div class="button-container">
+                <a href="{{ base_url }}/orders/my" class="button button-primary">View Order</a>
+                <a href="{{ base_url }}/rate/farmer/{{ order.farmer_id }}" class="button button-secondary">Rate Farmer</a>
+            </div>
+            
+            <p>Thank you for choosing FarmLink AI! We look forward to serving you again.</p>
+            
+            <p>Best regards,<br>The FarmLink AI Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>© 2024 FarmLink AI. Connecting Agriculture, Powering Growth.</p>
+        </div>
+    </div>
+</body>
+</html>

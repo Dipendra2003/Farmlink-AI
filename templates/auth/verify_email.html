@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Email - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-success text-white text-center py-4">
+                    <i class="fas fa-envelope-open-text fa-3x mb-3"></i>
+                    <h3 class="mb-0">Verify Your Email</h3>
+                </div>
+                <div class="card-body p-5">
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        We've sent a 6-digit verification code to <strong>{{ user.email }}</strong>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('verify_email', user_id=user.id) }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-4">
+                            <label for="otp" class="form-label fw-bold">
+                                <i class="fas fa-key me-2"></i>Verification Code
+                            </label>
+                            {{ form.otp(class="form-control form-control-lg text-center", 
+                                        placeholder="Enter 6-digit code",
+                                        maxlength="6",
+                                        pattern="[0-9]{6}",
+                                        inputmode="numeric",
+                                        autocomplete="off",
+                                        autofocus=true) }}
+                            {% if form.otp.errors %}
+                                <div class="text-danger mt-2">
+                                    {% for error in form.otp.errors %}
+                                        <small>{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>Code expires in 10 minutes
+                            </small>
+                        </div>
+
+                        <div class="d-grid gap-2 mb-3">
+                            {{ form.submit(class="btn btn-success btn-lg") }}
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <p class="text-muted mb-3">Didn't receive the code?</p>
+                        <form method="POST" action="{{ url_for('resend_verification', user_id=user.id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-outline-success">
+                                <i class="fas fa-redo me-2"></i>Resend Code
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <h6 class="fw-bold mb-2">
+                            <i class="fas fa-shield-alt me-2 text-success"></i>Why verify your email?
+                        </h6>
+                        <ul class="small mb-0">
+                            <li>Secure your account from unauthorized access</li>
+                            <li>Receive important notifications and updates</li>
+                            <li>Enable password recovery options</li>
+                            <li>Build trust with other users</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-footer text-center bg-light">
+                    <small class="text-muted">
+                        Need help? <a href="{{ url_for('contact') }}">Contact Support</a>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+    
+    #otp {
+        font-size: 1.5rem;
+        letter-spacing: 0.5rem;
+        font-weight: bold;
+    }
+    
+    #otp:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+</style>
+
+<script>
+    // Auto-submit form when 6 digits are entered
+    document.getElementById('otp').addEventListener('input', function(e) {
+        if (e.target.value.length === 6) {
+            // Optional: Auto-submit after a short delay
+            setTimeout(function() {
+                if (document.getElementById('otp').value.length === 6) {
+                    document.querySelector('form').submit();
+                }
+            }, 500);
+        }
+    });
+    
+    // Only allow numeric input
+    document.getElementById('otp').addEventListener('keypress', function(e) {
+        if (!/[0-9]/.test(e.key)) {
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

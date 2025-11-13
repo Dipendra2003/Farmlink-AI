@@ -1,0 +1,671 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout - FarmLink AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Checkout Styles */
+    .checkout-container {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+
+    .checkout-header {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .checkout-card {
+        background: white;
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
+    }
+
+    .checkout-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+
+    .card-header-modern {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.25rem 1.5rem;
+        border: none;
+        font-weight: 600;
+    }
+
+    .card-header-success {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    }
+
+    .card-header-primary {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    .farmer-group {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        transition: background 0.2s ease;
+    }
+
+    .farmer-group:hover {
+        background: #f8f9fa;
+    }
+
+    .farmer-group:last-child {
+        border-bottom: none;
+    }
+
+    .farmer-avatar {
+        width: 55px;
+        height: 55px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+    }
+
+    .order-total-sidebar {
+        position: sticky;
+        top: 90px;
+    }
+
+    .order-total-card {
+        background: white;
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+
+    .order-total-header {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        padding: 1.25rem 1.5rem;
+        border: none;
+    }
+
+    .order-total-body {
+        padding: 1.5rem;
+        /* Remove max-height and overflow to fix scrollbar issue */
+    }
+
+    .price-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px dashed #e9ecef;
+    }
+
+    .price-row:last-of-type {
+        border-bottom: none;
+    }
+
+    .total-row {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+    }
+
+    .payment-info-box {
+        background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
+        border-radius: 10px;
+        padding: 1rem;
+        border: none;
+        margin-bottom: 1.5rem;
+    }
+
+    .terms-box {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.25rem;
+        border: 2px solid #e9ecef;
+        margin-bottom: 1.5rem;
+    }
+
+    .custom-checkbox {
+        display: flex;
+        align-items: start;
+        margin-bottom: 0.75rem;
+    }
+
+    .custom-checkbox input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin-right: 0.75rem;
+        margin-top: 2px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .custom-checkbox label {
+        cursor: pointer;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        margin: 0;
+    }
+
+    .btn-checkout {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        border: none;
+        padding: 1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+    }
+
+    .btn-checkout:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
+        background: linear-gradient(135deg, #0f8a7f 0%, #32d96f 100%);
+    }
+
+    .btn-checkout:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-back {
+        border: 2px solid #6c757d;
+        padding: 0.75rem;
+        font-weight: 600;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-back:hover {
+        background: #6c757d;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-card {
+        background: linear-gradient(135deg, #fff5e6 0%, #ffe0b2 100%);
+        border-radius: 10px;
+        padding: 1.25rem;
+        border: none;
+        margin-top: 1.5rem;
+    }
+
+    .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .info-list li {
+        padding: 0.5rem 0;
+        display: flex;
+        align-items: start;
+    }
+
+    .info-list li i {
+        margin-right: 0.75rem;
+        margin-top: 0.25rem;
+        flex-shrink: 0;
+    }
+
+    .security-badge {
+        display: inline-flex;
+        align-items: center;
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-top: 1rem;
+    }
+
+    .item-row {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .item-row:last-child {
+        border-bottom: none;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 991px) {
+        .order-total-sidebar {
+            position: static;
+            margin-top: 2rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .checkout-container {
+            padding: 1rem 0;
+        }
+
+        .checkout-header {
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .farmer-avatar {
+            width: 45px;
+            height: 45px;
+            font-size: 1.2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+    <div class="container">
+        <!-- Header -->
+        <div class="checkout-header">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1 class="h3 fw-bold text-dark mb-1">
+                        <i class="fas fa-credit-card me-2 text-success"></i>Secure Checkout
+                    </h1>
+                    <p class="text-muted mb-0">Complete your order in a few simple steps</p>
+                </div>
+                <div class="d-none d-md-block">
+                    <span class="badge bg-success px-3 py-2">
+                        <i class="fas fa-shield-alt me-1"></i>SSL Secured
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warnings -->
+        {% if warnings %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert" style="border-radius: 15px;">
+            <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Price Updates</h5>
+            <ul class="mb-0">
+                {% for warning in warnings %}
+                <li>{{ warning.crop_name }}: {{ warning.message }}</li>
+                {% endfor %}
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('checkout') }}">
+            {{ form.hidden_tag() }}
+
+            <div class="row">
+                <!-- Left Column: Order Details & Delivery Info -->
+                <div class="col-lg-8 mb-4">
+                    <!-- Order Summary -->
+                    <div class="checkout-card mb-4">
+                        <div class="card-header-modern card-header-success">
+                            <h5 class="mb-0">
+                                <i class="fas fa-box me-2"></i>Order Summary
+                                <span class="badge bg-white text-success ms-2">{{ item_count }} items</span>
+                            </h5>
+                        </div>
+                        <div class="card-body p-0">
+                            {% for farmer_id, farmer_data in items_by_farmer.items() %}
+                            <div class="farmer-group">
+                                <!-- Farmer Info -->
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="farmer-avatar me-3">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0 fw-bold">{{ farmer_data.farmer.full_name }}</h6>
+                                        <small class="text-muted">
+                                            <i class="fas fa-map-marker-alt me-1"></i>{{ farmer_data.farmer.location }}
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- Items from this farmer -->
+                                <div class="ps-4">
+                                    {% for item in farmer_data['items'] %}
+                                    <div class="item-row">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-6">
+                                                <strong class="text-dark">{{ item.crop_name }}</strong>
+                                            </div>
+                                            <div class="col-md-3 text-muted small">
+                                                {{ item.quantity }} {{ item.unit }} × ₹{{ "%.2f"|format(item.price_per_unit) }}
+                                            </div>
+                                            <div class="col-md-3 text-end">
+                                                <strong class="text-success">₹{{ "%.2f"|format(item.subtotal) }}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+
+                                    <!-- Farmer Subtotal -->
+                                    <div class="row mt-3 pt-2 border-top">
+                                        <div class="col text-end">
+                                            <span class="text-muted me-2">Subtotal from this farmer:</span>
+                                            <strong class="text-success fs-5">₹{{ "%.2f"|format(farmer_data.subtotal) }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Delivery Information -->
+                    <div class="checkout-card">
+                        <div class="card-header-modern card-header-primary">
+                            <h5 class="mb-0">
+                                <i class="fas fa-truck me-2"></i>Delivery Information
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <!-- Delivery Address -->
+                            <div class="mb-3">
+                                {{ form.delivery_address.label(class="form-label") }}
+                                {{ form.delivery_address(class="form-control" + (" is-invalid" if form.delivery_address.errors else ""), rows="3", placeholder="Enter your complete delivery address") }}
+                                {% if form.delivery_address.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.delivery_address.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Delivery Method -->
+                            <div class="mb-3">
+                                {{ form.delivery_method.label(class="form-label") }}
+                                {{ form.delivery_method(class="form-select" + (" is-invalid" if form.delivery_method.errors else "")) }}
+                                {% if form.delivery_method.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.delivery_method.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Contact Phone -->
+                            <div class="mb-3">
+                                {{ form.contact_phone.label(class="form-label") }}
+                                {{ form.contact_phone(class="form-control" + (" is-invalid" if form.contact_phone.errors else ""), placeholder="Enter 10-digit mobile number") }}
+                                {% if form.contact_phone.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.contact_phone.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>This number will be used for delivery coordination
+                                </small>
+                            </div>
+
+                            <!-- Additional Notes -->
+                            <div class="mb-0">
+                                {{ form.notes.label(class="form-label") }}
+                                {{ form.notes(class="form-control" + (" is-invalid" if form.notes.errors else ""), rows="2", placeholder="Any special instructions for delivery?") }}
+                                {% if form.notes.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.notes.errors %}{{ error }}{% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Order Total & Payment -->
+                <div class="col-lg-4">
+                    <div class="order-total-sidebar">
+                        <div class="order-total-card">
+                            <div class="order-total-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-receipt me-2"></i>Order Total
+                                </h5>
+                            </div>
+                            <div class="order-total-body">
+                                <!-- Price Breakdown -->
+                                <div class="price-row">
+                                    <span class="text-muted">Items ({{ item_count }}):</span>
+                                    <strong class="text-dark">₹{{ "%.2f"|format(total_amount) }}</strong>
+                                </div>
+
+                                <div class="price-row">
+                                    <span class="text-muted small">Delivery Charges:</span>
+                                    <small class="text-muted">At payment</small>
+                                </div>
+
+                                <!-- Total -->
+                                <div class="total-row">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0 text-dark">Total:</h5>
+                                        <h4 class="mb-0 text-success fw-bold">₹{{ "%.2f"|format(total_amount) }}</h4>
+                                    </div>
+                                </div>
+
+                                <!-- Payment Info -->
+                                <div class="payment-info-box">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-info-circle text-info me-2 fs-5"></i>
+                                        <small class="text-dark">
+                                            Payment will be processed securely via <strong>Razorpay</strong>
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- Terms and Conditions -->
+                                <div class="terms-box">
+                                    <h6 class="fw-bold mb-3 text-dark">
+                                        <i class="fas fa-file-contract me-2"></i>Terms & Conditions
+                                    </h6>
+                                    
+                                    <div class="custom-checkbox">
+                                        <input type="checkbox" id="agreeTerms" required>
+                                        <label for="agreeTerms">
+                                            I agree to the <a href="{{ url_for('terms') }}" target="_blank" class="text-decoration-none fw-semibold">Terms of Service</a> and <a href="{{ url_for('privacy') }}" target="_blank" class="text-decoration-none fw-semibold">Privacy Policy</a>
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="custom-checkbox">
+                                        <input type="checkbox" id="agreeRefund" required>
+                                        <label for="agreeRefund">
+                                            I understand the refund and cancellation policy
+                                        </label>
+                                    </div>
+
+                                    <div class="mt-3 pt-2 border-top">
+                                        <small class="text-muted d-flex align-items-center">
+                                            <i class="fas fa-shield-alt text-success me-2"></i>
+                                            Your order is protected by our buyer protection policy
+                                        </small>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                {{ form.submit(class="btn btn-checkout btn-success w-100 mb-3", id="submitOrderBtn") }}
+
+                                <a href="{{ url_for('view_cart') }}" class="btn btn-back btn-outline-secondary w-100">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Cart
+                                </a>
+
+                                <!-- Security Badge -->
+                                <div class="text-center">
+                                    <div class="security-badge">
+                                        <i class="fas fa-lock me-2"></i>
+                                        256-bit SSL Encryption
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Order Info Card -->
+                        <div class="info-card">
+                            <h6 class="fw-bold mb-3 text-dark">
+                                <i class="fas fa-info-circle me-2"></i>Order Information
+                            </h6>
+                            <ul class="info-list">
+                                <li>
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    <span class="small">Separate orders will be created for each farmer</span>
+                                </li>
+                                <li>
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    <span class="small">Payment confirmation required before processing</span>
+                                </li>
+                                <li>
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    <span class="small">Email notifications will be sent to all parties</span>
+                                </li>
+                                <li>
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    <span class="small">Track your orders from your dashboard</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        const submitBtn = $('#submitOrderBtn');
+        const agreeTermsCheckbox = $('#agreeTerms');
+        const agreeRefundCheckbox = $('#agreeRefund');
+        const checkoutForm = $('form');
+
+        // Function to check if both checkboxes are checked
+        function updateSubmitButton() {
+            const bothChecked = agreeTermsCheckbox.is(':checked') && agreeRefundCheckbox.is(':checked');
+            submitBtn.prop('disabled', !bothChecked);
+        }
+
+        // Initially disable the submit button
+        updateSubmitButton();
+
+        // Listen for checkbox changes
+        agreeTermsCheckbox.on('change', updateSubmitButton);
+        agreeRefundCheckbox.on('change', updateSubmitButton);
+
+        // Form validation before submit
+        checkoutForm.on('submit', function (e) {
+            // Check if terms are agreed
+            if (!agreeTermsCheckbox.is(':checked') || !agreeRefundCheckbox.is(':checked')) {
+                e.preventDefault();
+                showNotification('Please agree to the terms and conditions to proceed', 'warning');
+                return false;
+            }
+
+            // Validate delivery address
+            const deliveryAddress = $('textarea[name="delivery_address"]').val().trim();
+            if (deliveryAddress.length < 10) {
+                e.preventDefault();
+                showNotification('Delivery address must be at least 10 characters long', 'danger');
+                $('textarea[name="delivery_address"]').focus();
+                return false;
+            }
+
+            // Validate contact phone
+            const contactPhone = $('input[name="contact_phone"]').val().trim();
+            const phoneDigits = contactPhone.replace(/\D/g, '');
+            if (phoneDigits.length < 10) {
+                e.preventDefault();
+                showNotification('Please enter a valid contact phone number', 'danger');
+                $('input[name="contact_phone"]').focus();
+                return false;
+            }
+
+            // Show loading state
+            submitBtn.prop('disabled', true);
+            submitBtn.html('<i class="fas fa-spinner fa-spin me-2"></i>Processing Order...');
+        });
+
+        // Phone number formatting
+        $('input[name="contact_phone"]').on('input', function () {
+            let value = $(this).val().replace(/\D/g, '');
+            if (value.length > 10) {
+                value = value.substring(0, 10);
+            }
+            $(this).val(value);
+        });
+
+        // Character counter for notes
+        const notesField = $('textarea[name="notes"]');
+        const maxLength = 500;
+
+        if (notesField.length) {
+            const counterDiv = $('<div class="text-end mt-1"><small class="text-muted"><span id="notesCounter">0</span>/' + maxLength + ' characters</small></div>');
+            notesField.after(counterDiv);
+
+            notesField.on('input', function () {
+                const length = $(this).val().length;
+                $('#notesCounter').text(length);
+
+                if (length > maxLength) {
+                    $(this).val($(this).val().substring(0, maxLength));
+                    $('#notesCounter').text(maxLength);
+                }
+            });
+
+            // Initialize counter
+            $('#notesCounter').text(notesField.val().length);
+        }
+
+        function showNotification(message, type) {
+            const alertClass = type === 'success' ? 'alert-success' : (type === 'warning' ? 'alert-warning' : 'alert-danger');
+            const iconClass = type === 'success' ? 'fa-check-circle' : (type === 'warning' ? 'fa-exclamation-triangle' : 'fa-exclamation-circle');
+
+            const alert = $(`
+                <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
+                     style="top: 80px; right: 20px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border-radius: 10px;" role="alert">
+                    <i class="fas ${iconClass} me-2"></i>${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `);
+
+            $('body').append(alert);
+
+            setTimeout(function () {
+                alert.alert('close');
+            }, 5000);
+        }
+
+        // Smooth scroll to error fields
+        $('.is-invalid').first().each(function() {
+            $('html, body').animate({
+                scrollTop: $(this).offset().top - 100
+            }, 500);
+        });
+    });
+</script>
+{% endblock %}
+""

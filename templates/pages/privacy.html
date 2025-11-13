@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="display-4 text-success mb-4">Privacy Policy</h1>
+            <p class="lead text-muted mb-5">Learn how we collect, use, and protect your personal information.</p>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">1. Information We Collect</h2>
+                    <p class="text-muted">We collect information that you provide directly to us:</p>
+                    <ul class="text-muted">
+                        <li>Account information (name, email, phone)</li>
+                        <li>Profile details (location, farm details)</li>
+                        <li>Transaction data</li>
+                        <li>Communication preferences</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">2. How We Use Your Information</h2>
+                    <p class="text-muted">We use your information to:</p>
+                    <ul class="text-muted">
+                        <li>Provide and improve our services</li>
+                        <li>Process transactions</li>
+                        <li>Send notifications and updates</li>
+                        <li>Maintain platform security</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">3. Information Sharing</h2>
+                    <p class="text-muted">We share information with:</p>
+                    <ul class="text-muted">
+                        <li>Service providers</li>
+                        <li>Payment processors</li>
+                        <li>Delivery partners</li>
+                        <li>Legal authorities when required</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">4. Data Security</h2>
+                    <p class="text-muted">We protect your data through:</p>
+                    <ul class="text-muted">
+                        <li>Encryption</li>
+                        <li>Access controls</li>
+                        <li>Regular security audits</li>
+                        <li>Employee training</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">5. Your Rights</h2>
+                    <p class="text-muted">You have the right to:</p>
+                    <ul class="text-muted">
+                        <li>Access your data</li>
+                        <li>Update your information</li>
+                        <li>Delete your account</li>
+                        <li>Opt out of communications</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">6. Cookies</h2>
+                    <p class="text-muted">We use cookies to:</p>
+                    <ul class="text-muted">
+                        <li>Remember your preferences</li>
+                        <li>Analyze site traffic</li>
+                        <li>Improve user experience</li>
+                        <li>Maintain security</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="text-center mt-5">
+                <p class="text-muted mb-4">Last updated: July 29, 2025</p>
+                <p class="mb-4">Questions about our privacy policy?</p>
+                <a href="{{ url_for('contact') }}" class="btn btn-success">
+                    <i class="fas fa-envelope me-2"></i>Contact Us
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

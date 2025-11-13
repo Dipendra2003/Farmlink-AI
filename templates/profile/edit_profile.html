@@ -1,0 +1,1281 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-info text-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-user-edit me-2"></i>Edit Profile
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Profile Header -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 text-center">
+                            <div class="profile-image-container">
+                                {% if current_user.profile_image and current_user.profile_image != 'default.jpg' %}
+                                <img id="profileImagePreview"
+                                    src="{{ url_for('static', filename=current_user.profile_image) }}"
+                                    class="rounded-circle border border-3 border-white" width="150" height="150"
+                                    alt="Profile Picture" style="object-fit: cover;">
+                                {% else %}
+                                <img id="profileImagePreview"
+                                    src="https://ui-avatars.com/api/?name={{ current_user.full_name }}&background=667eea&color=fff&size=150&bold=true"
+                                    class="rounded-circle border border-3 border-white" width="150" height="150"
+                                    alt="Profile Picture" style="object-fit: cover;">
+                                {% endif %}
+                                <div class="position-absolute bottom-0 end-0 camera-btn">
+                                    <label for="profile_picture" class="btn btn-sm btn-primary rounded-circle shadow-lg"
+                                        style="width: 45px; height: 45px; padding: 0; cursor: pointer;"
+                                        title="Change profile picture">
+                                        <i class="fas fa-camera" style="line-height: 45px; font-size: 1.1rem;"></i>
+                                    </label>
+                                </div>
+                            </div>
+                            {% if current_user.profile_image and current_user.profile_image != 'default.jpg' %}
+                            <div class="mt-2">
+                                <form method="POST" action="{{ url_for('remove_profile_picture') }}"
+                                    style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                        onclick="return confirm('Are you sure you want to remove your profile picture?');">
+                                        <i class="fas fa-trash-alt me-1"></i>Remove Picture
+                                    </button>
+                                </form>
+                            </div>
+                            {% endif %}
+                            <div class="mt-2">
+                                <span
+                                    class="badge bg-{{ 'success' if current_user.role == 'farmer' else 'info' if current_user.role == 'buyer' else 'warning' }} fs-6">
+                                    {{ current_user.role.title() }}
+                                </span>
+                            </div>
+                            <!-- Seller Reputation Badge -->
+                            {% if current_user.role == 'farmer' and current_user.reputation %}
+                            <div class="mt-3">
+                                <a href="{{ url_for('rating.view_seller_reputation', seller_id=current_user.id) }}"
+                                    class="text-decoration-none">
+                                    <div
+                                        class="reputation-card bg-warning bg-opacity-10 border border-warning rounded-3 p-3 shadow-sm">
+                                        <div class="rating-stars mb-2" style="color: #ffc107; font-size: 1.2rem;">
+                                            {% for i in range(current_user.reputation.average_rating|int) %}
+                                            <i class="fas fa-star"></i>
+                                            {% endfor %}
+                                            {% if current_user.reputation.average_rating % 1 >= 0.5 %}
+                                            <i class="fas fa-star-half-alt"></i>
+                                            {% endif %}
+                                            {% for i in range(5 - (current_user.reputation.average_rating|int) - (1 if
+                                            current_user.reputation.average_rating % 1 >= 0.5 else 0)) %}
+                                            <i class="far fa-star"></i>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="fw-bold text-warning fs-4">{{
+                                            "%.2f"|format(current_user.reputation.average_rating) }}</div>
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-users me-1"></i>{{ current_user.reputation.total_ratings }}
+                                            rating{{
+                                            's' if current_user.reputation.total_ratings != 1 else '' }}
+                                        </small>
+                                    </div>
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-9">
+                            <h3 class="fw-bold mb-3"
+                                style="background: var(--primary-gradient); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                {{ current_user.full_name }}
+                            </h3>
+                            <div class="info-card p-2 rounded-3 mb-2">
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-envelope me-2 text-primary"></i>{{ current_user.email }}
+                                </p>
+                            </div>
+                            <div class="info-card p-2 rounded-3 mb-2">
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-user me-2 text-info"></i>{{ current_user.username }}
+                                </p>
+                            </div>
+                            <div class="info-card p-2 rounded-3 mb-2">
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-calendar me-2 text-warning"></i>Member since {{
+                                    current_user.created_at.strftime('%B %Y') }}
+                                </p>
+                            </div>
+                            <div class="info-card p-2 rounded-3">
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-check-circle me-2 text-success"></i>
+                                    <span class="badge bg-success-subtle text-success">Active Account</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Profile Form -->
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.full_name.label(class="form-label fw-semibold") }}
+                                {{ form.full_name(class="form-control") }}
+                                {% if form.full_name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.full_name.errors %}
+                                    <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                {{ form.phone.label(class="form-label fw-semibold") }}
+                                {{ form.phone(class="form-control") }}
+                                {% if form.phone.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.phone.errors %}
+                                    <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.location.label(class="form-label fw-semibold") }}
+                            {{ form.location(class="form-control") }}
+                            {% if form.location.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.location.errors %}
+                                <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Your city, state, or region for location-based services</div>
+                        </div>
+
+                        <div class="mb-4">
+                            {{ form.profile_picture.label(class="form-label fw-semibold") }}
+                            {{ form.profile_picture(class="form-control", id="profile_picture", accept="image/*",
+                            style="display: none;") }}
+                            {% if form.profile_picture.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.profile_picture.errors %}
+                                <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Click the camera icon above to upload a new profile picture. Supported formats: JPG,
+                                PNG, GIF (Max 5MB)
+                            </div>
+                            <div id="imageFileName" class="mt-2 text-muted small"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                            {{ form.submit(class="btn btn-info btn-lg px-4") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- AI Profile Insights -->
+            <div class="card mt-4 border-0 shadow-lg" id="aiInsightsCard">
+                <div class="card-header text-white"
+                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-brain me-2"></i>AI Profile Insights
+                        </h5>
+                        <button class="btn btn-sm btn-light" id="refreshInsightsBtn" onclick="loadAIInsights()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="aiInsightsLoading" class="text-center py-4">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="text-muted">Analyzing your profile with AI...</p>
+                    </div>
+
+                    <div id="aiInsightsContent" class="d-none">
+                        <!-- Profile Score -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <div class="text-center p-3 bg-light rounded-3">
+                                    <h2 class="display-4 fw-bold mb-0" id="profileScore"
+                                        style="background: var(--primary-gradient); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                                        --</h2>
+                                    <p class="text-muted mb-0">Profile Score</p>
+                                    <span class="badge bg-success mt-2" id="profileStatus">--</span>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="p-3 bg-light rounded-3">
+                                    <h6 class="fw-bold mb-2"><i class="fas fa-lightbulb text-warning me-2"></i>Key
+                                        Insights</h6>
+                                    <ul id="keyInsightsList" class="mb-0 small">
+                                        <!-- Insights will be populated here -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Personalized Message -->
+                        <div class="alert alert-info border-0 mb-4" id="personalizedMessage">
+                            <i class="fas fa-comment-dots me-2"></i>
+                            <span id="personalizedMessageText">--</span>
+                        </div>
+
+                        <!-- Recommendations -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-star text-warning me-2"></i>Recommendations for
+                                You</h6>
+                            <div id="recommendationsList" class="row g-3">
+                                <!-- Recommendations will be populated here -->
+                            </div>
+                        </div>
+
+                        <!-- Next Steps -->
+                        <div>
+                            <h6 class="fw-bold mb-3"><i class="fas fa-tasks text-success me-2"></i>Next Steps</h6>
+                            <div id="nextStepsList" class="list-group">
+                                <!-- Next steps will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="aiInsightsError" class="d-none alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <span id="aiInsightsErrorText">Unable to load AI insights. Please try again later.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Information -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Account Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Role & Permissions</h6>
+                            <p class="mb-1">
+                                <strong>Account Type:</strong> {{ current_user.role.title() }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Username:</strong> {{ current_user.username }}
+                            </p>
+                            <p class="mb-3">
+                                <strong>Email:</strong> {{ current_user.email }}
+                            </p>
+
+                            {% if current_user.role == 'farmer' %}
+                            <div class="bg-success bg-opacity-10 p-3 rounded-3 border border-success border-opacity-25">
+                                <h6 class="text-success mb-3">
+                                    <i class="fas fa-seedling me-2"></i>Farmer Privileges
+                                </h6>
+                                <ul class="small mb-0 list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>List and
+                                        manage crops</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>Receive and
+                                        manage orders</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i>View weather
+                                        information</li>
+                                    <li><i class="fas fa-check-circle text-success me-2"></i>Access farming resources
+                                    </li>
+                                </ul>
+                            </div>
+                            {% elif current_user.role == 'buyer' %}
+                            <div class="bg-info bg-opacity-10 p-3 rounded-3 border border-info border-opacity-25">
+                                <h6 class="text-info mb-3">
+                                    <i class="fas fa-shopping-cart me-2"></i>Buyer Privileges
+                                </h6>
+                                <ul class="small mb-0 list-unstyled">
+                                    <li class="mb-2"><i class="fas fa-check-circle text-info me-2"></i>Browse and
+                                        purchase crops</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-info me-2"></i>Place and track
+                                        orders</li>
+                                    <li class="mb-2"><i class="fas fa-check-circle text-info me-2"></i>Contact farmers
+                                        directly</li>
+                                    <li><i class="fas fa-check-circle text-info me-2"></i>Access marketplace features
+                                    </li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="fw-bold">Activity Summary</h6>
+                            {% if current_user.role == 'farmer' %}
+                            <p class="mb-1">
+                                <strong>Total Crops Listed:</strong> {{ current_user.crops|length }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Active Crops:</strong> {{ current_user.crops|selectattr('status', 'equalto',
+                                'available')|list|length }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Orders Received:</strong> {{ current_user.orders_received|length }}
+                            </p>
+                            {% elif current_user.role == 'buyer' %}
+                            <p class="mb-1">
+                                <strong>Orders Placed:</strong> {{ current_user.orders_placed|length }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Completed Orders:</strong> {{ current_user.orders_placed|selectattr('status',
+                                'equalto', 'completed')|list|length }}
+                            </p>
+                            {% endif %}
+                            <p class="mb-1">
+                                <strong>Messages Sent:</strong> {{ current_user.sent_messages|length }}
+                            </p>
+                            <p class="mb-3">
+                                <strong>Messages Received:</strong> {{ current_user.received_messages|length }}
+                            </p>
+
+                            <div class="bg-light p-3 rounded-3 quick-actions">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-bolt me-2 text-warning"></i>Quick Actions
+                                </h6>
+                                <div class="d-grid gap-2">
+                                    {% if current_user.role == 'farmer' %}
+                                    <a href="{{ url_for('add_crop') }}" class="btn btn-success btn-sm shadow-sm">
+                                        <i class="fas fa-plus me-2"></i>Add New Crop
+                                    </a>
+                                    <a href="{{ url_for('my_crops') }}" class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-wheat-awn me-2"></i>Manage Crops
+                                    </a>
+                                    {% else %}
+                                    <a href="{{ url_for('marketplace') }}" class="btn btn-success btn-sm shadow-sm">
+                                        <i class="fas fa-store me-2"></i>Browse Marketplace
+                                    </a>
+                                    {% endif %}
+                                    <a href="{{ url_for('inbox') }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-envelope me-2"></i>Check Messages
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Information -->
+            <div class="alert alert-info mt-4 border-0 shadow-sm">
+                <div class="d-flex align-items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-shield-alt fa-2x text-info"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="alert-heading fw-bold mb-2">Security & Privacy</h6>
+                        <p class="mb-0">
+                            Your account information is secure and encrypted. Email and username cannot be changed
+                            through this form.
+                            <a href="#" class="alert-link">Contact support</a> if you need to update your login
+                            credentials.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Image Crop Modal -->
+<div class="modal" id="cropModal" tabindex="-1" aria-labelledby="cropModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient"
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h5 class="modal-title text-white" id="cropModalLabel">
+                    <i class="fas fa-magic me-2"></i>✨ Advanced Photo Editor
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <!-- Toolbar -->
+                <div class="bg-light border-bottom p-3">
+                    <div class="row g-2 align-items-center">
+                        <!-- Aspect Ratio Presets -->
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1 fw-bold">
+                                <i class="fas fa-crop me-1"></i>Aspect Ratio
+                            </label>
+                            <div class="btn-group w-100" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary aspect-btn active"
+                                    data-ratio="1">
+                                    <i class="fas fa-square"></i> 1:1
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary aspect-btn"
+                                    data-ratio="1.33">
+                                    <i class="fas fa-rectangle-landscape"></i> 4:3
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary aspect-btn"
+                                    data-ratio="1.78">
+                                    <i class="fas fa-tv"></i> 16:9
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary aspect-btn"
+                                    data-ratio="free">
+                                    <i class="fas fa-expand"></i> Free
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Quality Selector -->
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1 fw-bold">
+                                <i class="fas fa-sliders-h me-1"></i>Quality
+                            </label>
+                            <select class="form-select form-select-sm" id="qualitySelect">
+                                <option value="0.95">High (95%)</option>
+                                <option value="0.92" selected>Standard (92%)</option>
+                                <option value="0.85">Medium (85%)</option>
+                                <option value="0.75">Low (75%)</option>
+                            </select>
+                        </div>
+
+                        <!-- Output Size -->
+                        <div class="col-md-4">
+                            <label class="form-label small mb-1 fw-bold">
+                                <i class="fas fa-expand-arrows-alt me-1"></i>Output Size
+                            </label>
+                            <select class="form-select form-select-sm" id="sizeSelect">
+                                <option value="400">400x400 (Standard)</option>
+                                <option value="600">600x600 (High)</option>
+                                <option value="800">800x800 (Ultra)</option>
+                                <option value="300">300x300 (Small)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-0">
+                    <!-- Left Sidebar - Controls -->
+                    <div class="col-md-3 bg-light border-end p-3">
+                        <h6 class="fw-bold mb-3">
+                            <i class="fas fa-tools me-2"></i>Tools
+                        </h6>
+
+                        <!-- Transform Controls -->
+                        <div class="mb-4">
+                            <label class="small fw-bold text-muted mb-2">TRANSFORM</label>
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="zoomIn">
+                                    <i class="fas fa-search-plus me-1"></i>Zoom In <kbd>+</kbd>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="zoomOut">
+                                    <i class="fas fa-search-minus me-1"></i>Zoom Out <kbd>-</kbd>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="rotateLeft">
+                                    <i class="fas fa-undo me-1"></i>Rotate Left <kbd>L</kbd>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="rotateRight">
+                                    <i class="fas fa-redo me-1"></i>Rotate Right <kbd>R</kbd>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="flipH">
+                                    <i class="fas fa-arrows-alt-h me-1"></i>Flip Horizontal <kbd>H</kbd>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="flipV">
+                                    <i class="fas fa-arrows-alt-v me-1"></i>Flip Vertical <kbd>V</kbd>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Filters -->
+                        <div class="mb-4">
+                            <label class="small fw-bold text-muted mb-2">FILTERS</label>
+
+                            <div class="mb-3">
+                                <label class="form-label small mb-1">
+                                    <i class="fas fa-sun me-1"></i>Brightness: <span id="brightnessValue">100</span>%
+                                </label>
+                                <input type="range" class="form-range" id="brightness" min="0" max="200" value="100">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small mb-1">
+                                    <i class="fas fa-adjust me-1"></i>Contrast: <span id="contrastValue">100</span>%
+                                </label>
+                                <input type="range" class="form-range" id="contrast" min="0" max="200" value="100">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small mb-1">
+                                    <i class="fas fa-palette me-1"></i>Saturation: <span
+                                        id="saturationValue">100</span>%
+                                </label>
+                                <input type="range" class="form-range" id="saturation" min="0" max="200" value="100">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small mb-1">
+                                    <i class="fas fa-blur me-1"></i>Blur: <span id="blurValue">0</span>px
+                                </label>
+                                <input type="range" class="form-range" id="blur" min="0" max="10" value="0">
+                            </div>
+
+                            <button type="button" class="btn btn-sm btn-outline-danger w-100" id="resetFilters">
+                                <i class="fas fa-times me-1"></i>Reset Filters
+                            </button>
+                        </div>
+
+                        <!-- History -->
+                        <div class="mb-3">
+                            <label class="small fw-bold text-muted mb-2">HISTORY</label>
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="undoBtn" disabled>
+                                    <i class="fas fa-undo me-1"></i>Undo <kbd>Ctrl+Z</kbd>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="redoBtn" disabled>
+                                    <i class="fas fa-redo me-1"></i>Redo <kbd>Ctrl+Y</kbd>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-sm btn-outline-warning w-100" id="resetCrop">
+                            <i class="fas fa-sync-alt me-1"></i>Reset All
+                        </button>
+                    </div>
+
+                    <!-- Center - Image Preview -->
+                    <div class="col-md-9 p-4">
+                        <div class="alert alert-info alert-dismissible fade show mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Pro Tips:</strong> Drag to move • Scroll to zoom • Use keyboard shortcuts for faster
+                            editing
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+
+                        <div class="crop-container position-relative"
+                            style="height: 500px; overflow: hidden; background: #f8f9fa; border-radius: 8px;">
+                            <img id="cropImage" style="max-width: 100%; display: block;">
+
+                            <!-- Loading Overlay -->
+                            <div id="loadingOverlay" class="position-absolute top-0 start-0 w-100 h-100 d-none"
+                                style="background: rgba(0,0,0,0.7); z-index: 1000;">
+                                <div class="d-flex align-items-center justify-content-center h-100">
+                                    <div class="text-center text-white">
+                                        <div class="spinner-border mb-3" role="status"></div>
+                                        <p>Processing image...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Image Info -->
+                        <div class="mt-3 text-center">
+                            <small class="text-muted">
+                                <span id="imageInfo"></span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-light">
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <div>
+                        <button type="button" class="btn btn-outline-secondary" id="compareBtn">
+                            <i class="fas fa-exchange-alt me-1"></i>Compare Before/After
+                        </button>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </button>
+                        <button type="button" class="btn btn-success" id="cropAndSave">
+                            <i class="fas fa-check me-1"></i>✓ Apply & Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Drag & Drop Overlay -->
+<div id="dropZone" class="position-fixed top-0 start-0 w-100 h-100 d-none"
+    style="background: rgba(103, 126, 234, 0.95); z-index: 9999;">
+    <div class="d-flex align-items-center justify-content-center h-100">
+        <div class="text-center text-white">
+            <i class="fas fa-cloud-upload-alt fa-5x mb-3"></i>
+            <h3>Drop your image here</h3>
+            <p>Release to upload</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<!-- Cropper.js CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        --card-hover-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Smooth Animations */
+    * {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Enhanced Card Styles */
+    .card {
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        border: none;
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    .card:hover {
+        box-shadow: var(--card-hover-shadow);
+        transform: translateY(-5px);
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Gradient Headers */
+    .card-header.bg-info {
+        background: var(--info-gradient) !important;
+        border: none;
+        padding: 1.5rem;
+    }
+
+    /* Profile Image Container */
+    .profile-image-container {
+        position: relative;
+        display: inline-block;
+        animation: scaleIn 0.5s ease-out;
+    }
+
+    @keyframes scaleIn {
+        from {
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .profile-image-container img {
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .profile-image-container:hover img {
+        transform: scale(1.05);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .profile-image-container .camera-btn {
+        opacity: 0;
+        transform: scale(0.8);
+        transition: all 0.3s ease;
+    }
+
+    .profile-image-container:hover .camera-btn {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    /* Enhanced Form Controls */
+    .form-control,
+    .form-select {
+        border-radius: 12px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+        transform: translateY(-2px);
+    }
+
+    /* Enhanced Buttons */
+    .btn {
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+        z-index: -1;
+    }
+
+    .btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    .btn-info {
+        background: var(--info-gradient);
+        border: none;
+    }
+
+    .btn-success {
+        background: var(--success-gradient);
+        border: none;
+    }
+
+    /* Badge Enhancements */
+    .badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.05);
+        }
+    }
+
+    /* Reputation Card */
+    .reputation-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .reputation-card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 25px rgba(255, 193, 7, 0.3);
+    }
+
+    /* Stats Cards */
+    .stats-card {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        animation: slideInRight 0.6s ease-out;
+    }
+
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Quick Actions */
+    .quick-actions .btn {
+        transition: all 0.3s ease;
+    }
+
+    .quick-actions .btn:hover {
+        transform: translateX(5px);
+    }
+
+    /* Alert Enhancements */
+    .alert {
+        border-radius: 15px;
+        border: none;
+        animation: slideInUp 0.6s ease-out;
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Modal Enhancements */
+    .modal-content {
+        border-radius: 20px;
+        border: none;
+        overflow: hidden;
+    }
+
+    .modal-header {
+        border: none;
+    }
+
+    .modal-footer {
+        border: none;
+    }
+
+    /* Crop Modal Toolbar */
+    .crop-toolbar {
+        background: linear-gradient(to right, #f8f9fa, #e9ecef);
+    }
+
+    /* Range Slider Styling */
+    .form-range {
+        height: 6px;
+    }
+
+    .form-range::-webkit-slider-thumb {
+        width: 18px;
+        height: 18px;
+        background: var(--primary-gradient);
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .form-range::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        background: var(--primary-gradient);
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Keyboard Shortcuts */
+    kbd {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 5px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Loading Animation */
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3rem;
+    }
+
+    /* Drag & Drop Zone */
+    #dropZone {
+        backdrop-filter: blur(10px);
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* Tooltip Enhancements */
+    [title] {
+        position: relative;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .card {
+            border-radius: 15px;
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+        }
+
+        .profile-image-container .camera-btn {
+            opacity: 1;
+        }
+    }
+
+    /* Glassmorphism Effect */
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    /* Hover Effects for Info Cards */
+    .info-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .info-card:hover {
+        background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        transform: translateX(5px);
+    }
+
+    /* Icon Animations */
+    .fa,
+    .fas,
+    .far {
+        transition: transform 0.3s ease;
+    }
+
+    .btn:hover .fa,
+    .btn:hover .fas,
+    .btn:hover .far {
+        transform: scale(1.2);
+    }
+
+    /* Progress Bar for Image Upload */
+    .upload-progress {
+        height: 4px;
+        background: var(--primary-gradient);
+        width: 0%;
+        transition: width 0.3s ease;
+        border-radius: 2px;
+    }
+
+    /* Skeleton Loading */
+    .skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+        0% {
+            background-position: 200% 0;
+        }
+
+        100% {
+            background-position: -200% 0;
+        }
+    }
+
+    /* Success Animation */
+    @keyframes successPulse {
+
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+        }
+
+        50% {
+            box-shadow: 0 0 0 20px rgba(40, 167, 69, 0);
+        }
+    }
+
+    .success-pulse {
+        animation: successPulse 2s infinite;
+    }
+
+    /* Ripple Effect */
+    .ripple-effect {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.6);
+        transform: scale(0);
+        animation: ripple 0.6s ease-out;
+        pointer-events: none;
+    }
+
+    @keyframes ripple {
+        to {
+            transform: scale(2);
+            opacity: 0;
+        }
+    }
+
+    .btn {
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Smooth Transitions */
+    .form-control,
+    .form-select,
+    .btn,
+    .card,
+    .badge,
+    .alert {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Enhanced Focus States */
+    .form-control:focus,
+    .form-select:focus {
+        box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
+        border-color: #667eea;
+    }
+
+    /* Improved Accessibility */
+    .btn:focus-visible,
+    a:focus-visible {
+        outline: 3px solid #667eea;
+        outline-offset: 2px;
+    }
+
+    /* Loading State */
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* Enhanced Scrollbar */
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+
+    /* Print Styles */
+    @media print {
+
+        .btn,
+        .modal,
+        .alert {
+            display: none !important;
+        }
+
+        .card {
+            box-shadow: none;
+            border: 1px solid #ddd;
+        }
+    }
+
+    /* Dark Mode Support (Optional) */
+    @media (prefers-color-scheme: dark) {
+        .card {
+            background: #2d3748;
+            color: #e2e8f0;
+        }
+
+        .form-control,
+        .form-select {
+            background: #1a202c;
+            color: #e2e8f0;
+            border-color: #4a5568;
+        }
+
+        .text-muted {
+            color: #a0aec0 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+<script src="{{ url_for('static', filename='js/profile-editor.js') }}"></script>
+<script>
+    // AI Profile Insights functionality
+    function loadAIInsights() {
+        const loadingDiv = document.getElementById('aiInsightsLoading');
+        const contentDiv = document.getElementById('aiInsightsContent');
+        const errorDiv = document.getElementById('aiInsightsError');
+        const refreshBtn = document.getElementById('refreshInsightsBtn');
+
+        // Show loading state
+        loadingDiv.classList.remove('d-none');
+        contentDiv.classList.add('d-none');
+        errorDiv.classList.add('d-none');
+        refreshBtn.disabled = true;
+
+        fetch('{{ url_for("get_profile_ai_insights") }}')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.insights) {
+                    displayAIInsights(data.insights);
+                    loadingDiv.classList.add('d-none');
+                    contentDiv.classList.remove('d-none');
+                } else {
+                    throw new Error(data.error || 'Failed to load insights');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading AI insights:', error);
+                loadingDiv.classList.add('d-none');
+                errorDiv.classList.remove('d-none');
+                document.getElementById('aiInsightsErrorText').textContent = error.message || 'Unable to load AI insights. Please try again later.';
+            })
+            .finally(() => {
+                refreshBtn.disabled = false;
+            });
+    }
+
+    function displayAIInsights(insights) {
+        try {
+            // Display profile score
+            const profileScoreEl = document.getElementById('profileScore');
+            if (profileScoreEl) {
+                profileScoreEl.textContent = insights.profile_score || '--';
+            }
+
+            const statusBadge = document.getElementById('profileStatus');
+            if (statusBadge) {
+                statusBadge.textContent = insights.profile_status || '--';
+
+                // Set badge color based on status
+                statusBadge.className = 'badge mt-2';
+                if (insights.profile_status === 'Excellent') {
+                    statusBadge.classList.add('bg-success');
+                } else if (insights.profile_status === 'Good') {
+                    statusBadge.classList.add('bg-info');
+                } else if (insights.profile_status === 'Fair') {
+                    statusBadge.classList.add('bg-warning');
+                } else {
+                    statusBadge.classList.add('bg-secondary');
+                }
+            }
+
+            // Display key insights
+            const insightsList = document.getElementById('keyInsightsList');
+            if (insightsList) {
+                insightsList.innerHTML = '';
+                if (insights.key_insights && insights.key_insights.length > 0) {
+                    insights.key_insights.forEach(insight => {
+                        const li = document.createElement('li');
+                        li.className = 'mb-2';
+                        li.innerHTML = `<i class="fas fa-check-circle text-success me-2"></i>${insight}`;
+                        insightsList.appendChild(li);
+                    });
+                } else {
+                    insightsList.innerHTML = '<li class="text-muted">No insights available</li>';
+                }
+            }
+
+            // Display personalized message
+            const messageEl = document.getElementById('personalizedMessageText');
+            if (messageEl) {
+                messageEl.textContent = insights.personalized_message || 'Keep up the great work!';
+            }
+
+            // Display recommendations
+            const recommendationsList = document.getElementById('recommendationsList');
+            if (recommendationsList) {
+                recommendationsList.innerHTML = '';
+                if (insights.recommendations && insights.recommendations.length > 0) {
+                    insights.recommendations.forEach(rec => {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-6';
+
+                        const priorityColor = rec.priority === 'high' ? 'danger' : rec.priority === 'medium' ? 'warning' : 'info';
+                        const priorityIcon = rec.priority === 'high' ? 'exclamation-circle' : rec.priority === 'medium' ? 'star' : 'info-circle';
+
+                        col.innerHTML = `
+                        <div class="card border-${priorityColor} h-100">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-${priorityIcon} text-${priorityColor} me-2"></i>${rec.title || 'Recommendation'}
+                                </h6>
+                                <p class="card-text small">${rec.description || ''}</p>
+                                ${rec.action_url ? `<a href="${rec.action_url}" class="btn btn-sm btn-outline-${priorityColor}">Take Action</a>` : ''}
+                            </div>
+                        </div>
+                    `;
+                        recommendationsList.appendChild(col);
+                    });
+                } else {
+                    recommendationsList.innerHTML = '<div class="col-12"><p class="text-muted">No recommendations at this time</p></div>';
+                }
+            }
+
+            // Display next steps
+            const nextStepsList = document.getElementById('nextStepsList');
+            if (nextStepsList) {
+                nextStepsList.innerHTML = '';
+                if (insights.next_steps && insights.next_steps.length > 0) {
+                    insights.next_steps.forEach((step, index) => {
+                        const item = document.createElement('div');
+                        item.className = 'list-group-item d-flex align-items-start';
+                        item.innerHTML = `
+                        <div class="me-3">
+                            <span class="badge bg-primary rounded-circle" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                ${index + 1}
+                            </span>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="mb-0">${step}</p>
+                        </div>
+                    `;
+                        nextStepsList.appendChild(item);
+                    });
+                } else {
+                    nextStepsList.innerHTML = '<div class="list-group-item text-muted">No action items at this time</div>';
+                }
+            }
+        } catch (error) {
+            console.error('Error displaying AI insights:', error);
+        }
+    }
+
+    // Load AI insights when page loads
+    document.addEventListener('DOMContentLoaded', function () {
+        loadAIInsights();
+    });
+</script>
+{% endblock %}

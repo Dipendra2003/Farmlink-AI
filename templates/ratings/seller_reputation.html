@@ -1,0 +1,703 @@
+{% extends "base.html" %}
+
+{% block title %}{{ seller.full_name or seller.username }} - Seller Reputation - FarmLink AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reputation-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 50px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .reputation-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        animation: pulse 15s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            transform: scale(1);
+            opacity: 0.5;
+        }
+
+        50% {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+    }
+
+    .reputation-score {
+        font-size: 5rem;
+        font-weight: 900;
+        line-height: 1;
+        text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+        background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0.8) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .reputation-stars {
+        font-size: 2.5rem;
+        margin: 20px 0;
+        filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+    }
+
+    .reputation-badge {
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        padding: 12px 28px;
+        border-radius: 30px;
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-top: 15px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .stats-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        height: 100%;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        transform: scaleX(0);
+        transition: transform 0.4s ease;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.2);
+    }
+
+    .stats-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .stats-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        transition: transform 0.3s ease;
+    }
+
+    .stats-card:hover .stats-icon {
+        transform: scale(1.2) rotate(5deg);
+    }
+
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 10px;
+    }
+
+    .stats-label {
+        color: #6c757d;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+    }
+
+    .distribution-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+        margin-bottom: 30px;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .section-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin-bottom: 30px;
+        color: #2d3748;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .section-title i {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .distribution-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .distribution-label {
+        width: 100px;
+        font-size: 1rem;
+        color: #333;
+        font-weight: 500;
+    }
+
+    .distribution-bar {
+        flex: 1;
+        height: 30px;
+        background: #e9ecef;
+        border-radius: 15px;
+        overflow: hidden;
+        margin: 0 15px;
+        position: relative;
+    }
+
+    .distribution-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 15px;
+        color: white;
+        font-weight: 700;
+        font-size: 0.9rem;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .distribution-count {
+        width: 60px;
+        text-align: right;
+        font-size: 1rem;
+        color: #333;
+        font-weight: 600;
+    }
+
+    .recent-ratings-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .rating-item {
+        border-left: 5px solid transparent;
+        border-image: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        border-image-slice: 1;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        padding: 25px;
+        margin-bottom: 20px;
+        border-radius: 12px;
+        transition: all 0.4s ease;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .rating-item:hover {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        transform: translateX(10px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.15);
+    }
+
+    .rating-stars-small {
+        color: #ffc107;
+        font-size: 1rem;
+    }
+
+    .seller-profile {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .seller-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 5px solid rgba(255, 255, 255, 0.4);
+        object-fit: cover;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease;
+    }
+
+    .seller-avatar:hover {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .seller-info h3 {
+        margin: 0;
+        font-size: 2.2rem;
+        font-weight: 900;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .seller-meta {
+        opacity: 0.95;
+        font-size: 1rem;
+        font-weight: 500;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 10px;
+    }
+
+    .seller-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .products-section {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+        margin-bottom: 30px;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .product-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        margin: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        border: 2px solid transparent;
+    }
+
+    .product-badge:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        transform: translateY(-5px) scale(1.08);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .no-ratings-message {
+        text-align: center;
+        padding: 60px 40px;
+        color: #6c757d;
+    }
+
+    .no-ratings-icon {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.3;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .trust-badges {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        flex-wrap: wrap;
+        margin-top: 30px;
+        padding: 30px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+    }
+
+    .trust-badge-item {
+        text-align: center;
+        color: white;
+    }
+
+    .trust-badge-item i {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    .trust-badge-item span {
+        font-size: 0.9rem;
+        font-weight: 600;
+        opacity: 0.9;
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-top: 40px;
+    }
+
+    .btn-custom {
+        padding: 15px 35px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        border-radius: 30px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-custom:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+    }
+
+    .btn-gradient:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('marketplace') }}">Marketplace</a></li>
+            <li class="breadcrumb-item active">Seller Reputation</li>
+        </ol>
+    </nav>
+
+    <!-- Reputation Hero Section -->
+    <div class="reputation-hero">
+        <div class="seller-profile">
+            <img src="{% if seller.profile_image and seller.profile_image != 'default.jpg' %}{{ url_for('static', filename=seller.profile_image) }}{% else %}https://ui-avatars.com/api/?name={{ seller.full_name or seller.username }}&background=667eea&color=ffffff&size=100&bold=true{% endif %}"
+                class="seller-avatar" alt="{{ seller.full_name or seller.username }}"
+                onerror="this.src='https://ui-avatars.com/api/?name={{ seller.full_name or seller.username }}&background=667eea&color=ffffff&size=100&bold=true'">
+            <div class="seller-info">
+                <h3>{{ seller.full_name or seller.username }}</h3>
+                <div class="seller-meta">
+                    <div class="seller-meta-item">
+                        <i class="fas fa-store"></i>
+                        <span>Verified Seller</span>
+                    </div>
+                    {% if seller.location %}
+                    <div class="seller-meta-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>{{ seller.location }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="seller-meta-item">
+                        <i class="fas fa-calendar-check"></i>
+                        <span>Member since {{ seller.created_at.strftime('%B %Y') }}</span>
+                    </div>
+                    {% if products %}
+                    <div class="seller-meta-item">
+                        <i class="fas fa-box-open"></i>
+                        <span>{{ products|length }} Active Product{{ 's' if products|length != 1 else '' }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="row align-items-center mt-5">
+            <div class="col-md-6 text-center text-md-start">
+                <div class="reputation-score">{{ "%.1f"|format(avg_rating) }}</div>
+                <div class="reputation-stars">
+                    {% set full_stars = avg_rating|int %}
+                    {% set has_half = (avg_rating - full_stars) >= 0.5 %}
+                    {% for i in range(full_stars) %}
+                    <i class="fas fa-star"></i>
+                    {% endfor %}
+                    {% if has_half %}
+                    <i class="fas fa-star-half-alt"></i>
+                    {% endif %}
+                    {% for i in range(5 - full_stars - (1 if has_half else 0)) %}
+                    <i class="far fa-star"></i>
+                    {% endfor %}
+                </div>
+                <div class="reputation-badge">
+                    {% if avg_rating >= 4.8 %}
+                    <i class="fas fa-trophy"></i> Outstanding Seller
+                    {% elif avg_rating >= 4.5 %}
+                    <i class="fas fa-medal"></i> Excellent Seller
+                    {% elif avg_rating >= 4.0 %}
+                    <i class="fas fa-star"></i> Great Seller
+                    {% elif avg_rating >= 3.5 %}
+                    <i class="fas fa-thumbs-up"></i> Good Seller
+                    {% elif avg_rating > 0 %}
+                    <i class="fas fa-check"></i> Rated Seller
+                    {% else %}
+                    <i class="fas fa-seedling"></i> New Seller
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-6 text-center text-md-end mt-4 mt-md-0">
+                <h4 class="mb-3" style="font-weight: 700;">
+                    <i class="fas fa-comments"></i> {{ total_ratings }} Customer Review{{ 's' if total_ratings != 1 else
+                    '' }}
+                </h4>
+                <div class="trust-badges">
+                    <div class="trust-badge-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Verified</span>
+                    </div>
+                    <div class="trust-badge-item">
+                        <i class="fas fa-truck"></i>
+                        <span>Fast Delivery</span>
+                    </div>
+                    <div class="trust-badge-item">
+                        <i class="fas fa-leaf"></i>
+                        <span>Quality Products</span>
+                    </div>
+                    {% if avg_rating >= 4.5 %}
+                    <div class="trust-badge-item">
+                        <i class="fas fa-award"></i>
+                        <span>Top Rated</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stats-number">{{ "%.2f"|format(avg_rating) }}</div>
+                <div class="stats-label">Average Rating</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <div class="stats-number">{{ total_ratings }}</div>
+                <div class="stats-label">Total Reviews</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-thumbs-up"></i>
+                </div>
+                <div class="stats-number">{{ rating_distribution[5] + rating_distribution[4] }}</div>
+                <div class="stats-label">Positive Reviews</div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="stats-card">
+                <div class="stats-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="stats-number">
+                    {% if total_ratings > 0 %}
+                    {{ "%.0f"|format((rating_distribution[5] + rating_distribution[4]) / total_ratings * 100) }}%
+                    {% else %}
+                    0%
+                    {% endif %}
+                </div>
+                <div class="stats-label">Satisfaction Rate</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rating Distribution -->
+    <div class="distribution-card">
+        <h4 class="section-title">
+            <i class="fas fa-chart-bar"></i> Rating Distribution
+        </h4>
+        {% if total_ratings > 0 %}
+        {% for stars in [5, 4, 3, 2, 1] %}
+        <div class="distribution-row">
+            <div class="distribution-label">
+                {{ stars }} <i class="fas fa-star text-warning"></i>
+            </div>
+            <div class="distribution-bar">
+                <div class="distribution-fill" style="width: {{ rating_percentages[stars] }}%" data-percentage="{{ rating_percentages[stars] }}">
+                    {% set percentage = rating_percentages[stars] %}
+                    {% if percentage > 10 %}{{ "%.0f"|format(percentage) }}%{% endif %}
+                </div>
+            </div>
+            <div class="distribution-count">{{ rating_distribution[stars] }}</div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="no-ratings-message">
+            <div class="no-ratings-icon">
+                <i class="far fa-star"></i>
+            </div>
+            <p>No ratings yet. Be the first to review this seller!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Products Section -->
+    {% if products %}
+    <div class="products-section">
+        <h4 class="section-title">
+            <i class="fas fa-box-open"></i> Available Products ({{ products|length }})
+        </h4>
+        <p class="text-muted mb-4">Explore all products offered by {{ seller.full_name or seller.username }}</p>
+        <div class="d-flex flex-wrap">
+            {% for product in products %}
+            <a href="{{ url_for('product_detail', crop_id=product.id) }}" class="product-badge text-decoration-none">
+                <i class="fas fa-leaf"></i> {{ product.name }}
+                {% if product.price %}
+                <span style="opacity: 0.8; margin-left: 8px;">₹{{ "%.2f"|format(product.price) }}/{{ product.unit
+                    }}</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Ratings -->
+    <div class="recent-ratings-card">
+        <h4 class="section-title">
+            <i class="fas fa-comments"></i> Recent Customer Reviews
+        </h4>
+
+        {% if recent_ratings %}
+        {% for rating in recent_ratings %}
+        <div class="rating-item">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="flex-grow-1">
+                    <div class="rating-stars-small mb-2">
+                        {% for i in range(rating.rating) %}
+                        <i class="fas fa-star"></i>
+                        {% endfor %}
+                        {% for i in range(5 - rating.rating) %}
+                        <i class="far fa-star"></i>
+                        {% endfor %}
+                        <span class="ms-2 fw-bold" style="color: #667eea;">{{ rating.rating }}.0</span>
+                    </div>
+                    <div class="text-muted small d-flex align-items-center gap-3 flex-wrap">
+                        <span>
+                            <i class="fas fa-user-circle"></i>
+                            <strong>{{ rating.buyer.full_name or rating.buyer.username }}</strong>
+                        </span>
+                        <span>
+                            <i class="far fa-calendar-alt"></i>
+                            {{ rating.created_at.strftime('%B %d, %Y') }}
+                        </span>
+                        {% if rating.verified_purchase %}
+                        <span class="badge bg-success">
+                            <i class="fas fa-check-circle"></i> Verified Purchase
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <a href="{{ url_for('product_detail', crop_id=rating.product_id) }}"
+                    class="btn btn-sm btn-outline-primary" style="border-color: #667eea; color: #667eea;">
+                    <i class="fas fa-leaf"></i> {{ rating.product.name }}
+                </a>
+            </div>
+            {% if rating.review_text %}
+            <p class="mb-0 mt-2" style="color: #4a5568; line-height: 1.6;">
+                <i class="fas fa-quote-left" style="color: #667eea; opacity: 0.3; font-size: 0.8rem;"></i>
+                {{ rating.review_text }}
+                <i class="fas fa-quote-right" style="color: #667eea; opacity: 0.3; font-size: 0.8rem;"></i>
+            </p>
+            {% else %}
+            <p class="mb-0 mt-2 text-muted fst-italic">No written review provided.</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        {% if total_ratings > 10 %}
+        <div class="text-center mt-4">
+            <p class="text-muted">Showing 10 most recent reviews out of {{ total_ratings }} total</p>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="no-ratings-message">
+            <div class="no-ratings-icon">
+                <i class="far fa-comment"></i>
+            </div>
+            <p>No reviews yet for this seller's products.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <a href="{{ url_for('marketplace') }}" class="btn btn-outline-secondary btn-custom">
+            <i class="fas fa-arrow-left"></i> Back to Marketplace
+        </a>
+        {% if products %}
+        <a href="{{ url_for('marketplace') }}?seller={{ seller.id }}" class="btn btn-gradient btn-custom">
+            <i class="fas fa-shopping-cart"></i> Shop from {{ seller.full_name or seller.username }}
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Animate distribution bars on load
+        const bars = document.querySelectorAll('.distribution-fill');
+        bars.forEach(bar => {
+            const width = bar.style.width;
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.width = width;
+            }, 200);
+        });
+
+        // Animate stats numbers
+        const statsNumbers = document.querySelectorAll('.stats-number');
+        statsNumbers.forEach(stat => {
+            const finalValue = stat.textContent;
+            stat.style.opacity = '0';
+            setTimeout(() => {
+                stat.style.transition = 'opacity 0.5s ease';
+                stat.style.opacity = '1';
+            }, 100);
+        });
+    });
+</script>
+{% endblock %}

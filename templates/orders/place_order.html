@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Place Order - {{ crop.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Place Order</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <!-- Crop Details -->
+                        <div class="col-md-4">
+                            <img src="{{ url_for('static', filename=crop.image_url) if crop.image_url else 'https://via.placeholder.com/150' }}" 
+                                 class="img-fluid rounded" alt="{{ crop.name }}">
+                        </div>
+                        <div class="col-md-8">
+                            <h5>{{ crop.name }}</h5>
+                            <p class="text-muted mb-1">Category: {{ crop.category.title() }}</p>
+                            <p class="text-muted mb-1">Farmer: {{ crop.farmer.full_name }}
+                                {% set seller = crop.farmer %}
+                                {% include 'components/kyc_badge.html' %}
+                            </p>
+                            <p class="text-muted mb-1">Location: {{ crop.location }}</p>
+                            <p class="text-muted mb-1">Available Quantity: {{ crop.quantity }} {{ crop.unit }}</p>
+                            <p class="text-success fw-bold mb-0">Price: {{ format_currency(crop.price_per_unit) }} per {{ crop.unit }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Order Form -->
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.quantity_requested.label(class="form-label") }}
+                            {{ form.quantity_requested(class="form-control" + (" is-invalid" if form.quantity_requested.errors else ""), type="number", step="0.1") }}
+                            {% for error in form.quantity_requested.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                            <div class="form-text">Available: {{ crop.quantity }} {{ crop.unit }}</div>
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.delivery_address.label(class="form-label") }}
+                            {{ form.delivery_address(class="form-control" + (" is-invalid" if form.delivery_address.errors else ""), rows=3) }}
+                            {% for error in form.delivery_address.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.delivery_method.label(class="form-label") }}
+                            {{ form.delivery_method(class="form-select" + (" is-invalid" if form.delivery_method.errors else "")) }}
+                            {% for error in form.delivery_method.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.notes.label(class="form-label") }}
+                            {{ form.notes(class="form-control" + (" is-invalid" if form.notes.errors else ""), rows=3) }}
+                            {% for error in form.notes.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            {{ form.submit(class="btn btn-primary") }}
+                            <a href="{{ url_for('product_detail', crop_id=crop.id) }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

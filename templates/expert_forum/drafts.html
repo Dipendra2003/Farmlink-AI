@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}My Drafts - Expert Forum{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 mb-0">
+                    <i class="fas fa-edit me-2"></i>My Drafts
+                </h1>
+                <a href="{{ url_for('create_expert_post') }}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>New Post
+                </a>
+            </div>
+
+            {% if drafts %}
+                <div class="row">
+                    {% for draft in drafts %}
+                    <div class="col-lg-6 mb-4">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    {{ draft.title or 'Untitled Draft' }}
+                                    <span class="badge bg-secondary ms-2">Draft</span>
+                                </h5>
+                                
+                                {% if draft.category %}
+                                <p class="text-muted small mb-2">
+                                    <i class="fas fa-tag me-1"></i>{{ draft.category|replace('-', ' ')|title }}
+                                </p>
+                                {% endif %}
+                                
+                                <p class="card-text text-muted">
+                                    {{ draft.content|truncate(150) if draft.content else 'No content yet...' }}
+                                </p>
+                                
+                                {% if draft.tags %}
+                                <div class="mb-3">
+                                    {% for tag in draft.tags.split(',') %}
+                                        <span class="badge bg-light text-dark me-1">{{ tag.strip() }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        Last updated: {{ draft.updated_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                    </small>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('create_expert_post', draft_id=draft.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           title="Continue editing">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-success" 
+                                                onclick="publishDraft({{ draft.id }})"
+                                                title="Publish now">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-danger" 
+                                                onclick="deleteDraft({{ draft.id }})"
+                                                title="Delete draft">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-edit text-muted" style="font-size: 4rem;"></i>
+                    </div>
+                    <h3 class="text-muted">No drafts yet</h3>
+                    <p class="text-muted mb-4">Your post drafts will appear here when you save them.</p>
+                    <a href="{{ url_for('create_expert_post') }}" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>Create Your First Post
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function publishDraft(draftId) {
+    if (confirm('Are you sure you want to publish this draft? This action cannot be undone.')) {
+        fetch(`/expert-forum/draft/${draftId}/publish`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+            }
+        })
+        .then(response => {
+            if (response.redirected) {
+                window.location.href = response.url;
+            } else {
+                return response.json();
+            }
+        })
+        .then(data => {
+            if (data && !data.success) {
+                alert('Failed to publish draft: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while publishing the draft');
+        });
+    }
+}
+
+function deleteDraft(draftId) {
+    if (confirm('Are you sure you want to delete this draft? This action cannot be undone.')) {
+        fetch(`/expert-forum/draft/${draftId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Failed to delete draft: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the draft');
+        });
+    }
+}
+</script>
+{% endblock %}

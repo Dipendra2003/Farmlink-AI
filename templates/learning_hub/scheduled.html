@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Scheduled Articles - Learning Hub{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                  <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                  <li class="breadcrumb-item"><a href="{{ url_for('learning_hub') }}">Learning Hub</a></li>
+                  <li class="breadcrumb-item active">Scheduled Articles</li>
+            </ol>
+      </nav>
+
+      <!-- Header -->
+      <div class="row mb-4">
+            <div class="col-12">
+                  <div class="card bg-gradient-primary text-white">
+                        <div class="card-body text-center py-4">
+                              <h1 class="display-5 mb-0">
+                                    <i class="fas fa-clock me-3"></i>Scheduled Articles
+                              </h1>
+                              <p class="lead mb-0">Articles scheduled for future publication</p>
+                        </div>
+                  </div>
+            </div>
+      </div>
+
+      <!-- Scheduled Articles -->
+      <div class="row">
+            {% if scheduled %}
+            {% for article in scheduled %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                  <div class="card h-100 shadow-sm">
+                        {% if article.featured_image %}
+                        <img src="{{ article.featured_image }}" class="card-img-top" alt="{{ article.title }}"
+                              style="height: 200px; object-fit: cover;" loading="lazy">
+                        {% else %}
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center"
+                              style="height: 200px;">
+                              <i class="fas fa-calendar-alt fa-3x text-muted"></i>
+                        </div>
+                        {% endif %}
+                        <div class="card-body">
+                              <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title flex-grow-1">{{ article.title }}</h5>
+                                    <span class="badge bg-info">Scheduled</span>
+                              </div>
+                              <p class="card-text">{{ article.summary[:120] if article.summary else 'No summary' }}...
+                              </p>
+
+                              <div class="mb-2">
+                                    <span class="badge bg-secondary">{{ article.category|replace('_', ' ')|title
+                                          }}</span>
+                                    <span
+                                          class="badge bg-{{ 'success' if article.difficulty_level == 'beginner' else 'warning' if article.difficulty_level == 'intermediate' else 'danger' }}">
+                                          {{ article.difficulty_level|title }}
+                                    </span>
+                              </div>
+
+                              <div class="alert alert-info mb-2">
+                                    <i class="fas fa-calendar-check me-1"></i>
+                                    <strong>Publish on:</strong><br>
+                                    {{ article.scheduled_publish.strftime('%B %d, %Y at %I:%M %p') if
+                                    article.scheduled_publish else 'Not set' }}
+                              </div>
+
+                              <small class="text-muted">
+                                    Created: {{ article.created_at.strftime('%b %d, %Y') if article.created_at else
+                                    'N/A' }}
+                              </small>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                              <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('view_article', article_id=article.id) }}"
+                                          class="btn btn-outline-secondary btn-sm">
+                                          <i class="fas fa-eye me-1"></i>Preview
+                                    </a>
+                                    <a href="{{ url_for('edit_article', article_id=article.id) }}"
+                                          class="btn btn-primary btn-sm">
+                                          <i class="fas fa-edit me-1"></i>Edit
+                                    </a>
+                                    <button class="btn btn-success btn-sm" onclick="publishNow({{ article.id }})">
+                                          <i class="fas fa-paper-plane me-1"></i>Publish Now
+                                    </button>
+                              </div>
+                        </div>
+                  </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="col-12">
+                  <div class="card text-center">
+                        <div class="card-body py-5">
+                              <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                              <h4>No Scheduled Articles</h4>
+                              <p class="text-muted">You don't have any articles scheduled for future publication.</p>
+                              <a href="{{ url_for('add_article') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-1"></i>Create Article
+                              </a>
+                        </div>
+                  </div>
+            </div>
+            {% endif %}
+      </div>
+
+      <!-- Info Card -->
+      <div class="row mt-4">
+            <div class="col-12">
+                  <div class="card border-info">
+                        <div class="card-header bg-info text-white">
+                              <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>About Scheduled Publishing</h5>
+                        </div>
+                        <div class="card-body">
+                              <p class="mb-2"><strong>How it works:</strong></p>
+                              <ul class="mb-0">
+                                    <li>Articles scheduled for future publication will automatically go live at the
+                                          specified date and time</li>
+                                    <li>You can preview scheduled articles before they're published</li>
+                                    <li>Edit scheduled articles anytime before publication</li>
+                                    <li>Use "Publish Now" to immediately publish a scheduled article</li>
+                                    <li>Scheduled articles are not visible to regular users until published</li>
+                              </ul>
+                        </div>
+                  </div>
+            </div>
+      </div>
+</div>
+
+<script>
+      function publishNow(articleId) {
+            if (confirm('Publish this article immediately?')) {
+                  fetch(`/learning-hub/article/${articleId}/publish-now`, {
+                        method: 'POST',
+                        headers: {
+                              'Content-Type': 'application/json',
+                        }
+                  })
+                        .then(response => response.json())
+                        .then(data => {
+                              if (data.success) {
+                                    showToast('Article published successfully!');
+                                    setTimeout(() => {
+                                          location.reload();
+                                    }, 1500);
+                              } else {
+                                    alert(data.message || 'Error publishing article');
+                              }
+                        })
+                        .catch(error => {
+                              console.error('Error:', error);
+                              alert('Error publishing article. Please try again.');
+                        });
+            }
+      }
+
+      function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.textContent = message;
+            toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #28a745; color: white; padding: 15px 20px; border-radius: 5px; z-index: 9999;';
+            document.body.appendChild(toast);
+
+            setTimeout(function () {
+                  toast.remove();
+            }, 3000);
+      }
+</script>
+
+<style>
+      .bg-gradient-primary {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      }
+
+      .card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+      }
+
+      .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1) !important;
+      }
+</style>
+{% endblock %}

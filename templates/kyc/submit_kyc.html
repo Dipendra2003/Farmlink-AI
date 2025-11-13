@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Submit KYC Verification - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-id-card text-primary fa-3x mb-3"></i>
+                        <h2 class="fw-bold">KYC Verification</h2>
+                        <p class="text-muted">Complete your identity verification to start selling on FarmLink AI</p>
+                    </div>
+
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Why KYC?</strong> Identity verification helps build trust with buyers and ensures a secure marketplace for everyone.
+                    </div>
+
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+
+                        <!-- Personal Information -->
+                        <h5 class="mb-3 text-primary"><i class="fas fa-user me-2"></i>Personal Information</h5>
+                        
+                        <div class="mb-3">
+                            {{ form.full_name.label(class="form-label fw-semibold") }}
+                            {{ form.full_name(class="form-control", readonly=true) }}
+                            <div class="form-text">This is auto-filled from your profile</div>
+                            {% if form.full_name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.full_name.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.aadhaar_no.label(class="form-label fw-semibold") }}
+                                {{ form.aadhaar_no(class="form-control", placeholder="123456789012") }}
+                                <div class="form-text">12-digit Aadhaar number</div>
+                                {% if form.aadhaar_no.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.aadhaar_no.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                {{ form.pan_no.label(class="form-label fw-semibold") }}
+                                {{ form.pan_no(class="form-control", placeholder="ABCDE1234F", style="text-transform: uppercase;") }}
+                                <div class="form-text">10-character PAN (e.g., ABCDE1234F)</div>
+                                {% if form.pan_no.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.pan_no.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Bank Details -->
+                        <h5 class="mb-3 mt-4 text-primary"><i class="fas fa-university me-2"></i>Bank Details</h5>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.bank_account.label(class="form-label fw-semibold") }}
+                                {{ form.bank_account(class="form-control", placeholder="123456789012345") }}
+                                <div class="form-text">9-18 digit bank account number</div>
+                                {% if form.bank_account.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.bank_account.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                {{ form.ifsc.label(class="form-label fw-semibold") }}
+                                {{ form.ifsc(class="form-control", placeholder="ABCD0123456", style="text-transform: uppercase;") }}
+                                <div class="form-text">11-character IFSC code</div>
+                                {% if form.ifsc.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.ifsc.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Document Uploads -->
+                        <h5 class="mb-3 mt-4 text-primary"><i class="fas fa-file-upload me-2"></i>Document Uploads</h5>
+                        
+                        <div class="alert alert-warning mb-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Important:</strong> All files must be in JPG, PNG, or PDF format and not exceed 5MB each.
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.aadhaar_front.label(class="form-label fw-semibold") }}
+                                <span class="text-danger">*</span>
+                                {{ form.aadhaar_front(class="form-control") }}
+                                {% if form.aadhaar_front.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.aadhaar_front.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                {{ form.aadhaar_back.label(class="form-label fw-semibold") }}
+                                <span class="text-danger">*</span>
+                                {{ form.aadhaar_back(class="form-control") }}
+                                {% if form.aadhaar_back.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.aadhaar_back.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.pan_card.label(class="form-label fw-semibold") }}
+                                <span class="text-danger">*</span>
+                                {{ form.pan_card(class="form-control") }}
+                                {% if form.pan_card.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.pan_card.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                {{ form.land_proof.label(class="form-label fw-semibold") }}
+                                <span class="text-muted">(Optional)</span>
+                                {{ form.land_proof(class="form-control") }}
+                                <div class="form-text">Land ownership proof (optional)</div>
+                                {% if form.land_proof.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.land_proof.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="alert alert-secondary mt-4">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            <strong>Privacy & Security:</strong> All your documents and sensitive information are encrypted and stored securely. Only authorized admins can access them for verification purposes.
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                            <a href="{{ url_for('farmer_dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-uppercase PAN and IFSC inputs
+document.addEventListener('DOMContentLoaded', function() {
+    const panInput = document.querySelector('input[name="pan_no"]');
+    const ifscInput = document.querySelector('input[name="ifsc"]');
+    
+    if (panInput) {
+        panInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+    
+    if (ifscInput) {
+        ifscInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+});
+</script>
+{% endblock %}

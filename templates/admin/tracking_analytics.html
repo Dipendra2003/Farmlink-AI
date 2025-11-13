@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Tracking Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-chart-line"></i> Tracking Analytics
+                <div class="float-end">
+                    <a href="{{ url_for('admin_export_shipments') }}" class="btn btn-success btn-sm me-2">
+                        <i class="fas fa-file-csv"></i> Export to CSV
+                    </a>
+                    <a href="{{ url_for('admin_shipments') }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> Back to Shipments
+                    </a>
+                </div>
+            </h2>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Shipments</h5>
+                    <h2>{{ total_shipments }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Active Shipments</h5>
+                    <h2>{{ active_shipments }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Delivered</h5>
+                    <h2>{{ total_delivered }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Failed Deliveries</h5>
+                    <h2>{{ total_failed }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- On-Time vs Delayed Deliveries -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock"></i> On-Time vs Delayed Deliveries</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="deliveryPerformanceChart"></canvas>
+                    <div class="mt-3">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h4 class="text-success">{{ ontime_percentage }}%</h4>
+                                <p>On-Time ({{ ontime_count }})</p>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-danger">{{ delayed_percentage }}%</h4>
+                                <p>Delayed ({{ delayed_count }})</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Average Delivery Time by Courier -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-shipping-fast"></i> Average Delivery Time by Courier</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="avgDeliveryTimeChart"></canvas>
+                    <div class="mt-3">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Courier</th>
+                                    <th>Avg. Days</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for courier, avg_days in avg_delivery_times.items() %}
+                                <tr>
+                                    <td>{{ courier|title }}</td>
+                                    <td>{{ avg_days }} days</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shipment Volume Over Time -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-area"></i> Shipment Volume Over Time (Last 12 Months)</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="shipmentVolumeChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Failed Deliveries and Courier Usage -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Failed Deliveries by Reason</h5>
+                </div>
+                <div class="card-body">
+                    {% if failed_deliveries %}
+                    <canvas id="failedDeliveriesChart"></canvas>
+                    <div class="mt-3">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Reason</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reason, count in failed_deliveries.items() %}
+                                <tr>
+                                    <td>{{ reason }}</td>
+                                    <td>{{ count }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No failed deliveries recorded.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Courier Usage -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-truck"></i> Courier Service Usage</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="courierUsageChart"></canvas>
+                    <div class="mt-3">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Courier</th>
+                                    <th>Shipments</th>
+                                    <th>Percentage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for courier, count in courier_usage.items() %}
+                                <tr>
+                                    <td>{{ courier|title }}</td>
+                                    <td>{{ count }}</td>
+                                    <td>{{ "%.1f"|format((count / total_shipments * 100) if total_shipments > 0 else 0) }}%</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data for Charts -->
+<script type="application/json" id="chartData">
+{
+    "ontimeCount": {{ ontime_count }},
+    "delayedCount": {{ delayed_count }},
+    "avgDeliveryTimes": {{ avg_delivery_times|tojson }},
+    "volumeMonths": {{ volume_months|tojson }},
+    "volumeCounts": {{ volume_counts|tojson }},
+    "failedDeliveries": {{ failed_deliveries|tojson }},
+    "courierUsage": {{ courier_usage|tojson }}
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+// Load chart data
+const chartData = JSON.parse(document.getElementById('chartData').textContent);
+
+// On-Time vs Delayed Deliveries Chart
+const deliveryPerformanceCtx = document.getElementById('deliveryPerformanceChart').getContext('2d');
+new Chart(deliveryPerformanceCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['On-Time', 'Delayed'],
+        datasets: [{
+            data: [chartData.ontimeCount, chartData.delayedCount],
+            backgroundColor: ['#28a745', '#dc3545']
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Average Delivery Time by Courier Chart
+const avgDeliveryTimeCtx = document.getElementById('avgDeliveryTimeChart').getContext('2d');
+new Chart(avgDeliveryTimeCtx, {
+    type: 'bar',
+    data: {
+        labels: Object.keys(chartData.avgDeliveryTimes),
+        datasets: [{
+            label: 'Average Days',
+            data: Object.values(chartData.avgDeliveryTimes),
+            backgroundColor: '#007bff'
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Days'
+                }
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            }
+        }
+    }
+});
+
+// Shipment Volume Over Time Chart
+const shipmentVolumeCtx = document.getElementById('shipmentVolumeChart').getContext('2d');
+new Chart(shipmentVolumeCtx, {
+    type: 'line',
+    data: {
+        labels: chartData.volumeMonths,
+        datasets: [{
+            label: 'Shipments',
+            data: chartData.volumeCounts,
+            borderColor: '#007bff',
+            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Shipments'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Month'
+                }
+            }
+        }
+    }
+});
+
+// Failed Deliveries Chart
+if (Object.keys(chartData.failedDeliveries).length > 0) {
+    const failedDeliveriesCtx = document.getElementById('failedDeliveriesChart').getContext('2d');
+    new Chart(failedDeliveriesCtx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(chartData.failedDeliveries),
+            datasets: [{
+                data: Object.values(chartData.failedDeliveries),
+                backgroundColor: [
+                    '#dc3545', '#fd7e14', '#ffc107', '#6c757d', '#17a2b8'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+// Courier Usage Chart
+const courierUsageCtx = document.getElementById('courierUsageChart').getContext('2d');
+new Chart(courierUsageCtx, {
+    type: 'doughnut',
+    data: {
+        labels: Object.keys(chartData.courierUsage),
+        datasets: [{
+            data: Object.values(chartData.courierUsage),
+            backgroundColor: [
+                '#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Forum Analytics - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-card {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .stat-box {
+        text-align: center;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    .stat-box h3 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    .stat-box p {
+        margin: 0;
+        opacity: 0.9;
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-chart-line"></i> Forum Analytics</h2>
+        <a href="{{ url_for('admin_moderation') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Moderation
+        </a>
+    </div>
+
+    <!-- Overview Statistics -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-box">
+                <h3>{{ stats.total_posts }}</h3>
+                <p>Total Posts</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <h3>{{ stats.total_replies }}</h3>
+                <p>Total Replies</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <h3>{{ stats.total_users }}</h3>
+                <p>Total Users</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-box" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <h3>{{ stats.active_users_week }}</h3>
+                <p>Active This Week</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Stats -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="analytics-card">
+                <h5><i class="fas fa-question-circle"></i> Questions & Answers</h5>
+                <div class="row mt-3">
+                    <div class="col-6 text-center">
+                        <h4 class="text-primary">{{ stats.answered_questions }}</h4>
+                        <p class="text-muted">Answered Questions</p>
+                    </div>
+                    <div class="col-6 text-center">
+                        <h4 class="text-warning">{{ stats.pending_reports }}</h4>
+                        <p class="text-muted">Pending Reports</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="analytics-card">
+                <h5><i class="fas fa-chart-pie"></i> Category Distribution</h5>
+                <div class="mt-3">
+                    {% for category, count in category_stats %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>{{ category|title }}</span>
+                        <span class="badge bg-primary">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Activity Chart -->
+    <div class="analytics-card">
+        <h5><i class="fas fa-calendar-alt"></i> Daily Post Activity (Last 30 Days)</h5>
+        <div class="chart-container">
+            <canvas id="dailyActivityChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Daily Activity Chart
+    const dailyData = {{ daily_posts|tojson }};
+    const labels = dailyData.map(d => d.date);
+    const data = dailyData.map(d => d.count);
+
+    const ctx = document.getElementById('dailyActivityChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Posts per Day',
+                data: data,
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

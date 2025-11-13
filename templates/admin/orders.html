@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}Order Management - Admin - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-shopping-cart me-2"></i>Order Management
+            </h1>
+            <p class="lead text-muted">Manage and monitor all orders on the platform.</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-2">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ total_orders }}</h3>
+                    <p class="mb-0">Total Orders</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ pending_orders }}</h3>
+                    <p class="mb-0">Pending</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-shipping-fast fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ shipped_orders }}</h3>
+                    <p class="mb-0">Shipped</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ completed_orders }}</h3>
+                    <p class="mb-0">Delivered</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-times-circle fa-2x mb-2"></i>
+                    <h3 class="fw-bold">{{ cancelled_orders }}</h3>
+                    <p class="mb-0">Cancelled</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-dark text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-rupee-sign fa-2x mb-2"></i>
+                    <h3 class="fw-bold">₹{{ "%.2f"|format(total_revenue) }}</h3>
+                    <p class="mb-0">Revenue</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">Filter Orders</h6>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('admin_orders') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-redo me-1"></i>Reset Filters
+                    </a>
+                    <a href="{{ url_for('admin_export_orders', status=status_filter, payment=payment_filter, date_from=date_from, date_to=date_to, search=search_query) }}"
+                        class="btn btn-sm btn-success">
+                        <i class="fas fa-download me-1"></i>Export to CSV
+                    </a>
+                </div>
+            </div>
+            <form method="GET" action="{{ url_for('admin_orders') }}" class="row g-3">
+                <div class="col-md-2">
+                    <label class="form-label">Order Status</label>
+                    <select name="status" class="form-select">
+                        <option value="all" {% if status_filter=='all' %}selected{% endif %}>All Statuses</option>
+                        <option value="pending" {% if status_filter=='pending' %}selected{% endif %}>Pending</option>
+                        <option value="confirmed" {% if status_filter=='confirmed' %}selected{% endif %}>Confirmed
+                        </option>
+                        <option value="processing" {% if status_filter=='processing' %}selected{% endif %}>Processing
+                        </option>
+                        <option value="shipped" {% if status_filter=='shipped' %}selected{% endif %}>Shipped</option>
+                        <option value="delivered" {% if status_filter=='delivered' %}selected{% endif %}>Delivered
+                        </option>
+                        <option value="rejected" {% if status_filter=='rejected' %}selected{% endif %}>Rejected</option>
+                        <option value="cancelled" {% if status_filter=='cancelled' %}selected{% endif %}>Cancelled
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Payment Status</label>
+                    <select name="payment" class="form-select">
+                        <option value="all" {% if payment_filter=='all' %}selected{% endif %}>All Payments</option>
+                        <option value="pending" {% if payment_filter=='pending' %}selected{% endif %}>Pending</option>
+                        <option value="paid" {% if payment_filter=='paid' %}selected{% endif %}>Paid</option>
+                        <option value="failed" {% if payment_filter=='failed' %}selected{% endif %}>Failed</option>
+                        <option value="refunded" {% if payment_filter=='refunded' %}selected{% endif %}>Refunded
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Date From</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from or '' }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Date To</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to or '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Search</label>
+                    <input type="text" name="search" class="form-control" placeholder="Order ID, buyer, farmer, crop..."
+                        value="{{ search_query or '' }}">
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2"></i>All Orders
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            {% if orders.items %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Buyer</th>
+                            <th>Farmer</th>
+                            <th>Crop</th>
+                            <th>Quantity</th>
+                            <th>Total Amount</th>
+                            <th>Order Status</th>
+                            <th>Payment Status</th>
+                            <th>Tracking</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders.items %}
+                        <tr>
+                            <td><strong>#{{ order.id }}</strong></td>
+                            <td>
+                                <a href="{{ url_for('admin_user_analytics', user_id=order.buyer_id) }}"
+                                    class="text-decoration-none">
+                                    {{ order.buyer.full_name or order.buyer.username }}
+                                </a>
+                                <br>
+                                <small class="text-muted">{{ order.buyer.email }}</small>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin_user_analytics', user_id=order.farmer_id) }}"
+                                    class="text-decoration-none">
+                                    {{ order.farmer_user.full_name or order.farmer_user.username }}
+                                </a>
+                                <br>
+                                <small class="text-muted">{{ order.farmer_user.location }}</small>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ url_for('static', filename=order.crop.image_url or 'uploads/crops/default-crop.jpg') }}"
+                                        class="rounded me-2" width="40" height="40" alt="{{ order.crop.name }}"
+                                        style="object-fit: cover;">
+                                    <div>
+                                        <div class="fw-bold">{{ order.crop.name }}</div>
+                                        <small class="text-muted">{{ order.crop.category.title() }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ order.quantity_requested }} {{ order.crop.unit }}</td>
+                            <td>₹{{ "%.2f"|format(order.total_amount) }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'warning' if order.status == 'pending' 
+                                                     else 'info' if order.status == 'confirmed'
+                                                     else 'primary' if order.status == 'processing'
+                                                     else 'secondary' if order.status == 'shipped'
+                                                     else 'success' if order.status == 'delivered'
+                                                     else 'danger' }}">
+                                    {{ order.status.title() }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'warning' if order.payment_status == 'pending' 
+                                                     else 'success' if order.payment_status == 'paid'
+                                                     else 'danger' if order.payment_status == 'failed'
+                                                     else 'secondary' }}">
+                                    {{ order.payment_status.title() }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if order.tracking_number %}
+                                <span class="badge bg-info" title="{{ order.tracking_number }}">
+                                    <i class="fas fa-shipping-fast me-1"></i>{{ order.tracking_number[:10] }}...
+                                </span>
+                                {% elif order.status == 'shipped' %}
+                                <span class="text-muted small">No tracking</span>
+                                {% else %}
+                                <span class="text-muted small">-</span>
+                                {% endif %}
+                                {% if order.status in ['cancelled', 'rejected'] %}
+                                <br><span class="badge bg-danger mt-1"
+                                    title="{{ order.cancellation_reason or 'No reason provided' }}">
+                                    <i class="fas fa-ban me-1"></i>Cancelled
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div>{{ order.created_at.strftime('%b %d, %Y') }}</div>
+                                <small class="text-muted">{{ order.created_at.strftime('%I:%M %p') }}</small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('admin_order_detail', order_id=order.id) }}"
+                                        class="btn btn-outline-primary" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if order.status not in ['delivered', 'cancelled', 'shipped'] %}
+                                    <button type="button" class="btn btn-outline-danger"
+                                        onclick='showCancelModal({{ order.id }})' title="Cancel Order">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if orders.pages > 1 %}
+            <div class="card-footer">
+                <nav>
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item {% if not orders.has_prev %}disabled{% endif %}">
+                            <a class="page-link"
+                                href="{{ url_for('admin_orders', page=orders.prev_num, status=status_filter, payment=payment_filter, search=search_query) }}">
+                                Previous
+                            </a>
+                        </li>
+
+                        {% for page_num in orders.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2)
+                        %}
+                        {% if page_num %}
+                        <li class="page-item {% if page_num == orders.page %}active{% endif %}">
+                            <a class="page-link"
+                                href="{{ url_for('admin_orders', page=page_num, status=status_filter, payment=payment_filter, search=search_query) }}">
+                                {{ page_num }}
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                        {% endif %}
+                        {% endfor %}
+
+                        <li class="page-item {% if not orders.has_next %}disabled{% endif %}">
+                            <a class="page-link"
+                                href="{{ url_for('admin_orders', page=orders.next_num, status=status_filter, payment=payment_filter, search=search_query) }}">
+                                Next
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No orders found matching your criteria.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Order Modal -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelOrderModalLabel">Cancel Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="cancelOrderForm" method="POST" action="">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <div class="mb-3">
+                        <label for="cancelReason" class="form-label">Cancellation Reason</label>
+                        <textarea class="form-control" id="cancelReason" name="reason" rows="3" required
+                            placeholder="Enter reason for cancellation..."></textarea>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Note:</strong> If payment was completed, a refund will be automatically initiated.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-danger">Cancel Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showCancelModal(orderId) {
+        const form = document.getElementById('cancelOrderForm');
+        form.action = `/admin/orders/${orderId}/cancel`;
+        const modal = new bootstrap.Modal(document.getElementById('cancelOrderModal'));
+        modal.show();
+    }
+</script>
+{% endblock %}

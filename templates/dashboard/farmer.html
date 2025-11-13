@@ -1,0 +1,630 @@
+{% extends "base.html" %}
+
+{% block title %}Farmer Dashboard - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-tachometer-alt me-2"></i>Farmer Dashboard
+            </h1>
+            <p class="lead text-muted">Welcome back, {{ current_user.full_name }}! Here's your farm overview.</p>
+        </div>
+    </div>
+
+    <!-- KYC Status Alerts -->
+    {% if current_user.role in ['farmer', 'manager_farmer'] %}
+        {% if current_user.is_kyc_verified %}
+            <!-- KYC Verified Badge -->
+            <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>Identity Verified!</strong> Your KYC verification is complete. You can now list products and receive payments.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% else %}
+            {% set kyc_record = current_user.kyc_record %}
+            {% if not kyc_record %}
+                <!-- No KYC Submission -->
+                <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>KYC Verification Required!</strong> Please complete your KYC verification to start selling products and receive payments.
+                    <a href="{{ url_for('seller_kyc') }}" class="alert-link">Submit KYC Now</a>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% elif kyc_record.status == 'pending' %}
+                <!-- KYC Pending -->
+                <div class="alert alert-info alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-clock me-2"></i>
+                    <strong>KYC Under Review</strong> Your KYC application is being reviewed. You will be notified once verified. 
+                    <a href="{{ url_for('kyc_status') }}" class="alert-link">Check Status</a>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% elif kyc_record.status == 'rejected' %}
+                <!-- KYC Rejected -->
+                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                    <i class="fas fa-times-circle me-2"></i>
+                    <strong>KYC Rejected:</strong> {{ kyc_record.rejection_reason }}
+                    <br><small>Please resubmit your KYC with correct documents to start selling.</small>
+                    <a href="{{ url_for('kyc_resubmit') }}" class="alert-link">Resubmit KYC</a>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+    <!-- Marketplace Call-to-Action -->
+    {% include 'components/marketplace_cta.html' %}
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">My Crops</h6>
+                            <h2 class="fw-bold">{{ my_crops|length }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-wheat-awn fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Sales</h6>
+                            <h2 class="fw-bold">{{ recent_orders|length }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-shopping-cart fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Purchases</h6>
+                            <h2 class="fw-bold">{{ my_purchases|length }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-shopping-bag fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Messages</h6>
+                            <h2 class="fw-bold">{{ unread_messages }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-envelope fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <div class="card bg-dark text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Earnings</h6>
+                            <h2 class="fw-bold">{{ format_currency(total_earnings) }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-rupee-sign fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <div class="card bg-secondary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Spent</h6>
+                            <h2 class="fw-bold">{{ format_currency(total_spent) }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-credit-card fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seller Reputation Section -->
+    {% if seller_reputation %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-star me-2"></i>Your Reputation
+                    </h5>
+                    <a href="{{ url_for('rating.view_seller_reputation', seller_id=current_user.id) }}" class="btn btn-sm btn-dark">
+                        View Details
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="display-4 fw-bold text-warning">{{ "%.2f"|format(seller_reputation.average_rating) }}</div>
+                            <div class="rating-stars mb-2" style="color: #ffc107; font-size: 1.2rem;">
+                                {% for i in range(seller_reputation.average_rating|int) %}
+                                    <i class="fas fa-star"></i>
+                                {% endfor %}
+                                {% if seller_reputation.average_rating % 1 >= 0.5 %}
+                                    <i class="fas fa-star-half-alt"></i>
+                                {% endif %}
+                                {% for i in range(5 - (seller_reputation.average_rating|int) - (1 if seller_reputation.average_rating % 1 >= 0.5 else 0)) %}
+                                    <i class="far fa-star"></i>
+                                {% endfor %}
+                            </div>
+                            <p class="text-muted mb-0">Average Rating</p>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="display-4 fw-bold text-info">{{ seller_reputation.total_ratings }}</div>
+                            <p class="text-muted mb-0">Total Ratings</p>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="display-4 fw-bold text-success">{{ seller_reputation.five_star_count }}</div>
+                            <p class="text-muted mb-0">5-Star Ratings</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Ratings Received -->
+    {% if recent_ratings_received and recent_ratings_received|length > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-comment-dots me-2"></i>Recent Ratings Received
+                    </h5>
+                    <span class="badge bg-primary">{{ recent_ratings_received|length }}</span>
+                </div>
+                <div class="card-body">
+                    {% for rating in recent_ratings_received[:3] %}
+                        <div class="d-flex justify-content-between align-items-start mb-3 pb-3 {% if not loop.last %}border-bottom{% endif %}">
+                            <div class="flex-grow-1">
+                                <div class="rating-stars mb-1" style="color: #ffc107;">
+                                    {% for i in range(rating.rating) %}
+                                        <i class="fas fa-star"></i>
+                                    {% endfor %}
+                                    {% for i in range(5 - rating.rating) %}
+                                        <i class="far fa-star"></i>
+                                    {% endfor %}
+                                </div>
+                                <div class="fw-bold">{{ rating.product.name }}</div>
+                                <small class="text-muted">by {{ rating.buyer.full_name }} • {{ rating.created_at.strftime('%b %d, %Y') }}</small>
+                                {% if rating.review_text %}
+                                    <p class="text-muted small mb-0 mt-1">{{ rating.review_text[:100] }}{% if rating.review_text|length > 100 %}...{% endif %}</p>
+                                {% endif %}
+                            </div>
+                            <div class="text-end ms-3">
+                                {% if not rating.seller_response %}
+                                    <a href="{{ url_for('rating.respond_to_rating', rating_id=rating.id) }}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-reply"></i> Respond
+                                    </a>
+                                {% else %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check"></i> Responded
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- My Shipments Section -->
+    {% if recent_shipments and recent_shipments|length > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-info">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shipping-fast me-2"></i>My Shipments
+                    </h5>
+                    <div>
+                        <span class="badge bg-white text-info me-2">{{ active_shipments_count }} Active</span>
+                        <a href="{{ url_for('farmer_shipments') }}" class="btn btn-sm btn-light">
+                            View All Shipments
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Tracking Number</th>
+                                    <th>Buyer</th>
+                                    <th>Status</th>
+                                    <th>Shipped Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in recent_shipments %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('order_detail', order_id=order.id) }}" class="text-decoration-none fw-bold">
+                                            #{{ order.id }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="font-monospace text-primary small">{{ order.tracking_number }}</span>
+                                    </td>
+                                    <td>{{ order.buyer.full_name }}</td>
+                                    <td>
+                                        <span class="badge {{ get_shipment_status_badge_class(order.shipment_status) }}">
+                                            {{ order.shipment_status|replace('_', ' ')|title if order.shipment_status else 'Pending' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if order.shipment_created_at %}
+                                            {{ order.shipment_created_at.strftime('%b %d, %Y') }}
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ url_for('track_order', order_id=order.id) }}" 
+                                               class="btn btn-outline-info" 
+                                               title="Track">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                            </a>
+                                            <a href="{{ url_for('inbox') }}" 
+                                               class="btn btn-outline-success" 
+                                               title="Contact Buyer">
+                                                <i class="fas fa-envelope"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Weather Information -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cloud-sun me-2"></i>Weather - {{ current_user.location }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if weather_data %}
+                        <div class="text-center">
+                            <h3 class="text-primary">
+                                {% if weather_data.temperature %}
+                                    {{ weather_data.temperature }}°C
+                                {% else %}
+                                    --°C
+                                {% endif %}
+                            </h3>
+                            <p class="text-muted mb-3">{{ weather_data.condition }}</p>
+                            
+                            {% if weather_data.humidity %}
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <small class="text-muted">Humidity</small>
+                                        <div class="fw-bold">{{ weather_data.humidity }}%</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Wind</small>
+                                        <div class="fw-bold">{{ weather_data.wind_speed }} km/h</div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Weather data unavailable</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <a href="{{ url_for('add_crop') }}" class="btn btn-success w-100 py-3">
+                                <i class="fas fa-plus-circle fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">Add New Crop</span>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{{ url_for('crop_suggestions') }}" class="btn btn-primary w-100 py-3">
+                                <i class="fas fa-seedling fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">AI Crop Suggestions</span>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{{ url_for('my_crops') }}" class="btn btn-outline-success w-100 py-3">
+                                <i class="fas fa-wheat-awn fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">Manage My Crops</span>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{{ url_for('my_orders') }}" class="btn btn-outline-info w-100 py-3">
+                                <i class="fas fa-shopping-cart fa-2x d-block mb-2"></i>
+                                <span class="fw-bold">View Orders</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pest & Disease Detection Card -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bug me-2"></i>Pest & Disease Detection
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if critical_analyses > 0 %}
+                    <div class="alert alert-danger mb-3" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>{{ critical_analyses }}</strong> critical issue{{ 's' if critical_analyses != 1 else '' }} detected!
+                        <a href="{{ url_for('pest_analysis_history') }}" class="alert-link">View now</a>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted">Recent Analyses</span>
+                            <span class="badge bg-info">{{ recent_analyses_count }}</span>
+                        </div>
+                        <small class="text-muted">Last 30 days</small>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('pest_disease_analysis') }}" class="btn btn-warning">
+                            <i class="fas fa-camera me-2"></i>Analyze Now
+                        </a>
+                        <a href="{{ url_for('pest_analysis_history') }}" class="btn btn-outline-warning">
+                            <i class="fas fa-history me-2"></i>View History
+                        </a>
+                    </div>
+                    
+                    <hr>
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Early detection protects your crops
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI Tools -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-brain me-2"></i>AI Farm Assistant
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('crop_suggestions') }}" class="btn btn-success">
+                            <i class="fas fa-seedling me-2"></i>Get Crop Suggestions
+                        </a>
+                        <a href="{{ url_for('voice_interface') }}" class="btn btn-info">
+                            <i class="fas fa-microphone me-2"></i>FarmLink Assistant
+                        </a>
+                        <a href="{{ url_for('weather_dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-cloud-sun me-2"></i>Weather Info
+                        </a>
+                    </div>
+                    <hr>
+                    <small class="text-muted">
+                        <i class="fas fa-lightbulb me-1"></i>
+                        Use AI tools to optimize your farming decisions
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Crops -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-wheat-awn me-2"></i>My Recent Crops
+                    </h5>
+                    <a href="{{ url_for('my_crops') }}" class="btn btn-sm btn-outline-success">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if my_crops %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Crop Name</th>
+                                        <th>Quantity</th>
+                                        <th>Price/Unit</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for crop in my_crops[:5] %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <img src="{{ url_for('static', filename=crop.image_url) if crop.image_url else 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=60' }}" 
+                                                     class="rounded me-2" width="40" height="40" style="object-fit: cover;">
+                                                <div>
+                                                    <div class="fw-bold">{{ crop.name }}</div>
+                                                    <small class="text-muted">{{ crop.category.title() }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>{{ crop.quantity }} {{ crop.unit }}</td>
+                                        <td>{{ format_currency(crop.price_per_unit) }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if crop.status == 'available' else 'danger' if crop.status == 'sold' else 'warning' }}">
+                                                {{ crop.status.title() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('edit_crop', crop_id=crop.id) }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-seedling fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No crops added yet</h5>
+                            <p class="text-muted">Start by adding your first crop to the marketplace.</p>
+                            <a href="{{ url_for('add_crop') }}" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>Add Your First Crop
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Orders (Sales) -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shopping-cart me-2"></i>Recent Sales
+                    </h5>
+                    <a href="{{ url_for('my_orders') }}" class="btn btn-sm btn-outline-info">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if recent_orders %}
+                        {% for order in recent_orders %}
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                            <div>
+                                <div class="fw-bold">{{ order.crop.name }}</div>
+                                <small class="text-muted">Buyer: {{ order.buyer.full_name }}</small>
+                                <div class="small">
+                                    <span class="badge {{ get_order_status_badge_class(order.status) }}">
+                                        {{ order.status.title() }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">{{ format_currency(order.total_amount) }}</div>
+                                <small class="text-muted">{{ order.quantity_requested }} {{ order.crop.unit }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-shopping-cart fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No sales yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- My Purchases -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shopping-bag me-2"></i>My Purchases
+                    </h5>
+                    <a href="{{ url_for('my_orders') }}" class="btn btn-sm btn-outline-success">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if my_purchases %}
+                        {% for order in my_purchases %}
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                            <div>
+                                <div class="fw-bold">{{ order.crop.name }}</div>
+                                <small class="text-muted">Seller: {{ order.farmer_user.full_name }}</small>
+                                <div class="small">
+                                    <span class="badge {{ get_order_status_badge_class(order.status) }}">
+                                        {{ order.status.title() }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold">{{ format_currency(order.total_amount) }}</div>
+                                <small class="text-muted">{{ order.quantity_requested }} {{ order.crop.unit }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-shopping-bag fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No purchases yet</p>
+                            <a href="{{ url_for('marketplace') }}" class="btn btn-sm btn-success mt-2">
+                                <i class="fas fa-store me-1"></i>Browse Marketplace
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

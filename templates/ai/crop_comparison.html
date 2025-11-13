@@ -1,0 +1,784 @@
+{% extends "base.html" %}
+
+{% block title %}Crop Comparison - FarmLink AI{% endblock %}
+
+{% block extra_head %}
+<style>
+:root {
+    --primary-color: #2E7D32;
+    --primary-light: #4CAF50;
+    --primary-dark: #1B5E20;
+    --secondary-color: #FF6F00;
+    --success-color: #388E3C;
+    --warning-color: #F57C00;
+    --danger-color: #D32F2F;
+    --info-color: #1976D2;
+    --light-bg: #F1F8E9;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --card-hover-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+    --border-radius: 12px;
+}
+
+body {
+    background: linear-gradient(135deg, #E8F5E8 0%, #F1F8E9 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.comparison-container {
+    padding: 2rem 0;
+    min-height: 100vh;
+}
+
+.page-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    box-shadow: var(--card-shadow);
+}
+
+.feature-card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+    box-shadow: var(--card-hover-shadow);
+    transform: translateY(-2px);
+}
+
+.form-section {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--primary-dark);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.form-control, .form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(46, 125, 50, 0.25);
+    outline: none;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+    transform: translateY(-2px);
+    box-shadow: var(--card-hover-shadow);
+}
+
+.comparison-result {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.crop-comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.crop-card {
+    background: var(--light-bg);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    position: relative;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.crop-card.winner {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, #E8F5E8, #F1F8E9);
+}
+
+.crop-card.winner::before {
+    content: "🏆 Best Choice";
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    background: var(--success-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.crop-name {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    text-transform: capitalize;
+}
+
+.comparison-metric {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 8px;
+}
+
+.metric-label {
+    font-weight: 500;
+    color: var(--primary-dark);
+    flex: 1;
+}
+
+.metric-value {
+    font-weight: bold;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.metric-excellent { background: #d4edda; color: #155724; }
+.metric-good { background: #d1ecf1; color: #0c5460; }
+.metric-average { background: #fff3cd; color: #856404; }
+.metric-poor { background: #f8d7da; color: #721c24; }
+
+.score-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: white;
+    margin: 0 auto 1rem;
+}
+
+.score-excellent { background: var(--success-color); }
+.score-good { background: var(--info-color); }
+.score-average { background: var(--warning-color); }
+.score-poor { background: var(--danger-color); }
+
+.summary-section {
+    background: var(--light-bg);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-content {
+    text-align: center;
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    backdrop-filter: blur(10px);
+}
+
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .crop-comparison-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-section {
+        padding: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="comparison-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="mb-3">
+                        <i class="fas fa-balance-scale me-3"></i>Crop Comparison
+                    </h1>
+                    <p class="lead mb-0">Compare multiple crops to make informed farming decisions with AI-powered analysis</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="{{ url_for('crop_suggestions') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-seedling me-2"></i>Get Suggestions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Navigation Links -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="nav-links-section" style="background: white; border-radius: 12px; padding: 1rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 1rem;">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-0 text-primary">
+                                <i class="fas fa-navigation me-2"></i>AI Services Navigation
+                            </h6>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a href="{{ url_for('crop_suggestions') }}" class="btn btn-outline-primary btn-sm me-2">
+                                <i class="fas fa-seedling me-1"></i>Crop Suggestions
+                            </a>
+                            <a href="{{ url_for('crop_comparison_history') }}" class="btn btn-outline-success btn-sm me-2">
+                                <i class="fas fa-history me-1"></i>Comparison History
+                            </a>
+                            <a href="{{ url_for('voice_interface') }}" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-microphone me-1"></i>Voice AI
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Overview -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="feature-card text-center">
+                    <i class="fas fa-chart-line fa-2x text-primary mb-2"></i>
+                    <h5>Profitability Analysis</h5>
+                    <p class="small text-muted">Compare potential returns and market value</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="feature-card text-center">
+                    <i class="fas fa-tint fa-2x text-info mb-2"></i>
+                    <h5>Resource Requirements</h5>
+                    <p class="small text-muted">Water, fertilizer, and input comparisons</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="feature-card text-center">
+                    <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                    <h5>Growth Cycle</h5>
+                    <p class="small text-muted">Maturity time and seasonal requirements</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="feature-card text-center">
+                    <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
+                    <h5>Risk Assessment</h5>
+                    <p class="small text-muted">Disease resistance and market stability</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Form -->
+        <div class="form-section">
+            <h3 class="mb-4">
+                <i class="fas fa-seedling me-2"></i>
+                Select Crops to Compare
+            </h3>
+            
+            <form id="comparisonForm" action="{{ url_for('analyze_crop_comparison') }}" method="POST">
+                {{ form.hidden_tag() }}
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.crop1.label(class="form-label") }}
+                            {{ form.crop1(class="form-control") }}
+                            {% if form.crop1.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.crop1.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.crop2.label(class="form-label") }}
+                            {{ form.crop2(class="form-control") }}
+                            {% if form.crop2.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.crop2.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.crop3.label(class="form-label") }}
+                            {{ form.crop3(class="form-control") }}
+                            <small class="text-muted">Optional third crop for comparison</small>
+                            {% if form.crop3.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.crop3.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form.comparison_factors.label(class="form-label") }}
+                            {{ form.comparison_factors(class="form-select") }}
+                            {% if form.comparison_factors.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.comparison_factors.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="form-group">
+                            {{ form.submit(class="btn btn-primary btn-lg", id="compareBtn") }}
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Crop Suggestions for Quick Comparison -->
+        <div class="form-section">
+            <h3 class="mb-3">
+                <i class="fas fa-lightbulb me-2"></i>
+                Popular Crop Comparisons
+            </h3>
+            <p class="text-muted mb-3">Click on any comparison to quickly populate the form above</p>
+            
+            <div class="row">
+                <div class="col-md-4 mb-2">
+                    <button class="btn btn-outline-primary w-100" onclick="quickCompare('wheat', 'rice', 'corn')">
+                        <i class="fas fa-seedling me-2"></i>Wheat vs Rice vs Corn
+                    </button>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <button class="btn btn-outline-primary w-100" onclick="quickCompare('tomato', 'potato', 'onion')">
+                        <i class="fas fa-carrot me-2"></i>Tomato vs Potato vs Onion
+                    </button>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <button class="btn btn-outline-primary w-100" onclick="quickCompare('soybean', 'chickpea', '')">
+                        <i class="fas fa-leaf me-2"></i>Soybean vs Chickpea
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Container -->
+        <div id="resultsContainer" style="display: none;">
+            <!-- Results will be populated here -->
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <h4>Analyzing Crop Comparisons</h4>
+        <p>Our AI is comparing crop characteristics, profitability, and market conditions...</p>
+        <div class="progress mt-3" style="height: 8px;">
+            <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" 
+                 role="progressbar" style="width: 0%" id="loadingProgress"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('comparisonForm');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const compareBtn = document.getElementById('compareBtn');
+    const loadingProgress = document.getElementById('loadingProgress');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate form
+        const crop1 = document.getElementById('crop1').value.trim();
+        const crop2 = document.getElementById('crop2').value.trim();
+        
+        if (!crop1 || !crop2) {
+            alert('Please enter at least two crops to compare.');
+            return;
+        }
+        
+        // Show loading overlay
+        loadingOverlay.style.display = 'flex';
+        compareBtn.disabled = true;
+        
+        // Animate progress bar
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 15;
+            if (progress > 90) progress = 90;
+            loadingProgress.style.width = progress + '%';
+        }, 500);
+
+        // Submit form
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            clearInterval(progressInterval);
+            loadingProgress.style.width = '100%';
+            
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+                compareBtn.disabled = false;
+                
+                if (data.success) {
+                    displayResults(data);
+                } else {
+                    showError(data.error || 'Failed to compare crops');
+                }
+            }, 500);
+        })
+        .catch(error => {
+            clearInterval(progressInterval);
+            loadingOverlay.style.display = 'none';
+            compareBtn.disabled = false;
+            showError('Network error. Please try again.');
+            console.error('Error:', error);
+        });
+    });
+});
+
+function quickCompare(crop1, crop2, crop3) {
+    document.getElementById('crop1').value = crop1;
+    document.getElementById('crop2').value = crop2;
+    document.getElementById('crop3').value = crop3 || '';
+    
+    // Scroll to form
+    document.getElementById('comparisonForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+function displayResults(data) {
+    const resultsContainer = document.getElementById('resultsContainer');
+    
+    // Enhanced error checking
+    if (!data || !data.success) {
+        showError(data?.error || 'Failed to get comparison results');
+        return;
+    }
+    
+    if (!data.comparison) {
+        showError('No comparison data received from AI service');
+        return;
+    }
+    
+    // Handle different response formats
+    let cropAnalysis = [];
+    if (data.comparison.crop_analysis && Array.isArray(data.comparison.crop_analysis)) {
+        cropAnalysis = data.comparison.crop_analysis;
+    } else if (data.comparison.crops && Array.isArray(data.comparison.crops)) {
+        // Fallback for older response format
+        cropAnalysis = data.comparison.crops.map(crop => ({
+            crop_name: crop.name || crop.crop_name,
+            score: crop.overall_score || crop.score || 0,
+            key_metrics: crop.metrics || crop.key_metrics || {},
+            advantages: crop.advantages || [],
+            disadvantages: crop.disadvantages || [],
+            recommendation: crop.summary || crop.recommendation || ''
+        }));
+    }
+    
+    if (!cropAnalysis || cropAnalysis.length === 0) {
+        resultsContainer.innerHTML = `
+            <div class="comparison-result">
+                <div class="alert alert-warning text-center">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No crop analysis data available. Please try different crops.
+                    ${data.raw_response ? `<br><small class="text-muted">Debug: ${data.raw_response}</small>` : ''}
+                </div>
+            </div>
+        `;
+        resultsContainer.style.display = 'block';
+        return;
+    }
+
+    const comparison = data.comparison;
+    
+    // Find the best crop (highest score)
+    const bestCrop = cropAnalysis.reduce((best, current) => 
+        (current.score > best.score) ? current : best
+    );
+
+    let html = `
+        <div class="comparison-result">
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>Comparison Complete!</strong> Analysis based on ${comparison.comparison_factor || 'multiple factors'}.
+                Generated on ${new Date().toLocaleString()}
+            </div>
+            
+            <div class="crop-comparison-grid">
+    `;
+
+    cropAnalysis.forEach((crop, index) => {
+        const isWinner = crop.crop_name === bestCrop.crop_name;
+        const scoreClass = getScoreClass(crop.score);
+        
+        html += `
+            <div class="crop-card ${isWinner ? 'winner' : ''}">
+                <div class="score-circle ${scoreClass}">
+                    ${Math.round(crop.score || 0)}%
+                </div>
+                <div class="crop-name">${crop.crop_name || 'Unknown Crop'}</div>
+                
+                ${crop.key_metrics ? Object.entries(crop.key_metrics).map(([key, value]) => `
+                    <div class="comparison-metric">
+                        <span class="metric-label">${formatMetricName(key)}</span>
+                        <span class="metric-value ${getMetricClass(value)}">${formatMetricValue(value)}</span>
+                    </div>
+                `).join('') : ''}
+                
+                ${crop.advantages && crop.advantages.length > 0 ? `
+                    <div class="mt-3">
+                        <h6 class="text-success"><i class="fas fa-plus-circle me-1"></i>Advantages:</h6>
+                        <ul class="small text-muted">
+                            ${crop.advantages.map(adv => `<li>${adv}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+                
+                ${crop.disadvantages && crop.disadvantages.length > 0 ? `
+                    <div class="mt-2">
+                        <h6 class="text-warning"><i class="fas fa-minus-circle me-1"></i>Disadvantages:</h6>
+                        <ul class="small text-muted">
+                            ${crop.disadvantages.map(dis => `<li>${dis}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+                
+                ${crop.recommendation ? `
+                    <div class="mt-3">
+                        <h6><i class="fas fa-lightbulb me-1"></i>Recommendation:</h6>
+                        <p class="small text-muted">${crop.recommendation}</p>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+            
+            ${comparison.overall_recommendation ? `
+                <div class="summary-section">
+                    <h4><i class="fas fa-trophy me-2"></i>Overall Recommendation</h4>
+                    <div class="alert alert-info">
+                        <strong>Winner: ${bestCrop.crop_name}</strong><br>
+                        ${comparison.overall_recommendation}
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${comparison.market_insights ? `
+                <div class="summary-section mt-3">
+                    <h4><i class="fas fa-chart-line me-2"></i>Market Insights</h4>
+                    <p>${comparison.market_insights}</p>
+                </div>
+            ` : ''}
+            
+            ${comparison.risk_assessment ? `
+                <div class="summary-section mt-3">
+                    <h4><i class="fas fa-exclamation-triangle me-2"></i>Risk Assessment</h4>
+                    <p>${comparison.risk_assessment}</p>
+                </div>
+            ` : ''}
+            
+            <div class="text-center mt-4">
+                <button onclick="downloadComparison()" class="btn btn-success me-2">
+                    <i class="fas fa-download me-1"></i>Download Report
+                </button>
+                <button onclick="shareComparison()" class="btn btn-info me-2">
+                    <i class="fas fa-share-alt me-1"></i>Share Results
+                </button>
+                <a href="{{ url_for('crop_suggestions') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-seedling me-1"></i>Get New Suggestions
+                </a>
+            </div>
+        </div>
+    `;
+
+    resultsContainer.innerHTML = html;
+    resultsContainer.style.display = 'block';
+    
+    // Scroll to results
+    resultsContainer.scrollIntoView({ behavior: 'smooth' });
+    
+    // Store data for download/share
+    window.currentComparisonData = data;
+}
+
+function getScoreClass(score) {
+    if (score >= 80) return 'score-excellent';
+    if (score >= 60) return 'score-good';
+    if (score >= 40) return 'score-average';
+    return 'score-poor';
+}
+
+function getMetricClass(value) {
+    if (typeof value === 'string') {
+        const lower = value.toLowerCase();
+        if (lower.includes('excellent') || lower.includes('high') || lower.includes('good')) return 'metric-excellent';
+        if (lower.includes('average') || lower.includes('medium') || lower.includes('moderate')) return 'metric-average';
+        if (lower.includes('poor') || lower.includes('low') || lower.includes('bad')) return 'metric-poor';
+        return 'metric-good';
+    }
+    return 'metric-good';
+}
+
+function formatMetricName(key) {
+    return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function formatMetricValue(value) {
+    if (typeof value === 'number') {
+        return value.toFixed(1);
+    }
+    return value;
+}
+
+function downloadComparison() {
+    if (!window.currentComparisonData) {
+        alert('No comparison data available for download.');
+        return;
+    }
+    
+    // Create downloadable content
+    const data = window.currentComparisonData;
+    const content = JSON.stringify(data, null, 2);
+    const blob = new Blob([content], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `crop_comparison_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+function shareComparison() {
+    if (!window.currentComparisonData) {
+        alert('No comparison data available for sharing.');
+        return;
+    }
+    
+    const data = window.currentComparisonData;
+    const cropAnalysis = data.comparison.crop_analysis;
+    const bestCrop = cropAnalysis.reduce((best, current) => 
+        (current.score > best.score) ? current : best
+    );
+    
+    const shareText = `Check out this crop comparison from FarmLink AI! 
+    
+Compared: ${cropAnalysis.map(c => c.crop_name).join(' vs ')}
+Winner: ${bestCrop.crop_name} (Score: ${bestCrop.score}%)
+Factor: ${data.comparison.comparison_factor}
+
+${data.comparison.overall_recommendation}
+
+Generated by FarmLink AI - Smart farming decisions made easy!`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'FarmLink AI - Crop Comparison',
+            text: shareText,
+            url: window.location.href
+        }).catch(console.error);
+    } else {
+        navigator.clipboard.writeText(shareText).then(() => {
+            alert('Comparison results copied to clipboard!');
+        }).catch(() => {
+            prompt('Copy this text:', shareText);
+        });
+    }
+}
+
+function showError(message) {
+    const resultsContainer = document.getElementById('resultsContainer');
+    resultsContainer.innerHTML = `
+        <div class="comparison-result">
+            <div class="alert alert-danger text-center">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                ${message}
+            </div>
+        </div>
+    `;
+    resultsContainer.style.display = 'block';
+}
+</script>
+{% endblock %}

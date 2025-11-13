@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Article Management - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="fas fa-newspaper me-2"></i>Article Management</h2>
+            <p class="text-muted">Manage all learning hub articles</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('add_article') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>New Article
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-file-alt me-2"></i>Total</h5>
+                    <h2>{{ stats.total }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-check me-2"></i>Published</h5>
+                    <h2>{{ stats.published }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-edit me-2"></i>Drafts</h5>
+                    <h2>{{ stats.draft }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-clock me-2"></i>Scheduled</h5>
+                    <h2>{{ stats.scheduled }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select" onchange="this.form.submit()">
+                        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All</option>
+                        <option value="published" {% if status_filter == 'published' %}selected{% endif %}>Published</option>
+                        <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Drafts</option>
+                        <option value="scheduled" {% if status_filter == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Category</label>
+                    <select name="category" class="form-select" onchange="this.form.submit()">
+                        <option value="all" {% if category_filter == 'all' %}selected{% endif %}>All Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat }}" {% if category_filter == cat %}selected{% endif %}>{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Search</label>
+                    <div class="input-group">
+                        <input type="text" name="search" class="form-control" placeholder="Search articles..." value="{{ search }}">
+                        <button class="btn btn-outline-secondary" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col">
+                    <input type="checkbox" id="selectAll" class="form-check-input me-2">
+                    <label for="selectAll">Select All</label>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-sm btn-success" onclick="bulkAction('publish')" disabled id="bulkBtn">
+                        <i class="fas fa-check me-1"></i>Publish
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="bulkAction('unpublish')" disabled id="bulkBtn2">
+                        <i class="fas fa-eye-slash me-1"></i>Unpublish
+                    </button>
+                    <button class="btn btn-sm btn-info" onclick="bulkAction('feature')" disabled id="bulkBtn3">
+                        <i class="fas fa-star me-1"></i>Feature
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="bulkAction('delete')" disabled id="bulkBtn4">
+                        <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Articles Table -->
+    {% if articles.items %}
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th width="30"><input type="checkbox" class="select-all"></th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Views</th>
+                        <th>Likes</th>
+                        <th>Comments</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for article in articles.items %}
+                    <tr>
+                        <td><input type="checkbox" class="article-checkbox" value="{{ article.id }}"></td>
+                        <td>
+                            <a href="{{ url_for('view_article', article_id=article.id) }}" target="_blank">
+                                {{ article.title }}
+                            </a>
+                            {% if article.tags and 'featured' in article.tags %}
+                            <span class="badge bg-warning ms-1">Featured</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ article.author.username }}</td>
+                        <td><span class="badge bg-secondary">{{ article.category }}</span></td>
+                        <td>
+                            {% if article.is_draft %}
+                            <span class="badge bg-warning">Draft</span>
+                            {% elif article.scheduled_publish %}
+                            <span class="badge bg-info">Scheduled</span>
+                            {% elif article.is_published %}
+                            <span class="badge bg-success">Published</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Unpublished</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ article.views }}</td>
+                        <td>{{ article.likes }}</td>
+                        <td>{{ article.comments_count }}</td>
+                        <td>{{ article.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('edit_article', article_id=article.id) }}" class="btn btn-outline-primary" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-outline-warning" onclick="toggleFeature({{ article.id }})" title="Feature">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                                <button class="btn btn-outline-success" onclick="togglePublish({{ article.id }})" title="Toggle Publish">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if articles.pages > 1 %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if articles.has_prev %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_articles', status=status_filter, category=category_filter, search=search, page=articles.prev_num) }}">Previous</a>
+            </li>
+            {% endif %}
+            
+            {% for page_num in articles.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                {% if page_num %}
+                    <li class="page-item {% if page_num == articles.page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('admin_articles', status=status_filter, category=category_filter, search=search, page=page_num) }}">{{ page_num }}</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if articles.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="{{ url_for('admin_articles', status=status_filter, category=category_filter, search=search, page=articles.next_num) }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>No articles found.
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Select all functionality
+document.getElementById('selectAll').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.article-checkbox');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+    updateBulkButtons();
+});
+
+document.querySelectorAll('.article-checkbox').forEach(cb => {
+    cb.addEventListener('change', updateBulkButtons);
+});
+
+function updateBulkButtons() {
+    const checked = document.querySelectorAll('.article-checkbox:checked').length;
+    const buttons = ['bulkBtn', 'bulkBtn2', 'bulkBtn3', 'bulkBtn4'];
+    buttons.forEach(id => {
+        document.getElementById(id).disabled = checked === 0;
+    });
+}
+
+function getSelectedIds() {
+    return Array.from(document.querySelectorAll('.article-checkbox:checked')).map(cb => parseInt(cb.value));
+}
+
+function bulkAction(action) {
+    const ids = getSelectedIds();
+    if (ids.length === 0) return;
+    
+    if (action === 'delete' && !confirm(`Delete ${ids.length} article(s)?`)) return;
+    
+    fetch('/admin/articles/bulk-action', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({article_ids: ids, action: action})
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+}
+
+function toggleFeature(id) {
+    fetch(`/admin/articles/${id}/feature`, {method: 'POST'})
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) location.reload();
+        else alert('Error: ' + data.message);
+    });
+}
+
+function togglePublish(id) {
+    fetch(`/admin/articles/${id}/toggle-publish`, {method: 'POST'})
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) location.reload();
+        else alert('Error: ' + data.message);
+    });
+}
+</script>
+{% endblock %}

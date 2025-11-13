@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Weather Dashboard - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-cloud-sun text-info me-2"></i>
+                    Weather Dashboard
+                </h2>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Weather</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Location Selector -->
+    <div class="row mb-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="d-flex gap-2">
+                        <input type="text" class="form-control" name="location" 
+                               value="{{ location }}" placeholder="Enter location">
+                        <button type="submit" class="btn btn-info">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Current Weather -->
+    {% if current_weather and not current_weather.error %}
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="weather-widget">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h3 class="mb-1">{{ current_weather.location }}</h3>
+                        <p class="mb-3 opacity-75">{{ current_weather.condition|title }}</p>
+                        <h1 class="display-3 fw-bold">{{ current_weather.temperature }}°C</h1>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row">
+                            <div class="col-6 mb-3">
+                                <div class="text-center">
+                                    <i class="fas fa-tint fa-2x mb-2"></i>
+                                    <div class="fw-bold">{{ current_weather.humidity }}%</div>
+                                    <small>Humidity</small>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="text-center">
+                                    <i class="fas fa-wind fa-2x mb-2"></i>
+                                    <div class="fw-bold">{{ current_weather.wind_speed }} m/s</div>
+                                    <small>Wind Speed</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <i class="fas fa-thermometer-half fa-2x mb-2"></i>
+                                    <div class="fw-bold">{{ current_weather.pressure }} hPa</div>
+                                    <small>Pressure</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <i class="fas fa-eye fa-2x mb-2"></i>
+                                    <div class="fw-bold">{{ current_weather.visibility }} km</div>
+                                    <small>Visibility</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Farming Insights -->
+        {% if farming_insights and 'error' not in farming_insights %}
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        AI Farming Insights
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for insight in farming_insights.insights %}
+                    <div class="mb-3 pb-3 {% if not loop.last %}border-bottom{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="text-success mb-0">{{ insight.category|title }}</h6>
+                            <span class="badge bg-{{ 'danger' if insight.urgency == 'high' else 'warning' if insight.urgency == 'medium' else 'info' }}">
+                                {{ insight.urgency|title }}
+                            </span>
+                        </div>
+                        <p class="small mb-1">{{ insight.recommendation }}</p>
+                        <small class="text-muted">{{ insight.reason }}</small>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if farming_insights.overall_assessment %}
+                    <div class="mt-3 p-3 bg-light rounded">
+                        <h6 class="text-success mb-2">Overall Assessment</h6>
+                        <p class="small mb-0">{{ farming_insights.overall_assessment }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% elif current_weather and current_weather.error %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ current_weather.condition if current_weather.condition else 'Weather service temporarily unavailable' }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Weather History -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Recent Weather History
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Location</th>
+                                    <th>Temperature</th>
+                                    <th>Humidity</th>
+                                    <th>Condition</th>
+                                    <th>Wind Speed</th>
+                                    <th>Pressure</th>
+                                    <th>Visibility</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if weather_history %}
+                                    {% for record in weather_history %}
+                                    <tr>
+                                        <td>{{ record.date }}</td>
+                                        <td>{{ record.location }}</td>
+                                        <td>{{ record.temperature }}°C</td>
+                                        <td>{{ record.humidity }}%</td>
+                                        <td>{{ record.condition }}</td>
+                                        <td>{{ record.wind_speed }} m/s</td>
+                                        <td>{{ record.pressure }} hPa</td>
+                                        <td>{{ record.visibility }} km</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="8" class="text-center">No weather history available</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weather Forecast -->
+    {% if forecast and forecast|length > 0 %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        5-Day Forecast
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for day_forecast in forecast[:5] %}
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <div class="card h-100 text-center">
+                                <div class="card-body p-3">
+                                    <h6 class="card-title">{{ day_forecast.day }}</h6>
+                                    <p class="small text-muted mb-2">{{ day_forecast.date }}</p>
+                                    <i class="fas fa-cloud text-info fa-2x mb-2"></i>
+                                    <div class="fw-bold">{{ day_forecast.temperature }}°C</div>
+                                    <small class="text-muted">{{ day_forecast.weather_condition }}</small>
+                                    <div class="mt-2">
+                                        <small class="d-block">
+                                            <i class="fas fa-tint me-1"></i>{{ day_forecast.humidity }}%
+                                        </small>
+                                        <small class="d-block">
+                                            <i class="fas fa-wind me-1"></i>{{ day_forecast.wind_speed }}m/s
+                                        </small>
+                                        {% if day_forecast.temperature_max and day_forecast.temperature_min %}
+                                        <small class="d-block mt-1">
+                                            <span class="text-danger">{{ day_forecast.temperature_max }}°</span> / 
+                                            <span class="text-primary">{{ day_forecast.temperature_min }}°</span>
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

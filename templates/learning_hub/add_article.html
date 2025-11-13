@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Add Article - Learning Hub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('learning_hub') }}">Learning Hub</a></li>
+            <li class="breadcrumb-item active">Add Article</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-plus-circle me-2"></i>Add New Article
+                        </h4>
+                        <a href="{{ url_for('learning_hub') }}" class="btn btn-light btn-sm">
+                            <i class="fas fa-arrow-left me-1"></i>Back
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('add_article') }}">
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="title" name="title" required>
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label for="summary" class="form-label">Summary <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="summary" name="summary" rows="2" required 
+                                          placeholder="Brief description (150-200 characters)"></textarea>
+                                <small class="text-muted">This will be shown in article listings</small>
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label for="content" class="form-label">Content <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="content" name="content" rows="12" required></textarea>
+                                <small class="text-muted">Full article content (supports HTML)</small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">Category <span class="text-danger">*</span></label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="tips">Farming Tips</option>
+                                    <option value="crop_management">Crop Management</option>
+                                    <option value="pest_control">Pest Control</option>
+                                    <option value="soil_health">Soil Health</option>
+                                    <option value="irrigation">Irrigation</option>
+                                    <option value="technology">Technology</option>
+                                    <option value="market_trends">Market Trends</option>
+                                    <option value="success_stories">Success Stories</option>
+                                    <option value="general">General</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="difficulty_level" class="form-label">Difficulty Level</label>
+                                <select class="form-select" id="difficulty_level" name="difficulty_level">
+                                    <option value="beginner" selected>Beginner</option>
+                                    <option value="intermediate">Intermediate</option>
+                                    <option value="advanced">Advanced</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="crop_type" class="form-label">Crop Type</label>
+                                <select class="form-select" id="crop_type" name="crop_type">
+                                    <option value="general" selected>General (All Crops)</option>
+                                    <option value="rice">Rice</option>
+                                    <option value="wheat">Wheat</option>
+                                    <option value="maize">Maize</option>
+                                    <option value="tomato">Tomato</option>
+                                    <option value="cotton">Cotton</option>
+                                    <option value="sugarcane">Sugarcane</option>
+                                    <option value="vegetables">Vegetables</option>
+                                    <option value="fruits">Fruits</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="reading_time" class="form-label">Reading Time (minutes)</label>
+                                <input type="number" class="form-control" id="reading_time" name="reading_time" 
+                                       value="5" min="1" max="60">
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label for="featured_image" class="form-label">Featured Image URL</label>
+                                <input type="url" class="form-control" id="featured_image" name="featured_image" 
+                                       placeholder="https://example.com/image.jpg">
+                                <small class="text-muted">Optional: URL to article cover image</small>
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label for="tags" class="form-label">Tags</label>
+                                <input type="text" class="form-control" id="tags" name="tags" 
+                                       placeholder="farming, organic, irrigation">
+                                <small class="text-muted">Comma-separated tags for better searchability</small>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="publish_status" class="form-label">Publish Status</label>
+                                <select class="form-select" id="publish_status" name="publish_status">
+                                    <option value="publish">Publish Now</option>
+                                    <option value="draft">Save as Draft</option>
+                                    <option value="schedule">Schedule for Later</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3" id="scheduleField" style="display: none;">
+                                <label for="scheduled_publish" class="form-label">Schedule Date & Time</label>
+                                <input type="datetime-local" class="form-control" id="scheduled_publish" name="scheduled_publish">
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ url_for('learning_hub') }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
+                            <div>
+                                <button type="submit" name="action" value="draft" class="btn btn-outline-primary me-2">
+                                    <i class="fas fa-file me-1"></i>Save Draft
+                                </button>
+                                <button type="submit" name="action" value="publish" class="btn btn-success">
+                                    <i class="fas fa-paper-plane me-1"></i>Publish Article
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+<script>
+document.getElementById('publish_status').addEventListener('change', function() {
+    const scheduleField = document.getElementById('scheduleField');
+    if (this.value === 'schedule') {
+        scheduleField.style.display = 'block';
+        document.getElementById('scheduled_publish').required = true;
+    } else {
+        scheduleField.style.display = 'none';
+        document.getElementById('scheduled_publish').required = false;
+    }
+});
+</script>

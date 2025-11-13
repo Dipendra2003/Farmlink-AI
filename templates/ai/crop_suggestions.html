@@ -1,0 +1,1088 @@
+{% extends "base.html" %}
+
+{% block title %}AI Crop Suggestions - FarmLink AI{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --primary-color: #2E7D32;
+        --primary-light: #4CAF50;
+        --primary-dark: #1B5E20;
+        --secondary-color: #FF6F00;
+        --success-color: #388E3C;
+        --warning-color: #F57C00;
+        --danger-color: #D32F2F;
+        --info-color: #1976D2;
+        --light-bg: #F1F8E9;
+        --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --card-hover-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        --border-radius: 12px;
+    }
+
+    body {
+        background: linear-gradient(135deg, #E8F5E8 0%, #F1F8E9 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .crop-suggestions-container {
+        padding: 2rem 0;
+        min-height: 100vh;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        box-shadow: var(--card-shadow);
+    }
+
+    .feature-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+        box-shadow: var(--card-hover-shadow);
+        transform: translateY(-2px);
+    }
+
+    .form-section {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-section h3 {
+        color: var(--primary-dark);
+        border-bottom: 3px solid var(--primary-light);
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-control,
+    .form-select {
+        border: 2px solid #E0E0E0;
+        border-radius: 8px;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+        width: 100%;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        outline: none;
+    }
+
+    .btn-generate {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: var(--border-radius);
+        font-size: 1.1rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .btn-generate:hover {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+        transform: translateY(-2px);
+        box-shadow: var(--card-hover-shadow);
+    }
+
+    .btn-generate:disabled {
+        background: #CCCCCC;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.9);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .loading-content {
+        text-align: center;
+        background: white;
+        padding: 2rem;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-hover-shadow);
+    }
+
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+        0% {
+            transform: rotate(0deg);
+        }
+
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+
+    .results-container {
+        display: none;
+        margin-top: 2rem;
+    }
+
+    .crop-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border-left: 5px solid var(--primary-color);
+    }
+
+    .crop-card:hover {
+        box-shadow: var(--card-hover-shadow);
+        transform: translateY(-2px);
+    }
+
+    .crop-header {
+        background: linear-gradient(135deg, var(--light-bg), #E8F5E8);
+        padding: 1.5rem;
+        border-bottom: 1px solid #E0E0E0;
+    }
+
+    .crop-title {
+        color: var(--primary-dark);
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: bold;
+    }
+
+    .crop-score {
+        display: inline-block;
+        background: var(--primary-color);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+
+    .crop-body {
+        padding: 1.5rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-item {
+        background: #F8F9FA;
+        padding: 1rem;
+        border-radius: 8px;
+        border-left: 3px solid var(--primary-light);
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .info-value {
+        color: #333;
+        font-size: 0.95rem;
+    }
+
+    .tips-section,
+    .practices-section {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background: #F1F8E9;
+        border-radius: 8px;
+    }
+
+    .tips-section h5,
+    .practices-section h5 {
+        color: var(--primary-dark);
+        margin-bottom: 0.75rem;
+        font-size: 1rem;
+    }
+
+    .tips-list,
+    .practices-list {
+        margin: 0;
+        padding-left: 1.5rem;
+    }
+
+    .tips-list li,
+    .practices-list li {
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+
+    .alert {
+        border-radius: var(--border-radius);
+        border: none;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .alert-success {
+        background: #E8F5E8;
+        color: var(--success-color);
+        border-left: 4px solid var(--success-color);
+    }
+
+    .alert-danger {
+        background: #FFEBEE;
+        color: var(--danger-color);
+        border-left: 4px solid var(--danger-color);
+    }
+
+    .ai-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #FF6F00, #FF8F00);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+
+    .section-divider {
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary-color), var(--primary-light), var(--primary-color));
+        border-radius: 2px;
+        margin: 2rem 0;
+    }
+
+    @media (max-width: 768px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .page-header {
+            padding: 2rem 0;
+        }
+
+        .form-section {
+            padding: 1.5rem;
+        }
+
+        .download-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .download-buttons .btn {
+            width: 100%;
+            max-width: 250px;
+            margin-bottom: 0.5rem;
+        }
+    }
+
+    /* Download Section Styles */
+    .download-section {
+        animation: fadeInUp 0.5s ease-in-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .download-buttons .btn {
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .download-buttons .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .download-card {
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .download-card:hover {
+        border-color: var(--primary-light);
+        box-shadow: 0 8px 25px rgba(76, 175, 80, 0.15) !important;
+    }
+</style>
+{% endblock extra_head %}
+
+{% block content %}
+<div class="crop-suggestions-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 mb-3">
+                        <i class="fas fa-seedling me-3"></i>AI Crop Suggestions
+                        <span class="badge bg-warning text-dark ms-2">
+                            <i class="fas fa-robot me-1"></i>Powered by FarmLink AI 2.0
+                        </span>
+                    </h1>
+                    <p class="lead mb-0">
+                        Get intelligent, data-driven crop recommendations tailored to your specific farming conditions.
+                        Our advanced AI analyzes real agricultural data, soil science, current market prices, and climate patterns to suggest the most profitable crops for your farm.
+                    </p>
+                    <div class="alert alert-info mt-3 mb-0" style="background: rgba(255,255,255,0.2); border: none; color: white;">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Real-Time Analysis:</strong> This system uses Google's Gemini AI to provide scientifically accurate recommendations based on actual agricultural research, current market data, and proven farming practices. Not dummy or placeholder data.
+                    </div>
+                </div>
+                <div class="col-lg-4 text-end">
+                    <div class="feature-highlights">
+                        <div class="highlight-item mb-2">
+                            <i class="fas fa-brain text-warning me-2"></i>AI-Powered Analysis
+                        </div>
+                        <div class="highlight-item mb-2">
+                            <i class="fas fa-chart-line text-info me-2"></i>Profit Optimization
+                        </div>
+                        <div class="highlight-item">
+                            <i class="fas fa-leaf text-success me-2"></i>Sustainable Farming
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Navigation Links -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="nav-links-section"
+                    style="background: white; border-radius: var(--border-radius); padding: 1rem; box-shadow: var(--card-shadow); margin-bottom: 1rem;">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-0 text-primary">
+                                <i class="fas fa-navigation me-2"></i>Quick Navigation
+                            </h6>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <a href="{{ url_for('crop_suggestions_history') }}"
+                                class="btn btn-outline-primary btn-sm me-2">
+                                <i class="fas fa-history me-1"></i>View History
+                            </a>
+                            <a href="{{ url_for('crop_comparison') }}" class="btn btn-outline-info btn-sm me-2">
+                                <i class="fas fa-balance-scale me-1"></i>Compare Crops
+                            </a>
+                            <a href="{{ url_for('voice_interface') }}" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-microphone me-1"></i>Voice AI
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Features -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="feature-card text-center">
+                    <i class="fas fa-microscope fa-2x text-primary mb-2"></i>
+                    <h5>Soil Analysis</h5>
+                    <p class="small text-muted">Advanced soil condition assessment</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="feature-card text-center">
+                    <i class="fas fa-cloud-rain fa-2x text-info mb-2"></i>
+                    <h5>Climate Matching</h5>
+                    <p class="small text-muted">Weather-optimized recommendations</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="feature-card text-center">
+                    <i class="fas fa-coins fa-2x text-warning mb-2"></i>
+                    <h5>Profit Analysis</h5>
+                    <p class="small text-muted">ROI and market demand insights</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="feature-card text-center">
+                    <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
+                    <h5>Risk Assessment</h5>
+                    <p class="small text-muted">Disease and market risk evaluation</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Form -->
+        <form id="cropSuggestionForm" method="POST" action="{{ url_for('generate_crop_suggestions') }}">
+            {{ form.hidden_tag() }}
+
+            <!-- Location & Environment -->
+            <div class="form-section">
+                <h3><i class="fas fa-map-marker-alt me-2"></i>Location & Environment</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form.location.label(class="form-label") }}
+                            {{ form.location(class="form-control") }}
+                            {% if form.location.errors %}
+                            <div class="text-danger small mt-1">{{ form.location.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form.season.label(class="form-label") }}
+                            {{ form.season(class="form-select") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Soil Information -->
+            <div class="form-section">
+                <h3><i class="fas fa-mountain me-2"></i>Soil Information</h3>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.soil_type.label(class="form-label") }}
+                            {{ form.soil_type(class="form-select") }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.soil_ph.label(class="form-label") }}
+                            {{ form.soil_ph(class="form-control") }}
+                            {% if form.soil_ph.errors %}
+                            <div class="text-danger small mt-1">{{ form.soil_ph.errors[0] }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.water_source.label(class="form-label") }}
+                            {{ form.water_source(class="form-select") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Climate Conditions -->
+            <div class="form-section">
+                <h3><i class="fas fa-thermometer-half me-2"></i>Climate Conditions</h3>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.temperature_range.label(class="form-label") }}
+                            {{ form.temperature_range(class="form-select") }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.rainfall_range.label(class="form-label") }}
+                            {{ form.rainfall_range(class="form-select") }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.humidity_level.label(class="form-label") }}
+                            {{ form.humidity_level(class="form-select") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resources & Preferences -->
+            <div class="form-section">
+                <h3><i class="fas fa-cogs me-2"></i>Resources & Preferences</h3>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.fertilizer_availability.label(class="form-label") }}
+                            {{ form.fertilizer_availability(class="form-select") }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.budget_preference.label(class="form-label") }}
+                            {{ form.budget_preference(class="form-select") }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            {{ form.farm_size.label(class="form-label") }}
+                            {{ form.farm_size(class="form-control") }}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form.market_preference.label(class="form-label") }}
+                            {{ form.market_preference(class="form-select") }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            {{ form.experience_level.label(class="form-label") }}
+                            {{ form.experience_level(class="form-select") }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="text-center">
+                <button type="submit" class="btn-generate" id="generateBtn">
+                    <i class="fas fa-magic me-2"></i>🌱 Generate AI Crop Suggestions
+                </button>
+            </div>
+        </form>
+
+        <!-- Results Container -->
+        <div id="resultsContainer" class="results-container">
+            <div class="section-divider"></div>
+            <h2 class="text-center mb-4">
+                <i class="fas fa-chart-bar me-2 text-primary"></i>Your Personalized Crop Recommendations
+            </h2>
+            <div id="suggestionsContent"></div>
+
+            <!-- Download Options -->
+            <div id="downloadSection" class="download-section mt-4" style="display: none;">
+                <div class="section-divider"></div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="download-card"
+                            style="background: white; border-radius: var(--border-radius); padding: 2rem; box-shadow: var(--card-shadow); text-align: center;">
+                            <h3 class="mb-3">
+                                <i class="fas fa-download me-2 text-primary"></i>Download Your Report
+                            </h3>
+                            <p class="text-muted mb-4">Get your crop suggestions in your preferred format</p>
+
+                            <div class="download-buttons d-flex flex-wrap justify-content-center gap-3">
+                                <button onclick="downloadReport('pdf')" class="btn btn-danger btn-lg">
+                                    <i class="fas fa-file-pdf me-2"></i>Download PDF
+                                </button>
+                                <button onclick="downloadReport('word')" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-file-word me-2"></i>Download Word
+                                </button>
+                                <button onclick="downloadReport('excel')" class="btn btn-success btn-lg">
+                                    <i class="fas fa-file-excel me-2"></i>Download Excel
+                                </button>
+                                <button onclick="downloadReport('csv')" class="btn btn-info btn-lg">
+                                    <i class="fas fa-file-csv me-2"></i>Download CSV
+                                </button>
+                                <button onclick="downloadReport('json')" class="btn btn-secondary btn-lg">
+                                    <i class="fas fa-file-code me-2"></i>Download JSON
+                                </button>
+                            </div>
+
+                            <div class="mt-4">
+                                <button onclick="emailReport()" class="btn btn-outline-primary">
+                                    <i class="fas fa-envelope me-2"></i>Email Report
+                                </button>
+                                <button onclick="shareReport()" class="btn btn-outline-success">
+                                    <i class="fas fa-share-alt me-2"></i>Share Report
+                                </button>
+                                <a href="{{ url_for('crop_suggestions_history') }}" class="btn btn-outline-info">
+                                    <i class="fas fa-history me-2"></i>View All Reports
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <h4 class="text-primary">Analyzing Your Farm Conditions</h4>
+        <p class="text-muted">Our AI is processing soil, climate, and market data to find the best crops for you...</p>
+        <div class="progress mt-3" style="height: 8px;">
+            <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar"
+                style="width: 0%" id="loadingProgress"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('cropSuggestionForm');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const generateBtn = document.getElementById('generateBtn');
+        const loadingProgress = document.getElementById('loadingProgress');
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            // Show loading overlay
+            loadingOverlay.style.display = 'flex';
+            generateBtn.disabled = true;
+
+            // Animate progress bar
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                loadingProgress.style.width = progress + '%';
+            }, 500);
+
+            // Submit form data
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    clearInterval(progressInterval);
+                    loadingProgress.style.width = '100%';
+
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                        generateBtn.disabled = false;
+
+                        if (data.success) {
+                            displayResults(data);
+                        } else {
+                            showError(data.error || 'Failed to generate suggestions');
+                        }
+                    }, 500);
+                })
+                .catch(error => {
+                    clearInterval(progressInterval);
+                    loadingOverlay.style.display = 'none';
+                    generateBtn.disabled = false;
+                    showError('Network error. Please try again.');
+                    console.error('Error:', error);
+                });
+        });
+
+        function displayResults(data) {
+            const suggestionsContent = document.getElementById('suggestionsContent');
+
+            if (!data.suggestions || data.suggestions.length === 0) {
+                suggestionsContent.innerHTML = `
+                <div class="alert alert-warning text-center">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    No suitable crops found for the specified conditions. Please adjust your parameters and try again.
+                </div>
+            `;
+                resultsContainer.style.display = 'block';
+                return;
+            }
+
+            let html = `
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>Real-Time AI Analysis Complete!</strong> Found ${data.suggestions.length} suitable crops for your conditions.
+                <br>
+                <small class="mt-2 d-block">
+                    <i class="fas fa-robot me-1"></i>Generated by Gemini AI 2.0 on ${new Date(data.generated_at).toLocaleString()}
+                    <span class="badge bg-success ms-2">Live Data</span>
+                    <span class="badge bg-info ms-1">Scientific Analysis</span>
+                </small>
+            </div>
+            <div class="alert alert-info">
+                <i class="fas fa-lightbulb me-2"></i>
+                <strong>Data Sources:</strong> Recommendations based on ICAR agricultural research, current mandi prices, regional climate data, and soil science principles.
+                All yield estimates, costs, and revenue projections use real market data.
+            </div>
+        `;
+
+            data.suggestions.forEach((crop, index) => {
+                html += createCropCard(crop, index + 1);
+            });
+
+            suggestionsContent.innerHTML = html;
+            resultsContainer.style.display = 'block';
+
+            // Show download section
+            document.getElementById('downloadSection').style.display = 'block';
+
+            // Store current data for downloads
+            window.currentSuggestionData = data;
+
+            // Smooth scroll to results
+            resultsContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function createCropCard(crop, rank) {
+            const suitabilityColor = getSuitabilityColor(crop.suitability_score);
+            const profitabilityColor = getProfitabilityColor(crop.profitability);
+
+            return `
+            <div class="crop-card" style="border-left-color: ${suitabilityColor}">
+                <div class="crop-header">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4 class="crop-title">
+                                #${rank} ${crop.crop_name}
+                            </h4>
+                            <span class="crop-score" style="background-color: ${suitabilityColor}">
+                                ${crop.suitability_score}% Suitable
+                            </span>
+                        </div>
+                        <div class="text-end">
+                            <div class="badge bg-${profitabilityColor} mb-1">${crop.profitability} Profit</div>
+                            <div class="small text-muted">${crop.suitability_category}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="crop-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Expected Yield</div>
+                            <div class="info-value">${crop.expected_yield}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Time to Harvest</div>
+                            <div class="info-value">${crop.time_to_harvest}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Water Requirements</div>
+                            <div class="info-value">${crop.water_requirements}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Market Demand</div>
+                            <div class="info-value">${crop.market_demand}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Investment Cost</div>
+                            <div class="info-value">${crop.estimated_cost}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Expected Revenue</div>
+                            <div class="info-value">${crop.estimated_revenue}</div>
+                        </div>
+                    </div>
+
+                    ${crop.fertilizer_needs ? `
+                    <div class="info-item mb-3">
+                        <div class="info-label">Fertilizer & Nutrition Plan</div>
+                        <div class="info-value">${crop.fertilizer_needs}</div>
+                    </div>
+                    ` : ''}
+
+                    ${crop.roi_percentage ? `
+                    <div class="alert alert-info">
+                        <i class="fas fa-chart-line me-2"></i>
+                        <strong>Expected ROI: ${crop.roi_percentage}%</strong>
+                    </div>
+                    ` : ''}
+
+                    ${crop.growing_tips && crop.growing_tips.length > 0 ? `
+                    <div class="tips-section">
+                        <h5><i class="fas fa-lightbulb me-2"></i>Growing Tips</h5>
+                        <ul class="tips-list">
+                            ${crop.growing_tips.map(tip => `<li>${tip}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+
+                    ${crop.best_practices && crop.best_practices.length > 0 ? `
+                    <div class="practices-section">
+                        <h5><i class="fas fa-award me-2"></i>Best Practices</h5>
+                        <ul class="practices-list">
+                            ${crop.best_practices.map(practice => `<li>${practice}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+
+                    ${crop.risk_factors && crop.risk_factors.length > 0 ? `
+                    <div class="alert alert-warning mt-3">
+                        <strong><i class="fas fa-exclamation-triangle me-2"></i>Risk Factors:</strong>
+                        ${crop.risk_factors.join(', ')}
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        }
+
+        function getSuitabilityColor(score) {
+            if (score >= 80) return '#4CAF50';
+            if (score >= 60) return '#FF9800';
+            return '#F44336';
+        }
+
+        function getProfitabilityColor(profitability) {
+            const profit = profitability.toLowerCase();
+            if (profit.includes('very high')) return 'success';
+            if (profit.includes('high')) return 'primary';
+            if (profit.includes('medium')) return 'warning';
+            return 'secondary';
+        }
+
+        function showError(message) {
+            const suggestionsContent = document.getElementById('suggestionsContent');
+            suggestionsContent.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <strong>Error:</strong> ${message}
+            </div>
+        `;
+            resultsContainer.style.display = 'block';
+        }
+
+        // Download Functions
+        window.downloadReport = function (format) {
+            if (!window.currentSuggestionData) {
+                alert('No data available for download. Please generate suggestions first.');
+                return;
+            }
+
+            // Find the button that was clicked
+            const buttons = document.querySelectorAll('.download-buttons button');
+            let button = null;
+            buttons.forEach(btn => {
+                if (btn.onclick && btn.onclick.toString().includes(format)) {
+                    button = btn;
+                }
+            });
+
+            if (!button) {
+                // Fallback: find by format in button text
+                buttons.forEach(btn => {
+                    if (btn.textContent.toLowerCase().includes(format)) {
+                        button = btn;
+                    }
+                });
+            }
+
+            const originalText = button ? button.innerHTML : '';
+            if (button) {
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Preparing...';
+                button.disabled = true;
+            }
+
+            // Create download URL
+            const downloadUrl = `{{ url_for('download_crop_suggestions_report') }}?format=${format}`;
+
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                document.querySelector('input[name="csrf_token"]')?.value || '';
+
+            // Send POST request with current data
+            fetch(downloadUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(window.currentSuggestionData)
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob();
+                    }
+                    throw new Error('Download failed');
+                })
+                .then(blob => {
+                    // Create download link
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+
+                    // Set proper file extension based on format
+                    let extension = format;
+                    if (format === 'excel') extension = 'xlsx';
+                    if (format === 'word') extension = 'docx';
+
+                    a.download = `crop_suggestions_${new Date().toISOString().split('T')[0]}.${extension}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    // Show success message
+                    showDownloadSuccess(format);
+                })
+                .catch(error => {
+                    console.error('Download error:', error);
+                    alert(`Failed to download ${format.toUpperCase()} report. Please try again.`);
+                })
+                .finally(() => {
+                    // Restore button
+                    if (button) {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
+                });
+        };
+
+        function showDownloadSuccess(format) {
+            // Create temporary success message
+            const successDiv = document.createElement('div');
+            successDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            successDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            successDiv.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            <strong>Success!</strong> ${format.toUpperCase()} report downloaded successfully.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+            document.body.appendChild(successDiv);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (document.body.contains(successDiv)) {
+                    document.body.removeChild(successDiv);
+                }
+            }, 5000);
+        }
+
+        window.emailReport = function () {
+            if (!window.currentSuggestionData) {
+                alert('No data available to email. Please generate suggestions first.');
+                return;
+            }
+
+            const email = prompt('Enter email address to send the report:');
+            if (!email) return;
+
+            if (!isValidEmail(email)) {
+                alert('Please enter a valid email address.');
+                return;
+            }
+
+            // Show loading
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+            button.disabled = true;
+
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+            fetch('{{ url_for("email_crop_suggestions_report") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    email: email,
+                    data: window.currentSuggestionData
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Report sent successfully to ${email}!`);
+                    } else {
+                        alert('Failed to send email. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Email error:', error);
+                    alert('Failed to send email. Please try again.');
+                })
+                .finally(() => {
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                });
+        }
+
+        window.shareReport = function () {
+            if (!window.currentSuggestionData) {
+                alert('No data available to share. Please generate suggestions first.');
+                return;
+            }
+
+            // Generate shareable link
+            const shareData = {
+                title: 'FarmLink AI Crop Suggestions',
+                text: `Check out my personalized crop recommendations from FarmLink AI! Found ${window.currentSuggestionData.suggestions.length} suitable crops for my farming conditions.`,
+                url: window.location.href
+            };
+
+            if (navigator.share) {
+                // Use native share API if available
+                navigator.share(shareData).catch(console.error);
+            } else {
+                // Fallback to clipboard
+                const shareText = `${shareData.text}\n\n${shareData.url}`;
+                navigator.clipboard.writeText(shareText).then(() => {
+                    alert('Share link copied to clipboard!');
+                }).catch(() => {
+                    // Manual copy fallback
+                    const textArea = document.createElement('textarea');
+                    textArea.value = shareText;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('Share link copied to clipboard!');
+                });
+            }
+        }
+
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+    });
+</script>
+{% endblock content %}

@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Sales Report - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin_analytics_dashboard') }}">Analytics</a></li>
+                    <li class="breadcrumb-item active">Sales Report</li>
+                </ol>
+            </nav>
+            <h2><i class="fas fa-chart-bar me-2"></i>Sales Report</h2>
+            <p class="text-muted mb-0">Period: {{ report.period.start }} to {{ report.period.end }}</p>
+        </div>
+        <div class="btn-group">
+            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="fas fa-download me-1"></i>Export
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ url_for('export_sales_report', format='csv', range=date_range) }}">
+                    <i class="fas fa-file-csv me-2"></i>CSV
+                </a></li>
+                <li><a class="dropdown-item" href="{{ url_for('export_sales_report', format='json', range=date_range) }}">
+                    <i class="fas fa-file-code me-2"></i>JSON
+                </a></li>
+                <li><a class="dropdown-item" href="{{ url_for('export_sales_report', format='pdf', range=date_range) }}">
+                    <i class="fas fa-file-pdf me-2"></i>PDF
+                </a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Total Orders</h6>
+                    <h2 class="mb-0">{{ report.summary.total_orders }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Completed Orders</h6>
+                    <h2 class="mb-0 text-success">{{ report.summary.completed_orders }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Total Revenue</h6>
+                    <h2 class="mb-0 text-primary">₹{{ "%.2f"|format(report.summary.total_revenue) }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="text-muted mb-2">Avg Order Value</h6>
+                    <h2 class="mb-0 text-info">₹{{ "%.2f"|format(report.summary.average_order_value) }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Sales Chart -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Daily Sales Trend</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="dailySalesChart" height="80"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Selling Crops -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Top Selling Crops</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Crop Name</th>
+                            <th>Category</th>
+                            <th>Orders</th>
+                            <th>Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for crop in report.top_crops %}
+                        <tr>
+                            <td><strong>#{{ loop.index }}</strong></td>
+                            <td>{{ crop.name }}</td>
+                            <td><span class="badge bg-success">{{ crop.category }}</span></td>
+                            <td>{{ crop.orders }}</td>
+                            <td><strong>₹{{ "%.2f"|format(crop.revenue) }}</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Methods -->
+    {% if report.payment_methods %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Payment Methods Distribution</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <canvas id="paymentMethodsChart"></canvas>
+                </div>
+                <div class="col-md-6">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Method</th>
+                                    <th>Count</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pm in report.payment_methods %}
+                                <tr>
+                                    <td>{{ pm.method }}</td>
+                                    <td>{{ pm.count }}</td>
+                                    <td>₹{{ "%.2f"|format(pm.total) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+// Daily Sales Chart
+const dailyReport = {{ report.daily_sales | tojson }};
+const dailyCtx = document.getElementById('dailySalesChart').getContext('2d');
+
+new Chart(dailyCtx, {
+    type: 'bar',
+    data: {
+        labels: dailyReport.map(d => d.date),
+        datasets: [
+            {
+                label: 'Revenue (₹)',
+                data: dailyReport.map(d => d.revenue),
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgb(75, 192, 192)',
+                borderWidth: 1,
+                yAxisID: 'y'
+            },
+            {
+                label: 'Orders',
+                data: dailyReport.map(d => d.orders),
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgb(54, 162, 235)',
+                borderWidth: 1,
+                yAxisID: 'y1'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                title: {
+                    display: true,
+                    text: 'Revenue (₹)'
+                }
+            },
+            y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                title: {
+                    display: true,
+                    text: 'Orders'
+                },
+                grid: {
+                    drawOnChartArea: false
+                }
+            }
+        }
+    }
+});
+
+// Payment Methods Chart
+{% if report.payment_methods %}
+const paymentReport = {{ report.payment_methods | tojson }};
+const paymentCtx = document.getElementById('paymentMethodsChart').getContext('2d');
+
+new Chart(paymentCtx, {
+    type: 'doughnut',
+    data: {
+        labels: paymentReport.map(pm => pm.method),
+        datasets: [{
+            data: paymentReport.map(pm => pm.total),
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.6)',
+                'rgba(54, 162, 235, 0.6)',
+                'rgba(255, 206, 86, 0.6)',
+                'rgba(75, 192, 192, 0.6)',
+                'rgba(153, 102, 255, 0.6)'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

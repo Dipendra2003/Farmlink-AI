@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Service - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="display-4 text-success mb-4">Terms of Service</h1>
+            <p class="lead text-muted mb-5">Please read these terms carefully before using our platform.</p>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">1. Acceptance of Terms</h2>
+                    <p class="text-muted">By accessing and using the FarmLink AI platform, you agree to be bound by these Terms of Service and all applicable laws and regulations.</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">2. User Accounts</h2>
+                    <p class="text-muted">Users must:</p>
+                    <ul class="text-muted">
+                        <li>Provide accurate and complete information</li>
+                        <li>Maintain the security of their account</li>
+                        <li>Not share account credentials</li>
+                        <li>Notify us of any unauthorized use</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">3. Platform Usage</h2>
+                    <p class="text-muted">Users agree to:</p>
+                    <ul class="text-muted">
+                        <li>Use the platform for lawful purposes only</li>
+                        <li>Not interfere with platform operations</li>
+                        <li>Not attempt to gain unauthorized access</li>
+                        <li>Respect other users' rights</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">4. Content Guidelines</h2>
+                    <p class="text-muted">Users must not post content that:</p>
+                    <ul class="text-muted">
+                        <li>Is false or misleading</li>
+                        <li>Infringes on others' rights</li>
+                        <li>Is harmful or offensive</li>
+                        <li>Violates any laws</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">5. Transaction Rules</h2>
+                    <p class="text-muted">All transactions must:</p>
+                    <ul class="text-muted">
+                        <li>Use our secure payment system</li>
+                        <li>Comply with quality standards</li>
+                        <li>Follow delivery guidelines</li>
+                        <li>Respect cancellation policies</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">6. Liability</h2>
+                    <p class="text-muted">FarmLink AI is not liable for:</p>
+                    <ul class="text-muted">
+                        <li>User-generated content</li>
+                        <li>Transaction disputes</li>
+                        <li>Service interruptions</li>
+                        <li>Third-party services</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="text-center mt-5">
+                <p class="text-muted mb-4">Last updated: July 29, 2025</p>
+                <p class="mb-4">For questions about these terms, please contact us:</p>
+                <a href="{{ url_for('contact') }}" class="btn btn-success">
+                    <i class="fas fa-envelope me-2"></i>Contact Support
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
