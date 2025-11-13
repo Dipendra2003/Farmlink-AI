@@ -9,6 +9,7 @@ flask-socketio
 python-socketio
 eventlet
 wtforms
+email-validator
 python-dotenv
 gunicorn
 
