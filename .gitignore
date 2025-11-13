@@ -31,10 +31,7 @@ ENV/
 instance/
 .flaskenv
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# Database (PostgreSQL - server-based, no local files to ignore)
 
 # AI Cache
 ai_cache/
