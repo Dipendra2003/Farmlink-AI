@@ -3,7 +3,7 @@ services:
     name: farmlink-ai
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn app:app --workers 4 --timeout 120
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
@@ -17,9 +17,23 @@ services:
         value: app.py
       - key: FLASK_DEBUG
         value: 0
+      - key: FLASK_ENV
+        value: production
       - key: USE_JSON_LOGGING
         value: true
-      # Add other environment variables in Render dashboard
+      # IMPORTANT: Set BASE_URL to your actual Render URL
+      # Example: https://farmlink-ai.onrender.com
+      # Add other environment variables in Render dashboard:
+      # - GEMINI_API_KEY
+      # - WEATHER_API_KEY
+      # - AGMARKNET_API_KEY
+      # - MAIL_USERNAME
+      # - MAIL_PASSWORD
+      # - MAIL_DEFAULT_SENDER
+      # - RAZORPAY_KEY_ID
+      # - RAZORPAY_KEY_SECRET
+      # - KYC_ENCRYPTION_KEY
+      # - ENCRYPTION_KEY
 
 databases:
   - name: farmlink-db

@@ -243,7 +243,7 @@ class PaymentService:
         try:
             return self.client.payment.fetch(razorpay_payment_id)
         except Exception as e:
-            print(f"Error fetching payment details: {str(e)}")
+            logging.error(f"Error fetching payment details: {str(e)}")
             return None
     
     def initiate_refund(self, payment, amount=None, reason=None):

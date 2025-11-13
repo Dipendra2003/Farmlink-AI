@@ -1,6 +1,7 @@
 from app import app
 import logging
 import sys
+import os
 
 # Configure logging
 logging.basicConfig(
@@ -16,7 +17,9 @@ if __name__ == '__main__':
         print("=" * 50)
         print(f"Server will be available at: http://127.0.0.1:5000")
         print("=" * 50)
-        app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=True, threaded=True)
+        # Get debug mode from environment (default False for production safety)
+        debug_mode = os.environ.get('FLASK_DEBUG', '0') == '1'
+        app.run(host='0.0.0.0', port=5000, debug=debug_mode, use_reloader=debug_mode, threaded=True)
     except Exception as e:
         print(f"\n{'='*50}")
         print(f"ERROR: Server failed to start!")
