@@ -179,7 +179,13 @@ def load_user(user_id):
 with app.app_context():
     # Import models to ensure tables are created
     import models
-    db.create_all()
+    # Only create tables in development - use migrations in production
+    if os.environ.get('FLASK_ENV') != 'production':
+        try:
+            db.create_all()
+            app.logger.info("Database tables created successfully")
+        except Exception as e:
+            app.logger.warning(f"Could not create tables (may already exist): {str(e)}")
     
     # Import and register routes
     import advanced_routes  # Import first for helper functions
