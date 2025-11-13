@@ -2471,69 +2471,187 @@ def weather_dashboard():
 @app.route('/price-forecast', methods=['GET', 'POST'])
 @login_required
 def price_forecast_dashboard():
-    """AI-powered price forecast dashboard"""
+    """Enhanced national price forecast dashboard with adjustable forecast days"""
     from forms import PriceForecastForm
+    from national_price_forecast_service import NationalPriceForecastService
     
     form = PriceForecastForm()
     forecast_data = None
+    error_message = None
     
     if form.validate_on_submit():
         try:
-            crop_type = form.crop_type.data
-            quantity = form.quantity.data
-            location = form.location.data
+            commodity = form.commodity.data.strip()
             
-            # Generate mock forecast data (replace with actual AI service later)
-            import random
-            base_price = random.uniform(2000, 5000)
+            # Get forecast days from form or default to 7
+            forecast_days = request.form.get('forecast_days', 7, type=int)
+            forecast_days = max(7, min(forecast_days, 30))  # Clamp between 7-30
             
-            forecast_data = {
-                'crop_type': crop_type,
-                'quantity': quantity,
-                'location': location,
-                'current_price': base_price,
-                'predicted_prices': {
-                    '7_days': base_price * random.uniform(0.95, 1.08),
-                    '30_days': base_price * random.uniform(0.90, 1.15),
-                    '90_days': base_price * random.uniform(0.85, 1.20)
-                },
-                'confidence_scores': {
-                    '7_days': random.uniform(75, 95),
-                    '30_days': random.uniform(65, 85),
-                    '90_days': random.uniform(55, 75)
-                },
-                'demand_trend': random.choice(['increasing', 'stable', 'decreasing']),
-                'market_factors': [
-                    {'name': 'Weather Impact', 'description': 'Favorable weather conditions expected', 'impact_level': 'high'},
-                    {'name': 'Supply Chain', 'description': 'Normal supply chain operations', 'impact_level': 'medium'},
-                    {'name': 'Government Policy', 'description': 'No major policy changes expected', 'impact_level': 'low'},
-                    {'name': 'Export Demand', 'description': 'Strong international demand', 'impact_level': 'high'}
-                ],
-                'ai_insights': {
-                    'selling_strategy': {
-                        'timing': 'Best time to sell: Next 7-14 days',
-                        'markets': f'Target markets: {location} and nearby regions',
-                        'profit': 'Expected profit margin: 15-20%'
-                    },
-                    'market_insights': [
-                        {'icon': 'chart-line', 'color': 'success', 'text': 'Prices trending upward'},
-                        {'icon': 'users', 'color': 'info', 'text': 'High buyer demand in your region'},
-                        {'icon': 'cloud-sun', 'color': 'warning', 'text': 'Weather favorable for storage'}
-                    ]
-                }
-            }
+            # Initialize the national forecast service
+            service = NationalPriceForecastService()
             
-            logger.info(f"Price forecast generated for {crop_type} in {location}")
+            # Generate enhanced national forecast
+            result = service.get_national_forecast(commodity, forecast_days=forecast_days)
+            
+            if result.get('success'):
+                forecast_data = result
+                logger.info(
+                    f"Enhanced forecast generated for {commodity}: "
+                    f"{result['data_points']} data points, {result['markets_covered']} markets, "
+                    f"{result['states_covered']} states, {forecast_days} day forecast"
+                )
+            else:
+                error_message = result.get('error', 'Unable to generate forecast')
+                logger.warning(f"Forecast generation failed: {error_message}")
             
         except Exception as e:
-            logger.error(f"Error generating price forecast: {str(e)}")
-            flash('Error generating forecast. Please try again.', 'error')
+            error_message = f"Error generating forecast: {str(e)}"
+            logger.error(f"Unexpected error in price forecast: {str(e)}", exc_info=True)
     
-    return render_template('ai/price_forecast.html', form=form, forecast_data=forecast_data)
+    return render_template('ai/price_forecast.html', form=form, forecast_data=forecast_data, error_message=error_message)
+
+
+@app.route('/api/forecast', methods=['GET'])
+@login_required
+def api_price_forecast():
+    """
+    REST API endpoint for national price forecasts.
+    
+    Query Parameters:
+        commodity (str, required): Commodity name (e.g., "Wheat", "Rice", "Onion")
+        days (int, optional): Number of days to forecast (default: 7, max: 30)
+        
+    Returns:
+        JSON response with national forecast data
+        
+    Example:
+        GET /api/forecast?commodity=Wheat
+        
+    Response:
+        {
+            "success": true,
+            "commodity": "Wheat",
+            "national_daily_average": [...],
+            "forecast": [...],
+            "data_points": 940,
+            "markets_covered": 52,
+            "source": "Agmarknet"
+        }
+        
+    Status Codes:
+        200: Success
+        400: Bad request (missing or invalid parameters)
+        500: Internal server error
+    """
+    try:
+        from national_price_forecast_service import NationalPriceForecastService
+        
+        # Get and validate query parameters
+        commodity = request.args.get('commodity')
+        days = request.args.get('days', 7, type=int)
+        
+        # Validate required parameters
+        if not commodity:
+            return jsonify({
+                'success': False,
+                'error': 'Missing required parameter: commodity',
+                'details': 'Please provide a commodity name (e.g., Wheat, Rice, Onion)'
+            }), 400
+        
+        # Validate days parameter
+        if days < 1 or days > 30:
+            return jsonify({
+                'success': False,
+                'error': 'Invalid parameter: days',
+                'details': 'Days must be between 1 and 30'
+            }), 400
+        
+        # Initialize the national forecast service
+        service = NationalPriceForecastService()
+        
+        # Generate national forecast
+        result = service.get_national_forecast(commodity, forecast_days=days)
+        
+        if result.get('success'):
+            logger.info(
+                f"API forecast generated: commodity={commodity}, "
+                f"days={days}, data_points={result['data_points']}"
+            )
+            return jsonify(result), 200
+        else:
+            logger.warning(f"API forecast failed: {result.get('error')}")
+            return jsonify(result), 400
+        
+    except Exception as e:
+        logger.error(f"Unexpected error in API forecast: {str(e)}", exc_info=True)
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error',
+            'details': str(e)
+        }), 500
+
 
 # =============================================================================
 # BACKWARD COMPATIBILITY REDIRECTS
 # =============================================================================
+
+@app.route('/api/forecast/options', methods=['GET'])
+def api_forecast_options():
+    """
+    Get available commodities for price forecasting (dynamic from service).
+    
+    Returns:
+        JSON response with lists of supported commodities
+    """
+    try:
+        from national_price_forecast_service import NationalPriceForecastService
+        
+        service = NationalPriceForecastService()
+        commodities_list = service.get_commodity_suggestions()
+        
+        # Categorize commodities
+        categories = {
+            'cereals': ['Wheat', 'Rice', 'Paddy', 'Maize'],
+            'vegetables': ['Potato', 'Onion', 'Tomato', 'Cabbage', 'Cauliflower', 'Brinjal', 'Carrot'],
+            'pulses': ['Gram', 'Bengal Gram', 'Chickpea', 'Tur', 'Arhar', 'Moong', 'Green Gram', 'Urad', 'Black Gram'],
+            'cash_crops': ['Cotton', 'Sugarcane'],
+            'oilseeds': ['Soybean', 'Soyabean', 'Groundnut', 'Peanut'],
+            'fruits': ['Apple', 'Banana']
+        }
+        
+        def get_category(commodity):
+            for cat, items in categories.items():
+                if commodity in items:
+                    return cat
+            return 'others'
+        
+        commodities_formatted = [
+            {
+                'value': c.lower(),
+                'label': c,
+                'category': get_category(c)
+            }
+            for c in commodities_list
+        ]
+        
+        return jsonify({
+            'success': True,
+            'commodities': commodities_formatted,
+            'total_commodities': len(commodities_list),
+            'tips': [
+                'All commodities use nationwide data from Agmarknet',
+                'Popular commodities: Wheat, Rice, Onion, Tomato, Potato',
+                'Forecast accuracy depends on data availability'
+            ]
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Error fetching forecast options: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Unable to fetch commodity options'
+        }), 500
+
 
 @app.route('/farming-tips')
 def farming_tips():

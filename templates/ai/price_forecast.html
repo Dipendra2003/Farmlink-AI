@@ -1,906 +1,1331 @@
 {% extends "base.html" %}
 
-{% block title %}Price Forecast - FarmLink AI{% endblock %}
+{% block title %}National Price Forecast - FarmLink AI{% endblock %}
 
 {% block extra_head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 <style>
-    .price-metric {
+    :root {
+        --primary-green: #28a745;
+        --success-light: #d4edda;
+        --danger-red: #dc3545;
+        --warning-yellow: #ffc107;
+        --info-blue: #0dcaf0;
+        --text-dark: #212529;
+        --text-success: #155724;
+    }
+    
+    .forecast-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+    
+    .input-card {
         background: white;
-        color: #333;
-        border-radius: 15px;
-        padding: 1.5rem;
-        margin: 0.5rem 0;
+        border-radius: 20px;
+        padding: 2rem;
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        transition: transform 0.3s ease;
+        margin-bottom: 2rem;
     }
-    .price-metric:hover {
-        transform: translateY(-3px);
-    }
-    .price-trend {
-        font-size: 2.5rem;
-        font-weight: bold;
-    }
-    .trend-up { color: #28a745; }
-    .trend-down { color: #dc3545; }
-    .trend-stable { color: #6c757d; }
-    .forecast-period {
-        background: #f8f9fa;
-        border: 2px solid #e9ecef;
-        border-radius: 15px;
+    
+    .commodity-input {
+        font-size: 1.1rem;
         padding: 1rem;
-        margin: 0.5rem 0;
-        cursor: pointer;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        width: 100%;
         transition: all 0.3s ease;
     }
-    .forecast-period:hover {
-        border-color: #28a745;
-        background: #e8f5e8;
+    
+    .commodity-input:focus {
+        border-color: var(--primary-green);
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15);
+        outline: none;
     }
-    .forecast-period.active {
-        border-color: #28a745;
-        background: #d4edda;
-        color: #155724;
-    }
-    .market-factor {
+    
+    .suggestions-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
         background: white;
-        border-radius: 10px;
-        padding: 1rem;
-        margin: 0.5rem 0;
-        border-left: 4px solid #007bff;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border: 2px solid #e9ecef;
+        border-top: none;
+        border-radius: 0 0 12px 12px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
     }
-    .confidence-indicator {
-        display: inline-block;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        margin-right: 8px;
+    
+    .suggestion-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
     }
-    .confidence-high { background-color: #28a745; }
-    .confidence-medium { background-color: #ffc107; }
-    .confidence-low { background-color: #dc3545; }
-    .chart-container {
+    
+    .suggestion-item:last-child {
+        border-bottom: none;
+    }
+    
+    .suggestion-item:hover,
+    .suggestion-item.active {
+        background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);
+        padding-left: 1.2rem;
+    }
+    
+    .forecast-btn {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 1rem 2.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        transition: all 0.3s ease;
+    }
+    
+    .forecast-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+    }
+    
+    .metric-card {
         background: white;
         border-radius: 15px;
         padding: 1.5rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        margin: 1rem 0;
+        text-align: center;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        height: 100%;
     }
-    .price-alert {
-        background: linear-gradient(45deg, #ff6b6b, #feca57);
-        color: white;
+    
+    .metric-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.12);
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--primary-green);
+        margin: 0.5rem 0;
+    }
+    
+    .metric-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin: 2rem 0;
+    }
+    
+    .recommendation-card {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border-left: 4px solid var(--primary-green);
         border-radius: 15px;
-        padding: 1rem;
-        margin: 1rem 0;
-        animation: pulse 2s infinite;
+        padding: 1.5rem;
+        margin: 2rem 0;
     }
-    @keyframes pulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.02); }
-        100% { transform: scale(1); }
+    
+    .recommendation-text {
+        color: var(--text-success);
+        font-size: 1.1rem;
+        line-height: 1.8;
+        margin: 0;
+    }
+    
+    .info-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background: #e9ecef;
+        border-radius: 8px;
+        margin: 0.25rem;
+        font-size: 0.9rem;
+    }
+    
+    .info-badge a {
+        color: inherit;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    
+    .info-badge a:hover {
+        color: var(--primary-green);
+        text-decoration: underline;
+    }
+    
+    .badge a {
+        color: inherit;
+        text-decoration: none;
+    }
+    
+    .badge a:hover {
+        opacity: 0.8;
+    }
+    
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.97);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(3px);
+    }
+    
+    .loading-content {
+        text-align: center;
+    }
+    
+    .loading-spinner {
+        border: 6px solid #e9ecef;
+        border-top: 6px solid var(--primary-green);
+        border-radius: 50%;
+        width: 70px;
+        height: 70px;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 20px;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+        color: var(--text-dark);
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    .loading-subtext {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .error-alert {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 12px;
+        padding: 1.5rem;
+        color: #721c24;
+        margin: 1rem 0;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        opacity: 0.3;
+        margin-bottom: 1rem;
+    }
+    
+    .forecast-preview-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        text-align: center;
+        transition: all 0.3s;
+    }
+    
+    .forecast-preview-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    
+    .price-table {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        margin: 2rem 0;
+    }
+    
+    .price-table .table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .price-table .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: scale(1.01);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .confidence-tooltip {
+        cursor: help;
+        border-bottom: 1px dotted #6c757d;
+    }
+    
+    .price-positive {
+        color: #28a745;
+    }
+    
+    .price-negative {
+        color: #dc3545;
+    }
+    
+    .trend-icon-large {
+        font-size: 1.5rem;
+    }
+    
+    /* ============================================
+       MOBILE RESPONSIVE STYLES
+       ============================================ */
+    
+    /* Tablets and below (768px) */
+    @media (max-width: 768px) {
+        .forecast-container {
+            padding: 1rem 0.75rem;
+        }
+        
+        .input-card {
+            padding: 1.25rem;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .commodity-input {
+            font-size: 1rem;
+            padding: 0.875rem;
+        }
+        
+        .forecast-btn {
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        /* Header adjustments */
+        .display-5 {
+            font-size: 1.75rem !important;
+        }
+        
+        .lead {
+            font-size: 1rem;
+        }
+        
+        /* Metric cards - 2 columns on mobile */
+        .metric-card {
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .metric-value {
+            font-size: 1.5rem;
+        }
+        
+        .metric-label {
+            font-size: 0.8rem;
+        }
+        
+        /* Chart container */
+        .chart-container {
+            padding: 1rem;
+            border-radius: 15px;
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+        
+        .chart-container h5 {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .chart-container canvas {
+            max-width: 100%;
+            height: auto !important;
+        }
+        
+        /* Recommendation card */
+        .recommendation-card {
+            padding: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .recommendation-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+        
+        /* Info badges - stack better on mobile */
+        .info-badge {
+            padding: 0.4rem 0.75rem;
+            font-size: 0.8rem;
+            margin: 0.2rem;
+            display: inline-block;
+        }
+        
+        /* Price table */
+        .price-table {
+            padding: 1rem;
+            border-radius: 12px;
+            overflow-x: auto;
+        }
+        
+        .price-table h5 {
+            font-size: 1rem;
+        }
+        
+        .price-table .table {
+            font-size: 0.85rem;
+        }
+        
+        .price-table .table th,
+        .price-table .table td {
+            padding: 0.5rem 0.25rem;
+        }
+        
+        /* Forecast preview cards - 2 columns */
+        .forecast-preview-card {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .forecast-preview-card .fw-bold {
+            font-size: 1rem;
+        }
+        
+        /* Error alert */
+        .error-alert {
+            padding: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .error-alert h5 {
+            font-size: 1.1rem;
+        }
+        
+        /* Empty state */
+        .empty-state {
+            padding: 2rem 1rem;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.5rem;
+        }
+        
+        /* Loading overlay */
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border-width: 4px;
+        }
+        
+        .loading-text {
+            font-size: 1rem;
+        }
+        
+        .loading-subtext {
+            font-size: 0.8rem;
+        }
+        
+        /* National overview card */
+        .card-body h3 {
+            font-size: 1.25rem;
+        }
+        
+        .card-body p {
+            font-size: 0.85rem;
+        }
+        
+        /* Better spacing for overview section */
+        .card.shadow-sm {
+            margin-bottom: 1rem;
+        }
+        
+        /* Suggestions dropdown */
+        .suggestion-item {
+            padding: 0.6rem 0.75rem;
+            font-size: 0.9rem;
+        }
+        
+        /* Data freshness alert */
+        .alert {
+            font-size: 0.85rem;
+            padding: 0.75rem;
+        }
+    }
+    
+    /* Small phones (576px and below) */
+    @media (max-width: 576px) {
+        .forecast-container {
+            padding: 0.75rem 0.5rem;
+        }
+        
+        .input-card {
+            padding: 1rem;
+            border-radius: 12px;
+        }
+        
+        /* Make button full width on small screens */
+        .forecast-btn {
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+        }
+        
+        /* Header */
+        .display-5 {
+            font-size: 1.5rem !important;
+        }
+        
+        .lead {
+            font-size: 0.9rem;
+        }
+        
+        /* Metric cards - full width stacking */
+        .metric-card {
+            padding: 0.875rem;
+        }
+        
+        .metric-value {
+            font-size: 1.35rem;
+        }
+        
+        .metric-label {
+            font-size: 0.75rem;
+        }
+        
+        /* Chart */
+        .chart-container {
+            padding: 0.75rem;
+        }
+        
+        /* Recommendation */
+        .recommendation-card {
+            padding: 0.875rem;
+        }
+        
+        .recommendation-text {
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        
+        /* Info badges - smaller */
+        .info-badge {
+            padding: 0.35rem 0.6rem;
+            font-size: 0.75rem;
+            margin: 0.15rem;
+        }
+        
+        /* Hide some icons on very small screens for cleaner look */
+        .info-badge i {
+            display: none;
+        }
+        
+        /* Price table - more compact */
+        .price-table .table {
+            font-size: 0.8rem;
+        }
+        
+        .price-table .table th,
+        .price-table .table td {
+            padding: 0.4rem 0.2rem;
+        }
+        
+        /* Hide some table columns on very small screens */
+        .price-table .table th:nth-child(4),
+        .price-table .table td:nth-child(4),
+        .price-table .table th:nth-child(5),
+        .price-table .table td:nth-child(5) {
+            display: none;
+        }
+        
+        /* Forecast preview - better mobile layout */
+        .forecast-preview-card {
+            padding: 0.6rem 0.4rem;
+        }
+        
+        .forecast-preview-card .fw-bold {
+            font-size: 1.1rem !important;
+        }
+        
+        .forecast-preview-card .small {
+            font-size: 0.7rem;
+        }
+        
+        /* Error suggestions buttons */
+        .error-alert .btn {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.8rem;
+        }
+        
+        /* Empty state badges */
+        .empty-state .badge {
+            font-size: 0.75rem;
+            padding: 0.35rem 0.6rem;
+        }
+        
+        /* Card titles */
+        h5 {
+            font-size: 0.95rem;
+        }
+        
+        /* Trend icon */
+        .trend-icon-large {
+            font-size: 1.25rem;
+        }
+    }
+    
+    /* Landscape phones */
+    @media (max-width: 768px) and (orientation: landscape) {
+        .forecast-container {
+            padding: 0.75rem;
+        }
+        
+        .metric-card {
+            padding: 0.75rem;
+        }
+        
+        .chart-container {
+            padding: 1rem;
+        }
+    }
+    
+    /* Touch-friendly improvements for all mobile devices */
+    @media (hover: none) and (pointer: coarse) {
+        .forecast-btn {
+            min-height: 48px; /* Touch target size */
+        }
+        
+        .suggestion-item {
+            min-height: 44px;
+            padding: 0.75rem 1rem;
+        }
+        
+        .commodity-input {
+            min-height: 48px;
+        }
+        
+        /* Disable hover effects on touch devices */
+        .metric-card:hover {
+            transform: none;
+        }
+        
+        .forecast-preview-card:hover {
+            transform: none;
+        }
+        
+        .price-table .table tbody tr:hover {
+            transform: none;
+        }
     }
 </style>
 {% endblock %}
 
+
 {% block content %}
-<div class="container py-4">
+<div class="forecast-container">
+    <!-- Enhanced Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Fetching National Market Data</div>
+            <div class="loading-subtext">Analyzing prices from markets across India...</div>
+            <div class="loading-subtext mt-2">
+                <i class="fas fa-database me-1"></i>Processing thousands of data points
+            </div>
+        </div>
+    </div>
+
     <!-- Header -->
-    <div class="row mb-4">
-        <div class="col">
-            <h1 class="display-6 fw-bold text-success">
-                <i class="fas fa-chart-line me-2"></i>AI Price Forecast
-            </h1>
-            <p class="lead">Get AI-powered price predictions for your crops based on market trends</p>
-        </div>
-        <div class="col-auto">
-            <div class="btn-group">
-                <button class="btn btn-outline-success" onclick="downloadForecast()">
-                    <i class="fas fa-download me-1"></i>Download Report
+    <div class="text-center mb-4">
+        <h1 class="display-5 fw-bold text-success">
+            <i class="fas fa-chart-line me-2"></i>National Price Forecast
+        </h1>
+        <p class="lead">Get AI-powered price predictions based on all-India market data</p>
+        <p class="text-muted small">Location-free • Real-time • Nationwide Coverage</p>
+    </div>
+
+    <!-- Input Form -->
+    <div class="input-card">
+        <form method="POST" id="forecastForm">
+            {{ form.hidden_tag() }}
+            
+            <div class="row align-items-end g-3">
+                <div class="col-md-8">
+                    <label for="commodity" class="form-label fw-semibold">
+                        <i class="fas fa-seedling me-2"></i>Enter Commodity Name
+                    </label>
+                    <div style="position: relative;">
+                        {{ form.commodity(class="commodity-input", id="commodity", placeholder="e.g., Wheat, Rice, Onion, Tomato, Potato", autocomplete="off") }}
+                        <div id="suggestions" class="suggestions-dropdown"></div>
+                    </div>
+                    <small class="text-muted d-block mt-2">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Type any agricultural commodity name. System will fetch data from all markets across India.
+                    </small>
+                    <div id="dataAvailabilityHint" class="mt-2" style="display: none;">
+                        <small class="badge bg-info">
+                            <i class="fas fa-check-circle me-1"></i>Data available for this commodity
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold" style="visibility: hidden;">Action</label>
+                    <button type="submit" class="forecast-btn w-100">
+                        <i class="fas fa-chart-line me-2"></i>Get National Forecast
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+
+    <!-- Enhanced Error Message -->
+    {% if error_message %}
+    <div class="error-alert">
+        <h5><i class="fas fa-exclamation-triangle me-2"></i>Unable to Generate Forecast</h5>
+        <p class="mb-2">{{ error_message }}</p>
+        
+        {% if forecast_data and forecast_data.suggestions %}
+        <div class="mt-3">
+            <strong>💡 Try these commodities instead:</strong>
+            <div class="mt-2">
+                {% for suggestion in forecast_data.suggestions %}
+                <button class="btn btn-sm btn-outline-success m-1" onclick="document.getElementById('commodity').value='{{ suggestion }}'; document.getElementById('forecastForm').submit();">
+                    {{ suggestion }}
                 </button>
-                <button class="btn btn-success" onclick="setupPriceAlerts()">
-                    <i class="fas fa-bell me-1"></i>Price Alerts
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Crop Selection Form -->
-    <div class="row mb-4">
-        <div class="col-md-8 mx-auto">
-            <form method="POST" id="forecastForm" class="card shadow-sm p-4">
-                {{ form.hidden_tag() }}
-                
-                <div class="row">
-                    <div class="col-md-4">
-                        <label for="crop_type" class="form-label">Crop Type</label>
-                        {{ form.crop_type(class="form-select", id="cropSelect") }}
-                    </div>
-                    <div class="col-md-3">
-                        <label for="quantity" class="form-label">Quantity (Kg)</label>
-                        {{ form.quantity(class="form-control", placeholder="e.g., 1000") }}
-                    </div>
-                    <div class="col-md-3">
-                        <label for="location" class="form-label">Market Location</label>
-                        {{ form.location(class="form-control", placeholder="e.g., Delhi") }}
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-success w-100">
-                            <i class="fas fa-chart-line me-1"></i>Forecast
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Current Market Overview -->
-    <div class="row mb-4">
-        <div class="col">
-            <div class="forecast-card">
-                <div class="text-center">
-                    <h3><i class="fas fa-seedling me-2"></i><span id="cropDisplayName">Select Crop</span> Market Overview</h3>
-                    <p class="mb-0">Real-time market data and AI predictions for your selected crop</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Enhanced Price Metrics -->
-    <div class="row mb-4" id="priceMetrics">
-        {% if forecast_data %}
-        <div class="col-md-2">
-            <div class="price-metric text-center">
-                <h6 class="text-muted mb-2">Current Price</h6>
-                <div class="price-trend trend-up">₹{{ "%.2f"|format(forecast_data.current_price or 0) }}</div>
-                <small class="text-muted">per quintal</small>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="price-metric text-center">
-                <h6 class="text-muted mb-2">7-Day Forecast</h6>
-                <div class="price-trend {% if forecast_data.predicted_prices.get('7_days', 0) > forecast_data.current_price %}trend-up{% elif forecast_data.predicted_prices.get('7_days', 0) < forecast_data.current_price %}trend-down{% else %}trend-stable{% endif %}">
-                    ₹{{ "%.2f"|format(forecast_data.predicted_prices.get('7_days', 0)) }}
-                </div>
-                <small class="{% if forecast_data.predicted_prices.get('7_days', 0) >= forecast_data.current_price %}text-success{% else %}text-danger{% endif %}">
-                    <i class="fas fa-arrow-{% if forecast_data.predicted_prices.get('7_days', 0) >= forecast_data.current_price %}up{% else %}down{% endif %} me-1"></i>
-                    {{ "%.1f"|format(((forecast_data.predicted_prices.get('7_days', 0) - forecast_data.current_price) / forecast_data.current_price * 100) if forecast_data.current_price > 0 else 0) }}%
-                </small>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="price-metric text-center">
-                <h6 class="text-muted mb-2">30-Day Forecast</h6>
-                <div class="price-trend {% if forecast_data.predicted_prices.get('30_days', 0) > forecast_data.current_price %}trend-up{% elif forecast_data.predicted_prices.get('30_days', 0) < forecast_data.current_price %}trend-down{% else %}trend-stable{% endif %}">
-                    ₹{{ "%.2f"|format(forecast_data.predicted_prices.get('30_days', 0)) }}
-                </div>
-                <small class="{% if forecast_data.predicted_prices.get('30_days', 0) >= forecast_data.current_price %}text-success{% else %}text-danger{% endif %}">
-                    <i class="fas fa-arrow-{% if forecast_data.predicted_prices.get('30_days', 0) >= forecast_data.current_price %}up{% else %}down{% endif %} me-1"></i>
-                    {{ "%.1f"|format(((forecast_data.predicted_prices.get('30_days', 0) - forecast_data.current_price) / forecast_data.current_price * 100) if forecast_data.current_price > 0 else 0) }}%
-                </small>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="price-metric text-center">
-                <h6 class="text-muted mb-2">Market Volatility</h6>
-                <div class="price-trend trend-stable">
-                    Medium
-                </div>
-                <small class="text-muted">Risk Level</small>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="price-metric text-center">
-                <h6 class="text-muted mb-2">Demand Trend</h6>
-                <div class="price-trend {% if forecast_data.demand_trend == 'increasing' %}trend-up{% elif forecast_data.demand_trend == 'decreasing' %}trend-down{% else %}trend-stable{% endif %}">
-                    {% if forecast_data.demand_trend == 'increasing' %}
-                        <i class="fas fa-trending-up"></i>
-                    {% elif forecast_data.demand_trend == 'decreasing' %}
-                        <i class="fas fa-trending-down"></i>
-                    {% else %}
-                        <i class="fas fa-minus"></i>
-                    {% endif %}
-                </div>
-                <small class="text-muted">Market Demand</small>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="price-metric text-center">
-                <h6 class="text-muted mb-2">Confidence Score</h6>
-                <div class="price-trend trend-up">{{ "%.0f"|format(forecast_data.confidence_scores.get('7_days', 85)) }}%</div>
-                <small class="text-success">
-                    {% if forecast_data.confidence_scores.get('7_days', 85) >= 80 %}High Accuracy
-                    {% elif forecast_data.confidence_scores.get('7_days', 85) >= 60 %}Medium Accuracy
-                    {% else %}Low Accuracy{% endif %}
-                </small>
+                {% endfor %}
             </div>
         </div>
         {% else %}
-        <div class="col-12 text-center">
-            <div class="price-metric">
-                <h6 class="text-muted mb-2">Select a crop and location to get real-time price forecast</h6>
-                <p class="mb-0">Our AI will analyze market data and provide accurate predictions with detailed insights</p>
-            </div>
-        </div>
+        <small class="text-muted">
+            <strong>Suggestions:</strong>
+            <ul class="mb-0 mt-2" style="list-style-position: inside;">
+                <li>Check the commodity name spelling</li>
+                <li>Try common commodities: Wheat, Rice, Onion, Tomato, Potato</li>
+                <li>Ensure the commodity has recent market data</li>
+            </ul>
+        </small>
         {% endif %}
-    </div>
-
-    <!-- Price History Comparison -->
-    {% if forecast_data %}
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="chart-container">
-                <h5 class="mb-3">
-                    <i class="fas fa-history me-2"></i>Price History & Comparison
-                </h5>
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="text-center p-3 border rounded">
-                            <h6 class="text-muted mb-2">Last Week Average</h6>
-                            <div class="h4 text-info">₹{{ "%.2f"|format((forecast_data.current_price or 50) * 0.95) }}</div>
-                            <small class="text-success">
-                                {% set week_change = 5.0 %}
-                                +{{ "%.1f"|format(week_change) }}% from last week
-                            </small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 border rounded">
-                            <h6 class="text-muted mb-2">Last Month Average</h6>
-                            <div class="h4 text-warning">₹{{ "%.2f"|format((forecast_data.current_price or 50) * 0.92) }}</div>
-                            <small class="text-success">
-                                {% set month_change = 8.7 %}
-                                +{{ "%.1f"|format(month_change) }}% from last month
-                            </small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 border rounded">
-                            <h6 class="text-muted mb-2">Season High</h6>
-                            <div class="h4 text-success">₹{{ "%.2f"|format((forecast_data.current_price or 50) * 1.15) }}</div>
-                            <small class="text-muted">Peak season price</small>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 border rounded">
-                            <h6 class="text-muted mb-2">Season Low</h6>
-                            <div class="h4 text-danger">₹{{ "%.2f"|format((forecast_data.current_price or 50) * 0.78) }}</div>
-                            <small class="text-muted">Harvest season low</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
     {% endif %}
 
-    <!-- Forecast Period Selection -->
-    <div class="row mb-4">
-        <div class="col">
-            <h5 class="mb-3"><i class="fas fa-calendar me-2"></i>Select Forecast Period</h5>
-            <div class="row">
-                <div class="col-md-3">
-                    <div class="forecast-period active" onclick="selectForecastPeriod(this, '7d')">
-                        <h6 class="mb-1">7 Days</h6>
-                        <small>Short-term prediction</small>
-                    </div>
+    {% if forecast_data and forecast_data.success %}
+        <!-- Data Freshness Warning -->
+        {% if forecast_data.data_freshness == 'stale' or forecast_data.data_freshness == 'outdated' %}
+        <div class="alert alert-warning" style="border-radius: 15px;">
+            <i class="fas fa-clock me-2"></i>
+            <strong>Data Freshness Notice:</strong> 
+            Last market data is {{ forecast_data.days_since_update }} days old ({{ forecast_data.last_data_date }}). 
+            {% if forecast_data.data_freshness == 'outdated' %}
+            Forecast accuracy may be reduced. Check with local markets for current prices.
+            {% else %}
+            Prices may have changed. Verify with local markets before making decisions.
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        <!-- National Overview -->
+        <div class="card shadow-sm mb-4" style="border-radius: 20px; border: none;">
+            <div class="card-body p-4">
+                <h3 class="text-center mb-3">
+                    <i class="fas fa-seedling me-2 text-success"></i>{{ forecast_data.commodity }} - National Overview
+                </h3>
+                <div class="text-center mb-3">
+                    <span class="info-badge">
+                        <i class="fas fa-database me-1"></i>{{ forecast_data.data_points }} data points
+                    </span>
+                    <span class="info-badge">
+                        <a href="https://data.gov.in/search?query={{ forecast_data.commodity }}" target="_blank" rel="noopener noreferrer">
+                            <i class="fas fa-store me-1"></i>{{ forecast_data.markets_covered }} markets
+                        </a>
+                    </span>
+                    <span class="info-badge">
+                        <i class="fas fa-map-marked-alt me-1"></i>{{ forecast_data.states_covered }} states
+                    </span>
+                    <span class="info-badge">
+                        <i class="fas fa-clock me-1"></i>Updated: {{ forecast_data.last_updated }}
+                    </span>
                 </div>
-                <div class="col-md-3">
-                    <div class="forecast-period" onclick="selectForecastPeriod(this, '30d')">
-                        <h6 class="mb-1">30 Days</h6>
-                        <small>Monthly forecast</small>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="forecast-period" onclick="selectForecastPeriod(this, '90d')">
-                        <h6 class="mb-1">90 Days</h6>
-                        <small>Seasonal outlook</small>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="forecast-period" onclick="selectForecastPeriod(this, '1y')">
-                        <h6 class="mb-1">1 Year</h6>
-                        <small>Annual projection</small>
-                    </div>
-                </div>
+                <p class="text-center text-muted small mb-0">
+                    <i class="fas fa-check-circle text-success me-1"></i>
+                    Source: {{ forecast_data.source }}
+                </p>
             </div>
         </div>
-    </div>
 
-    <!-- Market Factors & Analysis -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="chart-container">
-                <h5 class="mb-3">
-                    <i class="fas fa-info-circle me-2"></i>Market Analysis & Insights
-                </h5>
-                {% if forecast_data and forecast_data.market_factors %}
-                    {% for factor in forecast_data.market_factors %}
-                    <div class="market-factor">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="mb-1">{{ factor.name }}</h6>
-                                <small class="text-muted">{{ factor.description }}</small>
-                            </div>
-                            <span class="confidence-indicator confidence-{{ factor.impact_level }}"></span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                <div class="market-factor">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-1">Weather Impact</h6>
-                            <small class="text-muted">Real-time weather analysis pending</small>
-                        </div>
-                        <span class="confidence-indicator confidence-medium"></span>
-                    </div>
-                </div>
-                <div class="market-factor">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-1">Supply Chain</h6>
-                            <small class="text-muted">Market data being analyzed</small>
-                        </div>
-                        <span class="confidence-indicator confidence-medium"></span>
-                    </div>
-                </div>
-                <div class="market-factor">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-1">Government Policy</h6>
-                            <small class="text-muted">Policy impact assessment</small>
-                        </div>
-                        <span class="confidence-indicator confidence-low"></span>
-                    </div>
-                </div>
-                <div class="market-factor">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h6 class="mb-1">Export Demand</h6>
-                            <small class="text-muted">International market analysis</small>
-                        </div>
-                        <span class="confidence-indicator confidence-high"></span>
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Price Alerts -->
-    <div class="row mb-4" id="priceAlerts" style="display: none;">
-        <div class="col">
-            <div class="price-alert">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
-                    <div>
-                        <h5 class="mb-1">Price Alert Triggered!</h5>
-                        <p class="mb-0">Rice prices have crossed your target threshold of ₹2,900 per quintal</p>
-                    </div>
+        <!-- Key Metrics -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-6">
+                <div class="metric-card">
+                    <div class="metric-label">Current National Avg</div>
+                    <div class="metric-value">₹{{ "%.2f"|format(forecast_data.current_national_avg) }}</div>
+                    <small class="text-muted">per quintal</small>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Recommendations -->
-    <div class="row">
-        <div class="col">
-            <div class="card shadow-sm">
-                <div class="card-header bg-light">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-lightbulb me-2"></i>AI Recommendations
-                    </h5>
+            <div class="col-md-3 col-6">
+                <div class="metric-card">
+                    <div class="metric-label">7-Day Change</div>
+                    <div class="metric-value {% if forecast_data.market_insights.get('price_change_7d', 0) >= 0 %}price-positive{% else %}price-negative{% endif %}">
+                        {{ "%.1f"|format(forecast_data.market_insights.get('price_change_7d', 0)) }}%
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-{% if forecast_data.market_insights.get('price_change_7d', 0) >= 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                    </small>
                 </div>
-                <div class="card-body">
-                    {% if forecast_data and forecast_data.get('ai_insights') %}
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-success">
-                                <i class="fas fa-thumbs-up me-2"></i>Optimal Selling Strategy
-                            </h6>
-                            <ul class="list-unstyled">
-                                <li class="mb-2">
-                                    <i class="fas fa-calendar-check text-success me-2"></i>
-                                    {{ forecast_data.ai_insights.get('selling_strategy', {}).get('timing', 'No timing data available') }}
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-map-marker-alt text-primary me-2"></i>
-                                    {{ forecast_data.ai_insights.get('selling_strategy', {}).get('markets', 'No market data available') }}
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-percentage text-warning me-2"></i>
-                                    {{ forecast_data.ai_insights.get('selling_strategy', {}).get('profit', 'No profit data available') }}
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-info">
-                                <i class="fas fa-chart-line me-2"></i>Market Insights
-                            </h6>
-                            <ul class="list-unstyled">
-                                {% for insight in forecast_data.ai_insights.get('market_insights', []) %}
-                                <li class="mb-2">
-                                    <i class="fas fa-{{ insight.get('icon', 'info') }} text-{{ insight.get('color', 'secondary') }} me-2"></i>
-                                    {{ insight.get('text', 'No insight data available') }}
-                                </li>
-                                {% endfor %}
-                            </ul>
-                        </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="metric-card">
+                    <div class="metric-label">Market Trend</div>
+                    <div class="metric-value trend-icon-large">
+                        {% if 'increasing' in forecast_data.market_insights.trend %}
+                            <i class="fas fa-trending-up text-success"></i>
+                        {% elif 'decreasing' in forecast_data.market_insights.trend %}
+                            <i class="fas fa-trending-down text-danger"></i>
+                        {% else %}
+                            <i class="fas fa-minus text-secondary"></i>
+                        {% endif %}
                     </div>
-                    {% else %}
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="text-success">
-                                <i class="fas fa-thumbs-up me-2"></i>Optimal Selling Strategy
-                            </h6>
-                            <ul class="list-unstyled">
-                                <li class="mb-2">
-                                    <i class="fas fa-calendar-check text-success me-2"></i>
-                                    Select crop for personalized timing recommendations
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-map-marker-alt text-primary me-2"></i>
-                                    Target markets will be suggested based on your location
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-percentage text-warning me-2"></i>
-                                    Profit margin analysis available after forecast
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="text-info">
-                                <i class="fas fa-chart-line me-2"></i>Market Insights
-                            </h6>
-                            <ul class="list-unstyled">
-                                <li class="mb-2">
-                                    <i class="fas fa-robot text-primary me-2"></i>
-                                    AI-powered insights will appear here
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-chart-line text-info me-2"></i>
-                                    Real-time market analysis pending
-                                </li>
-                                <li class="mb-2">
-                                    <i class="fas fa-lightbulb text-warning me-2"></i>
-                                    Get forecast for personalized recommendations
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
+                    <small class="text-muted">{{ forecast_data.market_insights.trend.replace('_', ' ')|capitalize }}</small>
+                    {% if forecast_data.market_insights.momentum %}
+                    <small class="d-block mt-1 small">
+                        <i class="fas fa-bolt me-1"></i>{{ forecast_data.market_insights.momentum|capitalize }}
+                    </small>
                     {% endif %}
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Price Alert Setup Modal -->
-    <div class="modal fade" id="alertModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-bell me-2"></i>Setup Price Alerts
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="alertForm">
-                        <div class="mb-3">
-                            <label class="form-label">Alert Type</label>
-                            <select class="form-select">
-                                <option>Price rises above</option>
-                                <option>Price falls below</option>
-                                <option>Significant price change</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Target Price (₹/quintal)</label>
-                            <input type="number" class="form-control" placeholder="e.g., 3000">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Notification Method</label>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" checked>
-                                <label class="form-check-label">Email</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" checked>
-                                <label class="form-check-label">SMS</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox">
-                                <label class="form-check-label">WhatsApp</label>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success" onclick="saveAlert()">Setup Alert</button>
+            <div class="col-md-3 col-6">
+                <div class="metric-card">
+                    <div class="metric-label">30-Day Change</div>
+                    <div class="metric-value {% if forecast_data.market_insights.get('price_change_30d', 0) >= 0 %}price-positive{% else %}price-negative{% endif %}">
+                        {{ "%.1f"|format(forecast_data.market_insights.get('price_change_30d', 0)) }}%
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-{% if forecast_data.market_insights.get('price_change_30d', 0) >= 0 %}arrow-up{% else %}arrow-down{% endif %}"></i>
+                        Long-term trend
+                    </small>
                 </div>
             </div>
         </div>
-    </div>
+        
+        <!-- Additional Metrics Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="metric-card">
+                    <div class="metric-label">
+                        <span class="confidence-tooltip" title="Based on data availability and market volatility">
+                            Forecast Confidence <i class="fas fa-info-circle"></i>
+                        </span>
+                    </div>
+                    <div class="metric-value">{{ "%.0f"|format(forecast_data.confidence_score) }}%</div>
+                    <small class="text-muted">
+                        {% if forecast_data.confidence_score >= 80 %}High Accuracy
+                        {% elif forecast_data.confidence_score >= 60 %}Medium Accuracy
+                        {% else %}Low Accuracy{% endif %}
+                    </small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-card">
+                    <div class="metric-label">Market Volatility</div>
+                    <div class="metric-value">
+                        {% if forecast_data.market_insights.volatility == 'very_low' %}
+                            <span class="badge bg-success fs-6">Very Low</span>
+                        {% elif forecast_data.market_insights.volatility == 'low' %}
+                            <span class="badge bg-success fs-6">Low</span>
+                        {% elif forecast_data.market_insights.volatility == 'medium' %}
+                            <span class="badge bg-warning fs-6">Medium</span>
+                        {% elif forecast_data.market_insights.volatility == 'high' %}
+                            <span class="badge bg-danger fs-6">High</span>
+                        {% else %}
+                            <span class="badge bg-danger fs-6">Very High</span>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted">Price stability indicator</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="metric-card">
+                    <div class="metric-label">30-Day Average</div>
+                    <div class="metric-value">₹{{ "%.2f"|format(forecast_data.market_insights.get('avg_price_30d', 0)) }}</div>
+                    <small class="text-muted">per quintal</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Recommendations -->
+        <div class="recommendation-card">
+            <h5 class="mb-3" style="color: var(--text-success);">
+                <i class="fas fa-robot me-2"></i>AI Recommendation
+            </h5>
+            <p class="recommendation-text">{{ forecast_data.market_insights.recommendation }}</p>
+        </div>
+
+        <!-- 7-Day Forecast Preview Cards -->
+        {% if forecast_data.forecast|length > 0 %}
+        <div class="mb-4">
+            <h5 class="mb-3"><i class="fas fa-calendar-week me-2"></i>7-Day Forecast Preview</h5>
+            <div class="row g-3">
+                {% for day in forecast_data.forecast[:7] %}
+                <div class="col-md-3 col-6">
+                    <div class="forecast-preview-card">
+                        <div class="text-muted small">{{ day.date }}</div>
+                        <div class="fw-bold text-success" style="font-size: 1.2rem;">₹{{ "%.2f"|format(day.predicted_price) }}</div>
+                        <div class="text-muted small">
+                            ₹{{ "%.2f"|format(day.lower_bound) }} - ₹{{ "%.2f"|format(day.upper_bound) }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Price Chart -->
+        <div class="chart-container">
+            <h5 class="mb-3"><i class="fas fa-chart-area me-2"></i>30-Day Historical & Forecast Trend</h5>
+            <canvas id="priceChart" height="80"></canvas>
+        </div>
+
+        <!-- Enhanced Recent Daily Prices Table -->
+        <div class="price-table">
+            <h5 class="mb-3"><i class="fas fa-table me-2"></i>Recent Daily Prices (Last 10 Days)</h5>
+            
+            <!-- Desktop Table View -->
+            <div class="table-responsive d-none d-md-block">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 20%;">Date</th>
+                            <th style="width: 25%;">National Avg Price</th>
+                            <th style="width: 18%;">Min Price</th>
+                            <th style="width: 18%;">Max Price</th>
+                            <th style="width: 19%;">Markets</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for day in forecast_data.historical_data[-10:]|reverse %}
+                        <tr>
+                            <td class="text-muted">
+                                <i class="fas fa-calendar-day me-1"></i>{{ day.date }}
+                            </td>
+                            <td>
+                                <span class="fw-bold text-success fs-5">
+                                    ₹{{ "%.2f"|format(day.price) }}
+                                </span>
+                                <small class="text-muted d-block">per quintal</small>
+                            </td>
+                            <td class="text-danger">₹{{ "%.2f"|format(day.min_price) }}</td>
+                            <td class="text-primary">₹{{ "%.2f"|format(day.max_price) }}</td>
+                            <td>
+                                <a href="https://data.gov.in/search?query={{ forecast_data.commodity }}" target="_blank" rel="noopener noreferrer">
+                                    <span class="badge bg-secondary">{{ day.num_markets }} markets</span>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Mobile Card View -->
+            <div class="d-md-none">
+                {% for day in forecast_data.historical_data[-10:]|reverse %}
+                <div class="card mb-2" style="border-radius: 10px; border: 1px solid #e9ecef;">
+                    <div class="card-body p-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <small class="text-muted d-block">
+                                    <i class="fas fa-calendar-day me-1"></i>{{ day.date }}
+                                </small>
+                            </div>
+                            <a href="https://data.gov.in/search?query={{ forecast_data.commodity }}" target="_blank" rel="noopener noreferrer">
+                                <span class="badge bg-secondary">{{ day.num_markets }} markets</span>
+                            </a>
+                        </div>
+                        <div class="text-center my-2">
+                            <div class="text-muted small">National Average</div>
+                            <div class="fw-bold text-success" style="font-size: 1.5rem;">
+                                ₹{{ "%.2f"|format(day.price) }}
+                            </div>
+                            <small class="text-muted">per quintal</small>
+                        </div>
+                        <div class="d-flex justify-content-around mt-2 pt-2" style="border-top: 1px solid #f0f0f0;">
+                            <div class="text-center">
+                                <small class="text-muted d-block">Min</small>
+                                <span class="text-danger fw-semibold">₹{{ "%.2f"|format(day.min_price) }}</span>
+                            </div>
+                            <div class="text-center">
+                                <small class="text-muted d-block">Max</small>
+                                <span class="text-primary fw-semibold">₹{{ "%.2f"|format(day.max_price) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    {% elif not error_message %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <i class="fas fa-chart-line"></i>
+            <h3>Enter a Commodity Name</h3>
+            <p>Get nationwide price forecasts based on real market data from across India</p>
+            <div class="mt-4">
+                <p class="fw-semibold mb-2">Popular Commodities:</p>
+                <span class="badge bg-success m-1">Wheat</span>
+                <span class="badge bg-success m-1">Rice</span>
+                <span class="badge bg-success m-1">Onion</span>
+                <span class="badge bg-success m-1">Tomato</span>
+                <span class="badge bg-success m-1">Potato</span>
+                <span class="badge bg-success m-1">Maize</span>
+            </div>
+        </div>
+    {% endif %}
 </div>
 
 <script>
-let currentPeriod = '7d';
-let isUpdating = false; // Prevent infinite loops
-let forecastData = {{ forecast_data|tojson if forecast_data else '{}' }};
+let priceChart = null;
 
-// Initialize page functionality when loaded
-document.addEventListener('DOMContentLoaded', function() {
-    initializePriceForecast();
+// Enhanced commodity suggestions with categories
+const commodities = [
+    // Cereals
+    { name: 'Wheat', category: 'Cereals', icon: '🌾' },
+    { name: 'Rice', category: 'Cereals', icon: '🌾' },
+    { name: 'Paddy', category: 'Cereals', icon: '🌾' },
+    { name: 'Maize', category: 'Cereals', icon: '🌽' },
+    // Vegetables
+    { name: 'Potato', category: 'Vegetables', icon: '🥔' },
+    { name: 'Onion', category: 'Vegetables', icon: '🧅' },
+    { name: 'Tomato', category: 'Vegetables', icon: '🍅' },
+    { name: 'Cabbage', category: 'Vegetables', icon: '🥬' },
+    { name: 'Cauliflower', category: 'Vegetables', icon: '🥦' },
+    { name: 'Brinjal', category: 'Vegetables', icon: '🍆' },
+    { name: 'Carrot', category: 'Vegetables', icon: '🥕' },
+    // Pulses
+    { name: 'Gram', category: 'Pulses', icon: '🫘' },
+    { name: 'Tur', category: 'Pulses', icon: '🫘' },
+    { name: 'Moong', category: 'Pulses', icon: '🫘' },
+    { name: 'Urad', category: 'Pulses', icon: '🫘' },
+    // Cash Crops
+    { name: 'Cotton', category: 'Cash Crops', icon: '🌱' },
+    { name: 'Sugarcane', category: 'Cash Crops', icon: '🎋' },
+    // Oilseeds
+    { name: 'Soybean', category: 'Oilseeds', icon: '🫘' },
+    { name: 'Groundnut', category: 'Oilseeds', icon: '🥜' },
+    // Fruits
+    { name: 'Apple', category: 'Fruits', icon: '🍎' },
+    { name: 'Banana', category: 'Fruits', icon: '🍌' }
+];
+
+const commodityInput = document.getElementById('commodity');
+const suggestionsDiv = document.getElementById('suggestions');
+
+// Enhanced auto-suggestions with better matching
+commodityInput.addEventListener('input', function() {
+    const value = this.value.toLowerCase().trim();
     
-    // Form submission handler
-    document.getElementById('forecastForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        updateForecast();
-    });
+    if (value.length < 1) {
+        suggestionsDiv.style.display = 'none';
+        return;
+    }
     
-    // Update crop display name when crop selection changes
-    document.getElementById('cropSelect').addEventListener('change', function() {
-        const selectedOption = this.options[this.selectedIndex];
-        const cropName = selectedOption.text;
-        document.getElementById('cropDisplayName').textContent = cropName;
-        
-        // Auto-update forecast if location is also selected
-        const locationInput = document.querySelector('input[name="location"]');
-        if (locationInput && locationInput.value.trim()) {
-            updateForecastPreview(cropName, locationInput.value);
-        }
-    });
+    // Filter with priority: starts with > contains
+    const startsWithMatches = commodities.filter(c => 
+        c.name.toLowerCase().startsWith(value)
+    );
+    const containsMatches = commodities.filter(c => 
+        c.name.toLowerCase().includes(value) && !c.name.toLowerCase().startsWith(value)
+    );
     
-    // Real-time location input
-    document.querySelector('input[name="location"]').addEventListener('input', function() {
-        const location = this.value.trim();
-        const cropSelect = document.getElementById('cropSelect');
-        if (location.length > 2 && cropSelect.value) {
-            debounceLocationUpdate(cropSelect.options[cropSelect.selectedIndex].text, location);
-        }
-    });
+    const filtered = [...startsWithMatches, ...containsMatches].slice(0, 8);
+    
+    if (filtered.length > 0) {
+        suggestionsDiv.innerHTML = filtered.map(c => 
+            `<div class="suggestion-item" onclick="selectCommodity('${c.name}')">
+                <span class="fs-5 me-2">${c.icon}</span>
+                <span class="fw-semibold">${c.name}</span>
+                <span class="text-muted small ms-2">${c.category}</span>
+            </div>`
+        ).join('');
+        suggestionsDiv.style.display = 'block';
+    } else {
+        suggestionsDiv.innerHTML = '<div class="suggestion-item text-muted" style="cursor: default;">No matches found. Try: Wheat, Rice, Onion</div>';
+        suggestionsDiv.style.display = 'block';
+    }
 });
 
-// Initialize price forecast functionality
-function initializePriceForecast() {
-    // Add price trend animations
-    animatePriceTrends();
+function selectCommodity(commodity) {
+    commodityInput.value = commodity;
+    suggestionsDiv.style.display = 'none';
+    commodityInput.focus();
     
-    // Initialize tooltips for better UX
-    initializeTooltips();
-    
-    // Check for real-time updates if forecast data exists
-    if (forecastData && Object.keys(forecastData).length > 0) {
-        startPriceMonitoring();
+    // Show data availability hint for known commodities
+    const knownCommodities = ['Wheat', 'Rice', 'Onion', 'Tomato', 'Potato', 'Maize', 'Paddy', 'Cotton', 'Sugarcane', 'Soybean'];
+    const hint = document.getElementById('dataAvailabilityHint');
+    if (knownCommodities.includes(commodity)) {
+        hint.style.display = 'block';
+        setTimeout(() => { hint.style.display = 'none'; }, 5000);
     }
 }
 
-// Animate price trend indicators
-function animatePriceTrends() {
-    const priceTrends = document.querySelectorAll('.price-trend');
-    priceTrends.forEach((trend, index) => {
-        setTimeout(() => {
-            trend.style.opacity = '0';
-            trend.style.transform = 'translateY(20px)';
-            trend.style.transition = 'all 0.6s ease';
-            
-            setTimeout(() => {
-                trend.style.opacity = '1';
-                trend.style.transform = 'translateY(0)';
-            }, 100);
-        }, index * 150);
-    });
-}
+// Hide suggestions when clicking outside
+document.addEventListener('click', function(e) {
+    if (!commodityInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+        suggestionsDiv.style.display = 'none';
+    }
+});
 
-// Initialize tooltips for better user experience
-function initializeTooltips() {
-    const tooltipElements = [
-        { selector: '.price-metric', title: 'Click for detailed breakdown' },
-        { selector: '.forecast-period', title: 'Select forecast timeframe' }
+// Keyboard navigation for suggestions
+commodityInput.addEventListener('keydown', function(e) {
+    const items = suggestionsDiv.querySelectorAll('.suggestion-item');
+    if (items.length === 0) return;
+    
+    let currentIndex = -1;
+    items.forEach((item, index) => {
+        if (item.classList.contains('active')) {
+            currentIndex = index;
+        }
+    });
+    
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (currentIndex < items.length - 1) {
+            if (currentIndex >= 0) items[currentIndex].classList.remove('active');
+            items[currentIndex + 1].classList.add('active');
+        }
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (currentIndex > 0) {
+            items[currentIndex].classList.remove('active');
+            items[currentIndex - 1].classList.add('active');
+        }
+    } else if (e.key === 'Enter' && currentIndex >= 0) {
+        e.preventDefault();
+        items[currentIndex].click();
+    }
+});
+
+// Enhanced form submission with validation
+document.getElementById('forecastForm').addEventListener('submit', function(e) {
+    const commodityValue = commodityInput.value.trim();
+    
+    if (!commodityValue || commodityValue.length < 2) {
+        e.preventDefault();
+        alert('Please enter a valid commodity name (at least 2 characters)');
+        commodityInput.focus();
+        return false;
+    }
+    
+    // Show loading overlay
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    
+    // Disable submit button to prevent double submission
+    const submitBtn = this.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    }
+});
+
+
+{% if forecast_data and forecast_data.success %}
+// Enhanced chart initialization with smoother lines and better styling
+const historicalData = {{ forecast_data.historical_data|tojson|safe }} || [];
+const forecastData = {{ forecast_data.forecast|tojson|safe }} || [];
+
+if (historicalData.length > 0) {
+    const ctx = document.getElementById('priceChart').getContext('2d');
+
+    const labels = [
+        ...historicalData.map(d => d.date),
+        ...(forecastData.length > 0 ? forecastData.map(d => d.date) : [])
     ];
-    
-    tooltipElements.forEach(item => {
-        document.querySelectorAll(item.selector).forEach(el => {
-            el.setAttribute('title', item.title);
-            el.style.cursor = 'pointer';
-        });
-    });
-}
 
-// Enhanced forecast period selection
-function selectForecastPeriod(element, period) {
-    // Remove active class from all periods
-    document.querySelectorAll('.forecast-period').forEach(el => {
-        el.classList.remove('active');
-    });
+    const historicalPrices = historicalData.map(d => d.price);
     
-    // Add active class to selected period
-    element.classList.add('active');
-    currentPeriod = period;
+    // Connect last historical point to first forecast point
+    const forecastPrices = new Array(historicalData.length - 1).fill(null);
+    forecastPrices.push(historicalPrices[historicalPrices.length - 1]); // Connection point
+    forecastPrices.push(...(forecastData.length > 0 ? forecastData.map(d => d.predicted_price) : []));
     
-    // Update UI based on selected period
-    updateForecastDisplay(period);
+    const forecastLower = new Array(historicalData.length - 1).fill(null);
+    forecastLower.push(historicalPrices[historicalPrices.length - 1]);
+    forecastLower.push(...(forecastData.length > 0 ? forecastData.map(d => d.lower_bound) : []));
     
-    console.log('Selected forecast period:', period);
-}
+    const forecastUpper = new Array(historicalData.length - 1).fill(null);
+    forecastUpper.push(historicalPrices[historicalPrices.length - 1]);
+    forecastUpper.push(...(forecastData.length > 0 ? forecastData.map(d => d.upper_bound) : []));
 
-// Update forecast display based on selected period
-function updateForecastDisplay(period) {
-    if (!forecastData || Object.keys(forecastData).length === 0) return;
-    
-    // Update price metrics based on period
-    const periodData = forecastData[`period_${period}`] || forecastData;
-    
-    // Animate the update
-    const priceMetrics = document.getElementById('priceMetrics');
-    if (priceMetrics) {
-        priceMetrics.style.opacity = '0.7';
-        setTimeout(() => {
-            // Update values here if period-specific data is available
-            priceMetrics.style.opacity = '1';
-        }, 300);
-    }
-}
-
-// Debounced location update for better performance
-let locationUpdateTimeout;
-function debounceLocationUpdate(crop, location) {
-    clearTimeout(locationUpdateTimeout);
-    locationUpdateTimeout = setTimeout(() => {
-        updateForecastPreview(crop, location);
-    }, 500);
-}
-
-// Preview forecast updates without full form submission
-function updateForecastPreview(crop, location) {
-    if (!crop || !location) return;
-    
-    // Show loading indicator
-    showLoadingIndicator();
-    
-    // Simulate API call for quick preview (in production, make actual API call)
-    setTimeout(() => {
-        hideLoadingIndicator();
-        // Update preview data
-        console.log(`Preview update for ${crop} in ${location}`);
-    }, 1000);
-}
-
-// Enhanced forecast update with better UX
-function updateForecast() {
-    const form = document.getElementById('forecastForm');
-    const formData = new FormData(form);
-    
-    // Validate form data
-    if (!validateForecastForm(formData)) {
-        return;
-    }
-    
-    // Show enhanced loading state
-    showEnhancedLoading();
-    
-    // Submit the form to get real forecast data
-    form.submit();
-}
-
-// Validate forecast form
-function validateForecastForm(formData) {
-    const crop = formData.get('crop_type');
-    const location = formData.get('location');
-    const quantity = formData.get('quantity');
-    
-    if (!crop || !location || !quantity) {
-        showValidationError('Please fill in all required fields');
-        return false;
-    }
-    
-    if (quantity < 1) {
-        showValidationError('Quantity must be at least 1 kg');
-        return false;
-    }
-    
-    return true;
-}
-
-// Show validation error
-function showValidationError(message) {
-    // Create or update error message
-    let errorDiv = document.getElementById('validationError');
-    if (!errorDiv) {
-        errorDiv = document.createElement('div');
-        errorDiv.id = 'validationError';
-        errorDiv.className = 'alert alert-danger mt-2';
-        document.getElementById('forecastForm').appendChild(errorDiv);
-    }
-    
-    errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i>${message}`;
-    errorDiv.style.display = 'block';
-    
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-        errorDiv.style.display = 'none';
-    }, 5000);
-}
-
-// Enhanced loading indicator
-function showEnhancedLoading() {
-    const button = document.querySelector('#forecastForm button[type="submit"]');
-    const originalText = button.innerHTML;
-    
-    button.innerHTML = `
-        <div class="d-flex align-items-center">
-            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-            <span>Analyzing Market Data...</span>
-        </div>
-    `;
-    button.disabled = true;
-    
-    // Store original text for restoration
-    button.dataset.originalText = originalText;
-}
-
-// Simple loading indicator
-function showLoadingIndicator() {
-    const indicator = document.createElement('div');
-    indicator.id = 'loadingIndicator';
-    indicator.className = 'text-center p-2';
-    indicator.innerHTML = '<div class="spinner-border spinner-border-sm text-primary" role="status"></div>';
-    
-    const container = document.querySelector('.forecast-card');
-    if (container) {
-        container.appendChild(indicator);
-    }
-}
-
-function hideLoadingIndicator() {
-    const indicator = document.getElementById('loadingIndicator');
-    if (indicator) {
-        indicator.remove();
-    }
-}
-
-// Start real-time price monitoring
-function startPriceMonitoring() {
-    // Simulate real-time updates every 30 seconds
-    setInterval(() => {
-        if (forecastData && Object.keys(forecastData).length > 0) {
-            updateRealTimePrices();
+    priceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Historical National Average',
+                    data: historicalPrices.concat(new Array(forecastData.length).fill(null)),
+                    borderColor: '#0dcaf0',
+                    backgroundColor: 'rgba(13, 202, 240, 0.08)',
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 1.5,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: '#0dcaf0',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2
+                },
+                {
+                    label: 'Price Forecast',
+                    data: forecastPrices,
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.05)',
+                    borderWidth: 3,
+                    borderDash: [8, 4],
+                    fill: false,
+                    tension: 0.35,
+                    pointRadius: 3,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#28a745',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointStyle: 'circle'
+                },
+                {
+                    label: 'Upper Confidence Bound',
+                    data: forecastUpper,
+                    borderColor: 'rgba(40, 167, 69, 0.25)',
+                    backgroundColor: 'rgba(40, 167, 69, 0.08)',
+                    borderWidth: 1,
+                    borderDash: [3, 3],
+                    fill: '+1',
+                    tension: 0.35,
+                    pointRadius: 0,
+                    pointHoverRadius: 0
+                },
+                {
+                    label: 'Lower Confidence Bound',
+                    data: forecastLower,
+                    borderColor: 'rgba(40, 167, 69, 0.25)',
+                    backgroundColor: 'rgba(40, 167, 69, 0.08)',
+                    borderWidth: 1,
+                    borderDash: [3, 3],
+                    fill: false,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    pointHoverRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 15,
+                        font: {
+                            size: 12,
+                            weight: '500'
+                        },
+                        filter: function(item) {
+                            return !item.text.includes('Lower Confidence');
+                        }
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#28a745',
+                    borderWidth: 1,
+                    padding: 12,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            if (context.parsed.y !== null) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += '₹' + context.parsed.y.toFixed(2) + '/quintal';
+                                return label;
+                            }
+                            return null;
+                        },
+                        title: function(tooltipItems) {
+                            return 'Date: ' + tooltipItems[0].label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return '₹' + value.toFixed(0);
+                        },
+                        font: {
+                            size: 11
+                        },
+                        padding: 8
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.03)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45,
+                        font: {
+                            size: 10
+                        },
+                        padding: 5
+                    }
+                }
+            }
         }
-    }, 30000);
-}
-
-// Update real-time prices
-function updateRealTimePrices() {
-    // In production, this would fetch real API data
-    const priceElements = document.querySelectorAll('.price-trend');
-    priceElements.forEach(element => {
-        // Add subtle pulse animation to indicate live data
-        element.style.animation = 'pulse 0.5s ease-in-out';
-        setTimeout(() => {
-            element.style.animation = '';
-        }, 500);
     });
+} else {
+    console.warn('No historical data available for chart');
 }
-
-// Enhanced price alerts
-function setupPriceAlerts() {
-    const modal = new bootstrap.Modal(document.getElementById('alertModal'));
-    modal.show();
-}
-
-function saveAlert() {
-    // Enhanced alert saving with validation
-    const alertForm = document.getElementById('alertForm');
-    const formData = new FormData(alertForm);
-    
-    // Validate alert data
-    const targetPrice = formData.get('target_price');
-    if (!targetPrice || targetPrice <= 0) {
-        alert('Please enter a valid target price');
-        return;
-    }
-    
-    // Save alert (in production, send to backend)
-    alert('Price alert setup successfully! You will be notified when price conditions are met.');
-    
-    const modalElement = document.getElementById('alertModal');
-    if (modalElement) {
-        bootstrap.Modal.getInstance(modalElement).hide();
-    }
-}
-
-// Enhanced download functionality
-function downloadForecast() {
-    if (forecastData && Object.keys(forecastData).length > 0) {
-        // Create comprehensive report
-        const reportData = {
-            timestamp: new Date().toISOString(),
-            crop: document.getElementById('cropSelect').value,
-            crop_name: document.getElementById('cropSelect').options[document.getElementById('cropSelect').selectedIndex].text,
-            location: document.querySelector('input[name="location"]').value,
-            quantity: document.querySelector('input[name="quantity"]').value,
-            forecast_period: currentPeriod,
-            forecast_data: forecastData,
-            report_type: 'Enhanced Price Forecast Report',
-            generated_by: 'FarmLink AI'
-        };
-        
-        // Create formatted report
-        const reportContent = generateReportContent(reportData);
-        
-        // Download as JSON
-        const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `enhanced-price-forecast-${reportData.crop}-${Date.now()}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        // Show success message
-        showSuccessMessage('Enhanced forecast report downloaded successfully!');
-    } else {
-        alert('Please generate a forecast first before downloading the report.');
-    }
-}
-
-// Generate formatted report content
-function generateReportContent(data) {
-    return `
-Enhanced Price Forecast Report
-==============================
-Generated: ${new Date(data.timestamp).toLocaleString()}
-Crop: ${data.crop_name}
-Location: ${data.location}
-Quantity: ${data.quantity} kg
-Forecast Period: ${data.forecast_period}
-
-Current Market Analysis:
-- Current Price: ₹${data.forecast_data.current_price || 'N/A'}
-- 7-Day Forecast: ₹${data.forecast_data.forecast_7d || 'N/A'}
-- 30-Day Forecast: ₹${data.forecast_data.forecast_30d || 'N/A'}
-- Confidence Score: ${data.forecast_data.confidence_score || 'N/A'}%
-
-Generated by FarmLink AI - Advanced Agricultural Intelligence Platform
-    `;
-}
-
-// Show success message
-function showSuccessMessage(message) {
-    const successDiv = document.createElement('div');
-    successDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
-    successDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    successDiv.innerHTML = `
-        <i class="fas fa-check-circle me-2"></i>${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    
-    document.body.appendChild(successDiv);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (successDiv.parentNode) {
-            successDiv.remove();
-        }
-    }, 5000);
-}
-
-function updateChart(type) {
-    console.log('Chart view updated to:', type);
-}
-
-function showPriceAlert() {
-    const alertElement = document.getElementById('priceAlerts');
-    if (alertElement) {
-        alertElement.style.display = 'block';
-        setTimeout(() => {
-            alertElement.style.display = 'none';
-        }, 5000);
-    }
-}
+{% endif %}
 </script>
 {% endblock %}

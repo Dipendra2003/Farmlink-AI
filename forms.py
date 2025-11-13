@@ -654,28 +654,16 @@ class RatingFlagForm(FlaskForm):
     submit = SubmitField('Report Review')
 
 class PriceForecastForm(FlaskForm):
-    """Form for price forecast requests"""
-    crop_type = SelectField('Crop Type', choices=[
-        ('rice', 'Rice'),
-        ('wheat', 'Wheat'),
-        ('maize', 'Maize'),
-        ('sugarcane', 'Sugarcane'),
-        ('cotton', 'Cotton'),
-        ('potato', 'Potato'),
-        ('tomato', 'Tomato'),
-        ('onion', 'Onion'),
-        ('soybean', 'Soybean'),
-        ('groundnut', 'Groundnut')
-    ], validators=[DataRequired()])
-    quantity = FloatField('Quantity (Kg)', validators=[
-        DataRequired(),
-        NumberRange(min=1, message='Quantity must be at least 1 kg')
-    ])
-    location = StringField('Market Location', validators=[
-        DataRequired(),
-        Length(min=2, max=100)
-    ])
-    submit = SubmitField('Get Forecast')
+    """Simplified form for national price forecast - location-free"""
+    commodity = StringField('Commodity Name', validators=[
+        DataRequired(message='Please enter a commodity name'),
+        Length(min=2, max=100, message='Commodity name must be between 2 and 100 characters')
+    ], render_kw={
+        'placeholder': 'e.g., Wheat, Rice, Onion, Tomato',
+        'autocomplete': 'off',
+        'class': 'form-control'
+    })
+    submit = SubmitField('Get National Forecast')
 
 
 class CheckoutForm(FlaskForm):

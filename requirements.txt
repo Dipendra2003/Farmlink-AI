@@ -15,7 +15,6 @@ gunicorn
 # Payment & External Services
 razorpay
 google-generativeai
-requests
 
 # Database - PostgreSQL
 psycopg2-binary
@@ -49,5 +48,9 @@ apscheduler>=3.10.0
 # SMS Notifications
 twilio>=8.10.0
 
-# Enhanced HTTP Requests with Retry Support
-requests[security]>=2.31.0
+# Price Forecast Dependencies
+requests==2.31.0
+pandas==2.1.4
+numpy==1.26.2
+statsmodels==0.14.1
+python-dateutil==2.8.2
