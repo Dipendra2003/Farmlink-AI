@@ -13,6 +13,7 @@ from models import User
 import secrets
 import logging
 from logging_config import log_notification_operation
+from email_fallback import email_fallback
 
 class EmailService:
     """Email service using Flask-Mail"""
@@ -21,7 +22,7 @@ class EmailService:
         self.from_email = os.environ.get('MAIL_USERNAME', 'farmlink76@gmail.com')
     
     def send_email(self, to_email, subject, html_content, text_content=None):
-        """Send email using Flask-Mail"""
+        """Send email using Flask-Mail with timeout protection"""
         try:
             log_notification_operation(
                 logging.getLogger(__name__),
@@ -49,8 +50,16 @@ class EmailService:
             if text_content:
                 msg.body = text_content
             
-            # Send the email
-            mail.send(msg)
+            # Send the email with timeout protection
+            import socket
+            original_timeout = socket.getdefaulttimeout()
+            try:
+                # Set socket timeout to 10 seconds to prevent hanging
+                socket.setdefaulttimeout(10)
+                mail.send(msg)
+            finally:
+                # Restore original timeout
+                socket.setdefaulttimeout(original_timeout)
             
             log_notification_operation(
                 logging.getLogger(__name__),
@@ -62,6 +71,23 @@ class EmailService:
             
             logging.info(f"Email sent successfully to {to_email}")
             return {"success": True, "status_code": 200, "message": "Email sent successfully"}
+        except socket.timeout:
+            error_msg = f"Email timeout to {to_email}: SMTP server not responding"
+            
+            log_notification_operation(
+                logging.getLogger(__name__),
+                'send_failure',
+                notification_type=subject,
+                recipient_email=to_email,
+                success=False,
+                error=error_msg
+            )
+            
+            # Log for fallback/retry
+            email_fallback.log_failed_email(to_email, subject, html_content, error_msg)
+            
+            logging.error(error_msg)
+            return {"success": False, "error": error_msg, "status_code": 504}
         except Exception as e:
             error_msg = f"Failed to send email to {to_email}: {str(e)}"
             
@@ -73,6 +99,9 @@ class EmailService:
                 success=False,
                 error=error_msg
             )
+            
+            # Log for fallback/retry
+            email_fallback.log_failed_email(to_email, subject, html_content, error_msg)
             
             logging.exception("Detailed error traceback:")
             return {"success": False, "error": error_msg, "status_code": 500}

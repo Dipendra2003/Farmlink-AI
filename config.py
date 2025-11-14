@@ -57,6 +57,9 @@ class Config:
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@farmlink-ai.com')
+    MAIL_MAX_EMAILS = None  # No limit on emails per connection
+    MAIL_SUPPRESS_SEND = False  # Set to True to disable email sending in dev
+    MAIL_ASCII_ATTACHMENTS = False
 
 class DevelopmentConfig(Config):
     """Development configuration"""
