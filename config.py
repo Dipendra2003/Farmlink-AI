@@ -49,7 +49,11 @@ class Config:
     RATING_SUSPICIOUS_IP_THRESHOLD = 5
     RATING_SUSPICIOUS_IP_WINDOW_HOURS = 1
 
-    # Mail Configuration
+    # SendGrid Configuration (Primary)
+    SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
+    SENDGRID_FROM_EMAIL = os.environ.get('SENDGRID_FROM_EMAIL')
+    
+    # Mail Configuration (SMTP Fallback)
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
     MAIL_PORT = int(os.environ.get('MAIL_PORT', 587))
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true'

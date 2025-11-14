@@ -7,22 +7,36 @@ import os
 import random
 import string
 from datetime import datetime, timedelta
-from flask_mail import Message
-from app import db, mail
+from app import db
 from models import User
 import secrets
 import logging
 from logging_config import log_notification_operation
 from email_fallback import email_fallback
 
+# SendGrid integration
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Email, To, Content
+
 class EmailService:
-    """Email service using Flask-Mail"""
+    """Email service using SendGrid API"""
     
     def __init__(self):
-        self.from_email = os.environ.get('MAIL_USERNAME', 'farmlink76@gmail.com')
+        self.sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
+        self.from_email = os.environ.get('SENDGRID_FROM_EMAIL') or os.environ.get('MAIL_USERNAME', 'farmlink76@gmail.com')
+        self.use_sendgrid = bool(self.sendgrid_api_key)
+        
+        if self.use_sendgrid:
+            self.sg_client = SendGridAPIClient(self.sendgrid_api_key)
+            logging.info("Email service initialized with SendGrid")
+        else:
+            # Fallback to Flask-Mail if SendGrid not configured
+            from app import mail
+            self.mail = mail
+            logging.warning("SendGrid not configured, using Flask-Mail fallback")
     
     def send_email(self, to_email, subject, html_content, text_content=None):
-        """Send email using Flask-Mail with timeout protection"""
+        """Send email using SendGrid API or Flask-Mail fallback"""
         try:
             log_notification_operation(
                 logging.getLogger(__name__),
@@ -32,62 +46,68 @@ class EmailService:
                 success=None
             )
             
-            # Log mail configuration for debugging (without password)
-            from flask import current_app
-            logging.info(f"Mail Config - Server: {current_app.config.get('MAIL_SERVER')}, "
-                        f"Port: {current_app.config.get('MAIL_PORT')}, "
-                        f"TLS: {current_app.config.get('MAIL_USE_TLS')}, "
-                        f"SSL: {current_app.config.get('MAIL_USE_SSL')}, "
-                        f"Username: {current_app.config.get('MAIL_USERNAME')}, "
-                        f"Password Set: {bool(current_app.config.get('MAIL_PASSWORD'))}")
+            if self.use_sendgrid:
+                # Use SendGrid API
+                message = Mail(
+                    from_email=Email(self.from_email),
+                    to_emails=To(to_email),
+                    subject=subject,
+                    html_content=Content("text/html", html_content)
+                )
+                
+                if text_content:
+                    message.plain_text_content = Content("text/plain", text_content)
+                
+                response = self.sg_client.send(message)
+                
+                log_notification_operation(
+                    logging.getLogger(__name__),
+                    'send_success',
+                    notification_type=subject,
+                    recipient_email=to_email,
+                    success=True
+                )
+                
+                logging.info(f"Email sent successfully via SendGrid to {to_email} (Status: {response.status_code})")
+                return {"success": True, "status_code": response.status_code, "message": "Email sent successfully"}
             
-            msg = Message(
-                subject=subject,
-                sender=self.from_email,
-                recipients=[to_email]
-            )
-            msg.html = html_content
-            if text_content:
-                msg.body = text_content
-            
-            # Send the email with timeout protection
-            import socket
-            original_timeout = socket.getdefaulttimeout()
-            try:
-                # Set socket timeout to 10 seconds to prevent hanging
-                socket.setdefaulttimeout(10)
-                mail.send(msg)
-            finally:
-                # Restore original timeout
-                socket.setdefaulttimeout(original_timeout)
-            
-            log_notification_operation(
-                logging.getLogger(__name__),
-                'send_success',
-                notification_type=subject,
-                recipient_email=to_email,
-                success=True
-            )
-            
-            logging.info(f"Email sent successfully to {to_email}")
-            return {"success": True, "status_code": 200, "message": "Email sent successfully"}
-        except socket.timeout:
-            error_msg = f"Email timeout to {to_email}: SMTP server not responding"
-            
-            log_notification_operation(
-                logging.getLogger(__name__),
-                'send_failure',
-                notification_type=subject,
-                recipient_email=to_email,
-                success=False,
-                error=error_msg
-            )
-            
-            # Log for fallback/retry
-            email_fallback.log_failed_email(to_email, subject, html_content, error_msg)
-            
-            logging.error(error_msg)
-            return {"success": False, "error": error_msg, "status_code": 504}
+            else:
+                # Fallback to Flask-Mail (SMTP)
+                from flask_mail import Message
+                from flask import current_app
+                
+                logging.info(f"Mail Config - Server: {current_app.config.get('MAIL_SERVER')}, "
+                            f"Port: {current_app.config.get('MAIL_PORT')}, "
+                            f"Username: {current_app.config.get('MAIL_USERNAME')}")
+                
+                msg = Message(
+                    subject=subject,
+                    sender=self.from_email,
+                    recipients=[to_email]
+                )
+                msg.html = html_content
+                if text_content:
+                    msg.body = text_content
+                
+                import socket
+                original_timeout = socket.getdefaulttimeout()
+                try:
+                    socket.setdefaulttimeout(10)
+                    self.mail.send(msg)
+                finally:
+                    socket.setdefaulttimeout(original_timeout)
+                
+                log_notification_operation(
+                    logging.getLogger(__name__),
+                    'send_success',
+                    notification_type=subject,
+                    recipient_email=to_email,
+                    success=True
+                )
+                
+                logging.info(f"Email sent successfully via SMTP to {to_email}")
+                return {"success": True, "status_code": 200, "message": "Email sent successfully"}
+                
         except Exception as e:
             error_msg = f"Failed to send email to {to_email}: {str(e)}"
             
