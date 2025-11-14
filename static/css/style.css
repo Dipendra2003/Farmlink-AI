@@ -353,6 +353,47 @@ body.modal-open {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
+/* ===== LEFT SECTION FEATURE BOXES ===== */
+.feature-box-left {
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+.feature-box-left:hover {
+    transform: translateY(-10px) scale(1.03) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+}
+
+.feature-box-left:hover .rounded-circle {
+    transform: scale(1.15) rotate(10deg);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;
+}
+
+.feature-box-left .rounded-circle {
+    transition: all 0.4s ease;
+}
+
+.feature-box-left:hover h6 {
+    transform: translateX(5px);
+}
+
+.feature-box-left h6 {
+    transition: all 0.3s ease;
+}
+
+/* Button hover effects for left section */
+.btn[style*="background: linear-gradient(135deg, #28a745"]:hover {
+    transform: translateY(-3px) scale(1.05) !important;
+    box-shadow: 0 15px 35px rgba(40, 167, 69, 0.4) !important;
+}
+
+.btn[style*="border: 3px solid #dc3545"]:hover {
+    transform: translateY(-3px) scale(1.05) !important;
+    background: #dc3545 !important;
+    color: white !important;
+    box-shadow: 0 15px 35px rgba(220, 53, 69, 0.4) !important;
+}
+
 /* ===== CROP CARDS ===== */
 .crop-card {
     border-radius: 15px;
@@ -548,7 +589,58 @@ body.modal-open {
 }
 
 .ai-demo-box {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
+    position: relative;
+    overflow: hidden;
+    animation: demoBoxGlow 3s ease-in-out infinite;
+}
+
+.ai-demo-box::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+    animation: demoRotate 20s linear infinite;
+    z-index: 0;
+}
+
+.ai-demo-box > * {
+    position: relative;
+    z-index: 1;
+}
+
+.ai-demo-box .bg-white,
+.ai-demo-box [style*="background: #ffffff"] {
+    animation: messageSlideIn 0.6s ease-out;
+    transform-origin: left center;
+}
+
+.ai-demo-box .space-y-3 > div:nth-child(1) {
+    animation-delay: 0.2s;
+}
+
+.ai-demo-box .space-y-3 > div:nth-child(2) {
+    animation-delay: 0.5s;
+}
+
+/* Ensure text is always visible */
+.ai-demo-box p[style*="color: #212529"],
+.ai-demo-box strong[style*="color: #212529"] {
+    color: #212529 !important;
+    text-shadow: none !important;
+}
+
+.ai-demo-box .btn[style*="background: #ffffff"] {
+    transition: all 0.3s ease;
+}
+
+.ai-demo-box .btn[style*="background: #ffffff"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+    background: #f8f9fa !important;
 }
 
 /* ===== BUTTONS ===== */
@@ -1192,6 +1284,55 @@ footer a:hover {
     }
     100% {
         box-shadow: 0 0 0 0 rgba(0, 123, 255, 0);
+    }
+}
+
+@keyframes demoBoxGlow {
+    0%, 100% {
+        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+    }
+    50% {
+        box-shadow: 0 15px 60px rgba(118, 75, 162, 0.6);
+    }
+}
+
+@keyframes demoRotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes featureBoxFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes buttonPulse {
+    0%, 100% {
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+    }
+    50% {
+        box-shadow: 0 8px 25px rgba(40, 167, 69, 0.5);
     }
 }
 
