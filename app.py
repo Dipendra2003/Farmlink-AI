@@ -99,6 +99,8 @@ app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
 app.config['MAIL_DEFAULT_SENDER'] = ('FarmLink AI', os.environ.get('MAIL_DEFAULT_SENDER', 'farmlink76@gmail.com'))
 app.config['MAIL_MAX_EMAILS'] = 10
 app.config['MAIL_ASCII_ATTACHMENTS'] = False
+app.config['MAIL_SUPPRESS_SEND'] = False  # Ensure emails are actually sent
+app.config['MAIL_DEBUG'] = os.environ.get('FLASK_DEBUG', '0') == '1'  # Enable debug in development
 
 # Configure the database - PostgreSQL
 # Get DATABASE_URL from environment (supports both local and Render deployment)
@@ -151,14 +153,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 from custom_session import CustomSessionInterface
 app.session_interface = CustomSessionInterface()
 
-# Configure Flask-Mail settings
-app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER')
-app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
-app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
-app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true'
-app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'False').lower() == 'true'
-app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER')
+# Mail configuration is already set above - removed duplicate
 
 # Rating System Configuration
 app.config['RATING_EDIT_WINDOW_DAYS'] = 30

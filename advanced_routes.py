@@ -1405,7 +1405,8 @@ def inject_utility_functions():
     from datetime import datetime
     return {
         'format_datetime': format_datetime,
-        'now': datetime.utcnow
+        'now': datetime.utcnow,
+        'current_year': datetime.now().year
     }
 
 # =============================================================================

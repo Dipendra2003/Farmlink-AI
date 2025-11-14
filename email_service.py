@@ -31,6 +31,15 @@ class EmailService:
                 success=None
             )
             
+            # Log mail configuration for debugging (without password)
+            from flask import current_app
+            logging.info(f"Mail Config - Server: {current_app.config.get('MAIL_SERVER')}, "
+                        f"Port: {current_app.config.get('MAIL_PORT')}, "
+                        f"TLS: {current_app.config.get('MAIL_USE_TLS')}, "
+                        f"SSL: {current_app.config.get('MAIL_USE_SSL')}, "
+                        f"Username: {current_app.config.get('MAIL_USERNAME')}, "
+                        f"Password Set: {bool(current_app.config.get('MAIL_PASSWORD'))}")
+            
             msg = Message(
                 subject=subject,
                 sender=self.from_email,
@@ -51,6 +60,7 @@ class EmailService:
                 success=True
             )
             
+            logging.info(f"Email sent successfully to {to_email}")
             return {"success": True, "status_code": 200, "message": "Email sent successfully"}
         except Exception as e:
             error_msg = f"Failed to send email to {to_email}: {str(e)}"
