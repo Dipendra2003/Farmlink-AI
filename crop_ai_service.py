@@ -14,10 +14,21 @@ logger = logging.getLogger(__name__)
 class EnhancedCropAI:
     """Enhanced AI service for comprehensive crop suggestions - GEMINI AI ONLY"""
     
-    def __init__(self):
-        """Initialize the Gemini AI client"""
+    def __init__(self, strict_mode=None):
+        """
+        Initialize the Gemini AI client
+        
+        Args:
+            strict_mode: If True, reject crops with quality score < 70.
+                        If None, reads from Config.CROP_AI_STRICT_MODE (default: True)
+        """
         self.client = None
         self.model = None
+        # Read from config if not explicitly provided
+        if strict_mode is None:
+            self.strict_mode = getattr(Config, 'CROP_AI_STRICT_MODE', True)
+        else:
+            self.strict_mode = strict_mode
         self.initialize_client()
     
     def initialize_client(self):
@@ -30,8 +41,8 @@ class EnhancedCropAI:
                 raise ValueError("Gemini API key is required for crop suggestions service")
             
             genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-2.0-flash')
-            logger.info("Gemini AI client initialized successfully with gemini-2.0-flash model")
+            self.model = genai.GenerativeModel('gemini-2.5-flash-lite')
+            logger.info("Gemini AI client initialized successfully with gemini-2.5-flash-lite model")
             
         except Exception as e:
             logger.error(f"CRITICAL: Failed to initialize Gemini AI client: {e}")
@@ -50,6 +61,7 @@ class EnhancedCropAI:
         """
         max_retries = 2
         retry_count = 0
+        last_error = None
         
         while retry_count <= max_retries:
             try:
@@ -58,8 +70,12 @@ class EnhancedCropAI:
                     logger.error("Gemini AI model not available - cannot provide suggestions")
                     return {
                         'success': False,
-                        'error': 'AI service not available. Please ensure Gemini API key is configured.',
-                        'suggestions': []
+                        'error': 'AI service is not configured. Please contact support.',
+                        'error_type': 'no_api_key',
+                        'service_status': {
+                            'gemini_available': False,
+                            'api_key_configured': False
+                        }
                     }
                 
                 # Create comprehensive prompt for Gemini AI
@@ -80,50 +96,110 @@ class EnhancedCropAI:
                 # Parse and structure the response
                 suggestions = service._parse_ai_response(response.text)
                 
+                # Check if we got any valid suggestions
+                if not suggestions:
+                    logger.error("AI response parsing failed - no valid crop data extracted")
+                    return {
+                        'success': False,
+                        'error': 'AI response could not be processed. Our team has been notified.',
+                        'error_type': 'parsing_error',
+                        'service_status': {
+                            'gemini_available': True,
+                            'api_key_configured': True
+                        }
+                    }
+                
                 # Add additional insights and metadata
                 enhanced_suggestions = service._enhance_suggestions(suggestions, input_data)
                 
-                logger.info(f"Successfully generated {len(enhanced_suggestions)} crop suggestions")
+                # Calculate data quality metrics
+                quality_scores = [s.get('data_quality_score', 0) for s in enhanced_suggestions]
+                min_quality_score = getattr(Config, 'CROP_AI_MIN_QUALITY_SCORE', 70)
+                crops_with_complete_data = sum(1 for score in quality_scores if score >= min_quality_score)
+                crops_with_partial_data = len(quality_scores) - crops_with_complete_data
+                average_quality_score = round(sum(quality_scores) / len(quality_scores), 1) if quality_scores else 0
+                
+                logger.info(f"Successfully generated {len(enhanced_suggestions)} crop suggestions with average quality score {average_quality_score}")
+                
+                # Log retry success if this was a retry attempt
+                if retry_count > 0:
+                    logger.info(f"Request succeeded after {retry_count} retry attempt(s)")
+                
                 return {
                     'success': True,
                     'suggestions': enhanced_suggestions,
                     'input_summary': input_data,
                     'generated_at': datetime.now().isoformat(),
                     'total_suggestions': len(enhanced_suggestions),
-                    'ai_model': 'gemini-2.0-flash',
-                    'source': 'Gemini AI - Real-time Analysis'
+                    'ai_model': 'Farmlnk AI',
+                    'source': 'Farmlink AI - Real-time Analysis',
+                    'data_quality_metrics': {
+                        'average_quality_score': average_quality_score,
+                        'crops_with_complete_data': crops_with_complete_data,
+                        'crops_with_partial_data': crops_with_partial_data
+                    }
                 }
                 
             except Exception as e:
-                retry_count += 1
+                last_error = e
                 error_msg = str(e)
+                error_type = type(e).__name__
                 
-                # Check if it's a timeout error and we can retry
-                if '504' in error_msg or 'timeout' in error_msg.lower():
+                # Check for timeout indicators: 504 status, timeout keywords, deadline exceeded
+                is_timeout_error = (
+                    '504' in error_msg or 
+                    'timeout' in error_msg.lower() or
+                    'deadline exceeded' in error_msg.lower() or
+                    'timed out' in error_msg.lower()
+                )
+                
+                # Log detailed error information
+                logger.error(f"Error on attempt {retry_count + 1}/{max_retries + 1}: {error_type}: {error_msg}")
+                
+                if is_timeout_error:
+                    # Timeout error - retry if we haven't exceeded max retries
+                    retry_count += 1
                     if retry_count <= max_retries:
-                        logger.warning(f"Timeout error on attempt {retry_count}/{max_retries + 1}. Retrying...")
+                        logger.warning(f"Timeout error detected (type: {error_type}). Retrying... (attempt {retry_count + 1}/{max_retries + 1})")
+                        logger.debug(f"Timeout error details: {error_msg}")
                         continue
                     else:
-                        logger.error(f"Max retries reached. Final error: {e}")
+                        logger.error(f"Max retries ({max_retries}) reached after timeout errors")
+                        logger.error(f"All retry attempts failed with timeout. Last error: {error_type}: {error_msg}")
                         return {
                             'success': False,
-                            'error': 'The AI service is experiencing high load. Please try again in a moment.',
-                            'suggestions': []
+                            'error': 'Request timed out. The AI service is experiencing high load. Please try again.',
+                            'error_type': 'timeout',
+                            'service_status': {
+                                'gemini_available': True,
+                                'api_key_configured': True
+                            }
                         }
                 else:
-                    # Non-timeout error, don't retry
-                    logger.error(f"Error generating crop suggestions from Gemini AI: {e}")
+                    # Non-timeout error - don't retry, return immediately
+                    logger.error(f"Non-timeout error detected (type: {error_type}). Not retrying.")
+                    logger.error(f"Error details: {error_msg}")
+                    logger.info(f"Skipping retry for non-timeout error type: {error_type}")
                     return {
                         'success': False,
-                        'error': f'AI analysis failed: {error_msg}',
-                        'suggestions': []
+                        'error': 'AI service is temporarily unavailable. Please try again in a few minutes.',
+                        'error_type': 'api_unavailable',
+                        'service_status': {
+                            'gemini_available': False,
+                            'api_key_configured': True
+                        }
                     }
         
         # Should not reach here, but just in case
+        logger.error(f"Unexpected exit from retry loop. Last error: {last_error}")
         return {
             'success': False,
-            'error': 'Unexpected error occurred',
-            'suggestions': []
+            'error': 'Unexpected error occurred. Please try again.',
+            'error_type': 'api_unavailable',
+            'service_status': {
+                'gemini_available': False,
+                'api_key_configured': False
+            }
         }
 
     def _create_comprehensive_prompt(self, input_data: Dict[str, Any]) -> str:
@@ -273,7 +349,7 @@ Return ONLY the JSON array. No markdown, no explanations, no additional text.
         return prompt
 
     def _parse_ai_response(self, response_text: str) -> List[Dict[str, Any]]:
-        """Parse AI response and extract structured data - Enhanced JSON parsing"""
+        """Parse AI response and extract structured data - JSON only, no fallback"""
         try:
             # Clean the response text
             cleaned_text = response_text.strip()
@@ -291,72 +367,181 @@ Return ONLY the JSON array. No markdown, no explanations, no additional text.
             
             if json_match:
                 json_str = json_match.group(0)
-                crops_data = json.loads(json_str)
+                
+                # Additional JSON cleaning to fix common issues
+                # Fix trailing commas before closing brackets/braces
+                json_str = re.sub(r',(\s*[}\]])', r'\1', json_str)
+                # Fix missing commas between array elements (common AI mistake)
+                json_str = re.sub(r'}\s*{', r'},{', json_str)
+                # Remove any control characters that might break JSON
+                json_str = ''.join(char for char in json_str if ord(char) >= 32 or char in '\n\r\t')
+                
+                try:
+                    crops_data = json.loads(json_str)
+                except json.JSONDecodeError as json_err:
+                    # Log the problematic JSON for debugging
+                    logger.error(f"JSON decode error at position {json_err.pos}: {json_err.msg}")
+                    logger.debug(f"Problematic JSON snippet: {json_str[max(0, json_err.pos-100):min(len(json_str), json_err.pos+100)]}")
+                    
+                    # Try to salvage partial data by finding complete objects
+                    logger.info("Attempting to salvage partial JSON data...")
+                    crops_data = self._salvage_partial_json(json_str)
+                    
+                    if not crops_data:
+                        logger.error("Could not salvage any valid crop data from malformed JSON")
+                        return []
                 
                 # Validate and clean each crop entry
                 validated_crops = []
                 for crop in crops_data:
                     if isinstance(crop, dict) and 'crop_name' in crop:
                         validated_crop = self._validate_crop_data(crop)
-                        validated_crops.append(validated_crop)
+                        if validated_crop:  # Only add if validation passed
+                            validated_crops.append(validated_crop)
                 
                 if validated_crops:
                     logger.info(f"Successfully parsed {len(validated_crops)} crops from Gemini AI")
                     return validated_crops
+                else:
+                    logger.warning("No valid crops after validation")
+                    return []
             
-            # If JSON parsing fails, try to extract structured data from text
-            logger.warning("JSON parsing failed, attempting text parsing")
-            return self._parse_text_response(cleaned_text)
+            # If JSON parsing fails, return empty list - no fallback to text parsing
+            logger.error("JSON parsing failed - no valid JSON array found in AI response")
+            return []
             
         except json.JSONDecodeError as e:
             logger.error(f"JSON decode error: {e}")
-            return self._parse_text_response(response_text)
+            return []
         except Exception as e:
             logger.error(f"Error parsing AI response: {e}")
-            # Return empty list - no fallback to mock data
             return []
     
-    def _validate_crop_data(self, crop: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate and standardize crop data from AI response - Ensure real data quality"""
+    def _salvage_partial_json(self, json_str: str) -> List[Dict[str, Any]]:
+        """
+        Attempt to extract valid crop objects from malformed JSON.
+        This is a fallback when the main JSON parsing fails.
+        """
+        crops = []
+        try:
+            # Find all complete object patterns that look like crop entries
+            # Pattern: { ... "crop_name": "..." ... }
+            object_pattern = r'\{[^{}]*"crop_name"\s*:\s*"[^"]*"[^{}]*\}'
+            
+            # Find all potential crop objects
+            potential_objects = re.finditer(object_pattern, json_str, re.DOTALL)
+            
+            for match in potential_objects:
+                obj_str = match.group(0)
+                try:
+                    # Try to parse this individual object
+                    crop_obj = json.loads(obj_str)
+                    if isinstance(crop_obj, dict) and 'crop_name' in crop_obj:
+                        crops.append(crop_obj)
+                        logger.debug(f"Salvaged crop object: {crop_obj.get('crop_name')}")
+                except json.JSONDecodeError:
+                    # This object is also malformed, skip it
+                    continue
+            
+            if crops:
+                logger.info(f"Salvaged {len(crops)} crop objects from malformed JSON")
+            
+            return crops
+            
+        except Exception as e:
+            logger.error(f"Error during JSON salvage operation: {e}")
+            return []
+    
+    def _validate_crop_data(self, crop: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Validate and standardize crop data from AI response - Strict validation, no fallback values"""
         
-        # Reject crops with generic/dummy data
-        crop_name = str(crop.get('crop_name', 'Unknown Crop'))
-        if crop_name == 'Unknown Crop' or not crop_name.strip():
-            logger.warning("Rejecting crop with no name")
+        # Define placeholder patterns to detect and reject
+        PLACEHOLDER_PATTERNS = [
+            'variable', 'based on conditions', 'not available',
+            'not specified', 'x kg', 'x quintals', 'consult',
+            'check local', 'data not available', 'varies',
+            'depends on', 'to be determined', 'tbd', 'n/a'
+        ]
+        
+        # Validate crop name
+        crop_name = str(crop.get('crop_name', ''))
+        if not crop_name.strip():
+            logger.warning("Rejecting crop with empty crop name")
             return None
         
-        # Validate yield data - reject "variable" or generic responses
-        expected_yield = crop.get('expected_yield', '')
-        if not expected_yield or 'variable' in str(expected_yield).lower() or 'based on conditions' in str(expected_yield).lower():
-            logger.warning(f"Crop {crop_name} has generic yield data, requesting specific data")
-            # Keep it but flag for improvement
-            expected_yield = crop.get('expected_yield', 'Data not available - consult local agricultural office')
+        # Reject generic crop names
+        GENERIC_CROP_NAMES = [
+            'rice', 'wheat', 'cotton', 'maize', 'corn',
+            'unknown crop', 'crop', 'unknown', 'not specified',
+            'barley', 'millet', 'sorghum', 'sugarcane',
+            'pulses', 'vegetables', 'fruits'
+        ]
         
+        crop_name_lower = crop_name.lower().strip()
+        
+        # Check if crop name is exactly a generic name (not a variety)
+        if crop_name_lower in GENERIC_CROP_NAMES:
+            logger.warning(f"Rejecting crop with generic name: '{crop_name}'. Crop names must include specific varieties.")
+            return None
+        
+        # Ensure crop name is properly capitalized and formatted
+        # Capitalize first letter of each word for proper formatting
+        crop_name = ' '.join(word.capitalize() for word in crop_name.split())
+        crop['crop_name'] = crop_name
+        
+        # Log warning if crop name seems too short or generic
+        if len(crop_name) < 4:
+            logger.warning(f"Crop name '{crop_name}' is very short and may not be specific enough")
+        
+        # Check if crop name contains variety information (e.g., "Basmati Rice - Pusa 1121")
+        # This is a quality indicator but not a rejection criterion
+        if '-' not in crop_name and len(crop_name.split()) < 2:
+            logger.warning(f"Crop name '{crop_name}' may lack variety information. Specific varieties are preferred.")
+        
+        # Build validated crop data - no default/fallback values
         validated = {
             'crop_name': crop_name,
-            'suitability_score': max(1, min(100, int(crop.get('suitability_score', 75)))),
-            'suitability_category': crop.get('suitability_category', 'Moderately Suitable'),
-            'expected_yield': expected_yield,
-            'time_to_harvest': crop.get('time_to_harvest', '90-120 days'),
-            'profitability': crop.get('profitability', 'Medium'),
-            'water_requirements': crop.get('water_requirements', 'Medium'),
-            'fertilizer_needs': crop.get('fertilizer_needs', 'Consult soil test for specific NPK requirements'),
-            'pesticide_recommendations': crop.get('pesticide_recommendations', 'Use integrated pest management - consult local agricultural extension officer'),
-            'irrigation_schedule': crop.get('irrigation_schedule', 'Based on soil moisture monitoring and crop stage'),
-            'disease_resistance': crop.get('disease_resistance', 'Medium'),
-            'market_demand': crop.get('market_demand', 'Check local mandi prices and demand'),
+            'suitability_score': max(1, min(100, int(crop.get('suitability_score', 0)))) if crop.get('suitability_score') else 0,
+            'suitability_category': crop.get('suitability_category', ''),
+            'expected_yield': crop.get('expected_yield', ''),
+            'time_to_harvest': crop.get('time_to_harvest', ''),
+            'profitability': crop.get('profitability', ''),
+            'water_requirements': crop.get('water_requirements', ''),
+            'fertilizer_needs': crop.get('fertilizer_needs', ''),
+            'pesticide_recommendations': crop.get('pesticide_recommendations', ''),
+            'irrigation_schedule': crop.get('irrigation_schedule', ''),
+            'disease_resistance': crop.get('disease_resistance', ''),
+            'market_demand': crop.get('market_demand', ''),
             'growing_tips': crop.get('growing_tips', []) if isinstance(crop.get('growing_tips'), list) else [],
-            'estimated_cost': crop.get('estimated_cost', '₹25,000-35,000/hectare'),
-            'estimated_revenue': crop.get('estimated_revenue', '₹60,000-90,000/hectare'),
+            'estimated_cost': crop.get('estimated_cost', ''),
+            'estimated_revenue': crop.get('estimated_revenue', ''),
             'risk_factors': crop.get('risk_factors', []) if isinstance(crop.get('risk_factors'), list) else [],
             'best_practices': crop.get('best_practices', []) if isinstance(crop.get('best_practices'), list) else [],
-            'yield_prediction': crop.get('yield_prediction', 'Yield depends on proper management practices and weather conditions'),
-            'soil_health_impact': crop.get('soil_health_impact', 'Follow crop rotation for maintaining soil health'),
-            'climate_resilience': crop.get('climate_resilience', 'Moderate resilience to climate variations'),
-            'government_schemes': crop.get('government_schemes', 'PM-KISAN, Crop Insurance (PMFBY), check MSP eligibility')
+            'yield_prediction': crop.get('yield_prediction', ''),
+            'soil_health_impact': crop.get('soil_health_impact', ''),
+            'climate_resilience': crop.get('climate_resilience', ''),
+            'government_schemes': crop.get('government_schemes', '')
         }
         
-        # Calculate ROI with better error handling
+        # Check critical fields for placeholder patterns
+        critical_fields = {
+            'expected_yield': validated['expected_yield'],
+            'estimated_cost': validated['estimated_cost'],
+            'estimated_revenue': validated['estimated_revenue'],
+            'fertilizer_needs': validated['fertilizer_needs'],
+            'market_demand': validated['market_demand']
+        }
+        
+        # Log warnings when placeholder patterns are detected
+        for field_name, field_value in critical_fields.items():
+            field_value_lower = str(field_value).lower()
+            for pattern in PLACEHOLDER_PATTERNS:
+                if pattern in field_value_lower:
+                    logger.warning(f"Placeholder pattern '{pattern}' detected in {field_name} for crop {crop_name}: {field_value}")
+                    break
+        
+        # Calculate ROI from parsed data (no fallback estimates)
+        validated['roi_percentage'] = 0
         try:
             cost_str = str(validated['estimated_cost']).replace('₹', '').replace(',', '').replace('/hectare', '').replace('/acre', '').split('-')[0].strip()
             revenue_str = str(validated['estimated_revenue']).replace('₹', '').replace(',', '').replace('/hectare', '').replace('/acre', '').split('-')[0].strip()
@@ -372,95 +557,94 @@ Return ONLY the JSON array. No markdown, no explanations, no additional text.
                 if cost > 0:
                     roi = ((revenue - cost) / cost) * 100
                     validated['roi_percentage'] = round(roi, 1)
+                    logger.debug(f"ROI calculated for {crop_name}: {validated['roi_percentage']}% (cost: ₹{cost}, revenue: ₹{revenue})")
                 else:
-                    validated['roi_percentage'] = 0
+                    logger.warning(f"ROI calculation failed for {crop_name}: cost is zero or negative (cost: {cost})")
             else:
-                validated['roi_percentage'] = 0
-                logger.warning(f"Could not calculate ROI for {crop_name}: cost={cost_str}, revenue={revenue_str}")
+                logger.warning(f"ROI calculation failed for {crop_name}: could not parse cost/revenue data (cost: '{cost_str}', revenue: '{revenue_str}')")
                 
         except (ValueError, ZeroDivisionError, AttributeError) as e:
-            validated['roi_percentage'] = 0
-            logger.warning(f"ROI calculation error for {crop_name}: {e}")
+            logger.warning(f"ROI calculation failed for {crop_name}: {type(e).__name__}: {e} (cost: '{validated['estimated_cost']}', revenue: '{validated['estimated_revenue']}')")
         
-        # Add data quality score
-        quality_score = 100
-        if 'variable' in str(validated['expected_yield']).lower():
-            quality_score -= 20
-        if 'not available' in str(validated['expected_yield']).lower():
-            quality_score -= 30
-        if validated['roi_percentage'] == 0:
-            quality_score -= 10
-        if not validated['growing_tips']:
-            quality_score -= 10
-        if not validated['risk_factors']:
-            quality_score -= 10
-        if not validated['best_practices']:
-            quality_score -= 10
+        # Calculate data quality score using the new algorithm
+        validated['data_quality_score'] = self._calculate_data_quality_score(validated, PLACEHOLDER_PATTERNS)
         
-        validated['data_quality_score'] = max(0, quality_score)
+        # Get minimum quality score threshold from config
+        min_quality_score = getattr(Config, 'CROP_AI_MIN_QUALITY_SCORE', 70)
+        
+        # Log warning if quality score is below threshold
+        if validated['data_quality_score'] < min_quality_score:
+            logger.warning(f"Low data quality score ({validated['data_quality_score']}) for crop {crop_name}")
+            
+            # In strict mode, reject crops with quality score below threshold
+            if self.strict_mode:
+                logger.warning(f"Rejecting crop {crop_name} due to low quality score ({validated['data_quality_score']} < {min_quality_score}) in strict mode")
+                return None
         
         return validated
-
-    def _parse_text_response(self, text: str) -> List[Dict[str, Any]]:
-        """Parse text response when JSON parsing fails - Last resort parsing"""
-        crops = []
-        lines = text.split('\n')
-        current_crop = None
+    
+    def _calculate_data_quality_score(self, crop_data: Dict[str, Any], placeholder_patterns: List[str]) -> int:
+        """
+        Calculate quality score based on data completeness and specificity.
         
-        # Common Indian crop names for pattern matching
-        crop_indicators = [
-            'rice', 'wheat', 'maize', 'cotton', 'sugarcane', 'potato', 'tomato', 'onion',
-            'bajra', 'jowar', 'barley', 'mustard', 'groundnut', 'soybean', 'pulses',
-            'chana', 'masoor', 'moong', 'urad', 'tur', 'arhar', 'sesame', 'sunflower'
+        Scoring:
+        - Start with 100 points
+        - Deduct points for each quality issue
+        
+        Args:
+            crop_data: Validated crop data dictionary
+            placeholder_patterns: List of placeholder patterns to check for
+            
+        Returns:
+            Quality score from 0-100
+        """
+        score = 100
+        crop_name = crop_data.get('crop_name', '')
+        
+        # Check for placeholder patterns in critical fields (-30 points each)
+        critical_fields = [
+            'expected_yield',
+            'estimated_cost',
+            'estimated_revenue',
+            'fertilizer_needs',
+            'market_demand'
         ]
         
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            
-            # Check if line contains a crop name
-            line_lower = line.lower()
-            if any(crop in line_lower for crop in crop_indicators):
-                # Save previous crop if exists
-                if current_crop and 'crop_name' in current_crop:
-                    crops.append(self._validate_crop_data(current_crop))
-                
-                # Start new crop
-                current_crop = {
-                    'crop_name': line.strip('*- ').title(),
-                    'suitability_score': 75,  # Default moderate score
-                    'suitability_category': 'Moderately Suitable',
-                    'expected_yield': 'Variable based on conditions',
-                    'time_to_harvest': '90-120 days',
-                    'profitability': 'Medium',
-                    'water_requirements': 'Medium',
-                    'fertilizer_needs': 'Standard NPK application as per soil test',
-                    'pesticide_recommendations': 'Use integrated pest management',
-                    'irrigation_schedule': 'Regular irrigation based on crop stage',
-                    'disease_resistance': 'Medium',
-                    'market_demand': 'Good local market demand',
-                    'growing_tips': ['Follow recommended spacing', 'Monitor for pests', 'Timely harvesting'],
-                    'estimated_cost': '₹25,000-35,000',
-                    'estimated_revenue': '₹60,000-90,000',
-                    'risk_factors': ['Weather dependency', 'Market price fluctuation'],
-                    'best_practices': ['Soil testing before planting', 'Quality seed selection', 'Proper water management'],
-                    'yield_prediction': 'Good yield expected with proper management',
-                    'soil_health_impact': 'Maintains soil health with proper rotation',
-                    'climate_resilience': 'Moderately resilient to climate variations',
-                    'government_schemes': 'Eligible for crop insurance and input subsidies'
-                }
+        for field in critical_fields:
+            value = str(crop_data.get(field, '')).lower()
+            for pattern in placeholder_patterns:
+                if pattern in value:
+                    score -= 30
+                    break  # Only deduct once per field
         
-        # Add the last crop
-        if current_crop and 'crop_name' in current_crop:
-            crops.append(self._validate_crop_data(current_crop))
+        # Check for empty lists (-10 points each)
+        list_fields = ['growing_tips', 'risk_factors', 'best_practices']
+        for field in list_fields:
+            if not crop_data.get(field):
+                score -= 10
         
-        if not crops:
-            logger.warning("No crops could be parsed from AI response")
-            return []
+        # Check for zero ROI (-10 points)
+        if crop_data.get('roi_percentage', 0) == 0:
+            score -= 10
         
-        logger.info(f"Text parsing extracted {len(crops)} crops")
-        return crops
+        # Check for generic crop names (-20 points for borderline cases)
+        generic_names = [
+            'rice', 'wheat', 'cotton', 'maize', 'corn',
+            'unknown crop', 'crop', 'unknown', 'barley',
+            'millet', 'sorghum', 'sugarcane', 'pulses',
+            'vegetables', 'fruits'
+        ]
+        crop_name_lower = crop_name.lower().strip()
+        if crop_name_lower in generic_names:
+            score -= 20
+        
+        # Check if crop name lacks variety information (-10 points)
+        if '-' not in crop_name and len(crop_name.split()) < 2:
+            score -= 10
+        
+        return max(0, score)
+
+
 
     def _enhance_suggestions(self, suggestions: List[Dict[str, Any]], input_data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Enhance suggestions with additional calculations and insights"""
@@ -472,21 +656,10 @@ Return ONLY the JSON array. No markdown, no explanations, no additional text.
             # Add ranking
             enhanced_crop['rank'] = i + 1
             
-            # Ensure ROI is calculated if not already present
-            if 'roi_percentage' not in enhanced_crop or enhanced_crop['roi_percentage'] == 0:
-                try:
-                    cost_str = str(crop.get('estimated_cost', '25000')).replace('₹', '').replace(',', '').split('-')[0]
-                    revenue_str = str(crop.get('estimated_revenue', '60000')).replace('₹', '').replace(',', '').split('-')[0]
-                    
-                    cost = float(re.sub(r'[^\d.]', '', cost_str))
-                    revenue = float(re.sub(r'[^\d.]', '', revenue_str))
-                    
-                    if cost > 0:
-                        roi = ((revenue - cost) / cost) * 100
-                        enhanced_crop['roi_percentage'] = round(roi, 1)
-                    
-                except (ValueError, ZeroDivisionError):
-                    enhanced_crop['roi_percentage'] = 0
+            # Ensure ROI is present (0 indicates missing/invalid data)
+            if 'roi_percentage' not in enhanced_crop:
+                enhanced_crop['roi_percentage'] = 0
+                logger.warning(f"ROI not found for {crop.get('crop_name', 'unknown crop')} - setting to 0")
             
             # Add suitability factors based on input
             enhanced_crop['suitability_factors'] = self._calculate_suitability_factors(crop, input_data)
@@ -648,10 +821,12 @@ Return ONLY the JSON array. No markdown, no explanations, no additional text.
             
             # Create comparison prompt
             prompt = f"""
-You are an agricultural expert. Compare the following crops based on {comparison_factor}:
+You are an agricultural expert specializing in Indian agriculture. Compare the following crops based on {comparison_factor}:
 
 Crops to compare: {', '.join(crop_names)}
 Comparison factor: {comparison_factor}
+
+IMPORTANT: Use Indian Rupee (₹) for ALL monetary values. DO NOT use dollar signs ($) or any other currency.
 
 Provide a detailed comparison with the following structure:
 {{
@@ -663,18 +838,20 @@ Provide a detailed comparison with the following structure:
       "advantages": ["advantage1", "advantage2"],
       "disadvantages": ["disadvantage1", "disadvantage2"],
       "key_metrics": {{
-        "yield_potential": "description",
-        "investment_required": "amount",
-        "market_price": "price_range",
+        "yield_potential": "description with specific numbers",
+        "investment_required": "amount in Indian Rupees (₹) - e.g., ₹1,000 - ₹5,000+ per acre",
+        "market_price": "price range in Indian Rupees (₹) - e.g., ₹0.20 - ₹1.50+ per pound",
         "risk_level": "High/Medium/Low"
       }},
       "recommendation": "detailed recommendation"
     }}
   ],
   "overall_recommendation": "which crop is best and why",
-  "market_insights": "current market analysis",
+  "market_insights": "current market analysis with Indian Rupee (₹) prices",
   "risk_assessment": "comparative risk analysis"
 }}
+
+CRITICAL: All prices and costs MUST be in Indian Rupees (₹). Never use $ or USD.
 
 Return only valid JSON, no additional text.
 """
@@ -719,7 +896,7 @@ Return only valid JSON, no additional text.
                     'success': True,
                     'comparison': comparison_data,
                     'generated_at': datetime.now().isoformat(),
-                    'ai_model': 'gemini-2.0-flash'
+                    'ai_model': 'gemini-2.5-flash-lite'
                 }
             except (json.JSONDecodeError, ValueError) as e:
                 logger.error(f"JSON parsing error: {e}")
@@ -798,7 +975,7 @@ Return only valid JSON, no additional text.
             Make recommendations specific to Indian agricultural conditions and include both chemical and organic options.
             """
             
-            model = genai.GenerativeModel('gemini-2.0-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash-lite')
             response = model.generate_content(prompt)
             
             # Try to parse JSON response
@@ -905,7 +1082,7 @@ Return only valid JSON, no additional text.
             Focus on Indian agricultural conditions and include water-efficient practices.
             """
             
-            model = genai.GenerativeModel('gemini-2.0-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash-lite')
             response = model.generate_content(prompt)
             
             # Try to parse JSON response
@@ -1005,7 +1182,7 @@ Return only valid JSON, no additional text.
             Base predictions on Indian agricultural data and current market conditions.
             """
             
-            model = genai.GenerativeModel('gemini-2.0-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash-lite')
             response = model.generate_content(prompt)
             
             # Try to parse JSON response
@@ -1091,7 +1268,7 @@ Return only valid JSON, no additional text.
             Focus on crops suitable for Indian climate and {season} season conditions.
             """
             
-            model = genai.GenerativeModel('gemini-2.0-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash-lite')
             response = model.generate_content(prompt)
             
             # Try to parse JSON response
@@ -1116,22 +1293,13 @@ Return only valid JSON, no additional text.
                 "error": f"Failed to get seasonal recommendations: {str(e)}"
             }
 
-# Legacy support - redirect to new methods  
-def get_crop_suggestions(input_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Legacy function - redirects to new Gemini AI implementation"""
-    return EnhancedCropAI.get_smart_crop_suggestions(input_data)
-
-def compare_crops(crop_names: List[str], comparison_factor: str = 'profitability') -> Dict[str, Any]:
-    """Legacy function - redirects to new Gemini AI implementation"""
-    return EnhancedCropAI.compare_crops_analysis(crop_names, comparison_factor)
-
 def get_crop_service_status() -> Dict[str, Any]:
     """Get the status of crop AI service"""
     try:
         service = EnhancedCropAI()
         return {
             'service_available': service.model is not None,
-            'model_name': 'gemini-2.0-flash',
+            'model_name': 'gemini-2.5-flash-lite',
             'capabilities': [
                 'crop_suggestions',
                 'crop_comparison', 

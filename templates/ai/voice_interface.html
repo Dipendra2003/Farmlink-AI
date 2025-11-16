@@ -529,7 +529,7 @@
 
     /* ========== EMPTY STATE ========== */
     .empty-state {
-        max-width: 900px;
+        max-width: 700px;
         width: 100%;
         display: flex;
         flex-direction: column;
@@ -537,12 +537,12 @@
         justify-content: center;
         min-height: calc(100vh - 200px);
         text-align: center;
-        padding: 60px 20px 40px;
+        padding: 30px 20px 20px;
     }
 
     .empty-icon {
-        font-size: 72px;
-        margin-bottom: 24px;
+        font-size: 48px;
+        margin-bottom: 16px;
         opacity: 0.9;
         animation: float 3s ease-in-out infinite;
     }
@@ -560,32 +560,32 @@
     }
 
     .empty-title {
-        font-size: 36px;
+        font-size: 28px;
         font-weight: 600;
         color: var(--text-primary);
-        margin-bottom: 16px;
+        margin-bottom: 12px;
         letter-spacing: -0.5px;
     }
 
     .empty-subtitle {
-        font-size: 18px;
+        font-size: 15px;
         color: var(--text-secondary);
-        margin-bottom: 48px;
+        margin-bottom: 24px;
         max-width: 600px;
     }
 
     .quick-actions {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+        gap: 10px;
         width: 100%;
-        max-width: 900px;
+        max-width: 650px;
     }
 
     .quick-action-card {
         background: var(--message-ai-bg);
-        padding: 20px;
-        border-radius: 12px;
+        padding: 14px;
+        border-radius: 10px;
         cursor: pointer;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         border: 1px solid rgba(0, 0, 0, 0.1);
@@ -621,8 +621,8 @@
     }
 
     .quick-action-icon {
-        font-size: 32px;
-        margin-bottom: 12px;
+        font-size: 24px;
+        margin-bottom: 8px;
         display: block;
         transition: transform 0.3s ease;
         position: relative;
@@ -634,18 +634,18 @@
     }
 
     .quick-action-title {
-        font-size: 15px;
+        font-size: 14px;
         font-weight: 600;
         color: var(--text-primary);
-        margin-bottom: 6px;
+        margin-bottom: 4px;
         position: relative;
         z-index: 1;
     }
 
     .quick-action-desc {
-        font-size: 13px;
+        font-size: 12px;
         color: var(--text-secondary);
-        line-height: 1.5;
+        line-height: 1.4;
         position: relative;
         z-index: 1;
     }
@@ -1765,6 +1765,11 @@
 
     ::-webkit-scrollbar-thumb:hover {
         background: #6e6f7f;
+    }
+
+    /* Hide footer on this page */
+    footer.footer-enhanced {
+        display: none !important;
     }
 </style>
 {% endblock %}

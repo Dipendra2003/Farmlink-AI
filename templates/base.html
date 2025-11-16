@@ -302,59 +302,180 @@
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .ai-quick-access {
-                width: 240px;
-                height: 240px;
-                padding: 15px;
-                bottom: 15px;
-                left: 15px;
+                width: 220px;
+                height: 220px;
+                padding: 12px;
+                bottom: 10px;
+                left: 10px;
+                z-index: 1055;
             }
 
-            .ai-quick-access .btn {
-                width: 50px;
-                height: 50px;
-                font-size: 0.6rem;
+            .ai-quick-access.show {
+                display: block;
+                opacity: 1;
+                transform: translateY(0) scale(1);
             }
 
-            .ai-quick-access .btn i {
-                font-size: 1rem;
+            .ai-quick-access .ai-header {
+                margin-bottom: 10px;
             }
 
-            .ai-quick-access .quick-actions .btn {
-                width: 40px;
-                height: 30px;
+            .ai-quick-access .ai-header h6 {
+                font-size: 0.85rem;
+                margin-bottom: 0.25rem;
+            }
+
+            .ai-quick-access .ai-header small {
                 font-size: 0.5rem;
             }
 
+            .ai-quick-access .ai-grid {
+                gap: 6px;
+                margin-bottom: 10px;
+            }
+
+            .ai-quick-access .btn {
+                width: 48px;
+                height: 48px;
+                font-size: 0.55rem;
+            }
+
+            .ai-quick-access .btn i {
+                font-size: 0.95rem;
+                margin-bottom: 1px;
+            }
+
+            .ai-quick-access .btn small {
+                font-size: 0.5rem;
+            }
+
+            .ai-quick-access .quick-actions {
+                gap: 4px;
+            }
+
+            .ai-quick-access .quick-actions .btn {
+                width: 38px;
+                height: 28px;
+                font-size: 0.5rem;
+            }
+
+            .ai-quick-access .close-btn,
+            .ai-quick-access .reset-position-btn {
+                width: 26px;
+                height: 26px;
+                font-size: 0.75rem;
+            }
+
+            .ai-quick-access .reset-position-btn {
+                right: 40px;
+            }
+
             .ai-helper-widget {
-                right: 15px;
-                width: 70px;
-                height: 70px;
+                right: 10px;
+                width: 65px;
+                height: 65px;
             }
 
             .ai-helper-widget .brain-icon {
-                font-size: 1.5rem;
+                font-size: 1.4rem;
             }
         }
 
         @media (max-width: 480px) {
             .ai-quick-access {
-                width: 200px;
-                height: 200px;
+                width: 190px;
+                height: 190px;
                 padding: 10px;
+                bottom: 8px;
+                left: 8px;
+            }
+
+            .ai-quick-access.show {
+                display: block;
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+
+            .ai-quick-access .ai-header h6 {
+                font-size: 0.75rem;
+            }
+
+            .ai-quick-access .ai-header small {
+                font-size: 0.45rem;
+            }
+
+            .ai-quick-access .ai-grid {
+                gap: 5px;
+                margin-bottom: 8px;
             }
 
             .ai-quick-access .btn {
-                width: 45px;
-                height: 45px;
+                width: 42px;
+                height: 42px;
+                font-size: 0.5rem;
+            }
+
+            .ai-quick-access .btn i {
+                font-size: 0.85rem;
+            }
+
+            .ai-quick-access .btn small {
+                font-size: 0.45rem;
+            }
+
+            .ai-quick-access .quick-actions .btn {
+                width: 35px;
+                height: 26px;
+                font-size: 0.45rem;
+            }
+
+            .ai-quick-access .close-btn,
+            .ai-quick-access .reset-position-btn {
+                width: 24px;
+                height: 24px;
+                font-size: 0.7rem;
+            }
+
+            .ai-quick-access .reset-position-btn {
+                right: 36px;
             }
 
             .ai-helper-widget {
-                width: 60px;
-                height: 60px;
+                width: 55px;
+                height: 55px;
+                right: 8px;
             }
 
             .ai-helper-widget .brain-icon {
-                font-size: 1.3rem;
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .ai-quick-access {
+                width: 170px;
+                height: 170px;
+                padding: 8px;
+                bottom: 5px;
+                left: 5px;
+            }
+
+            .ai-quick-access .ai-grid {
+                gap: 4px;
+            }
+
+            .ai-quick-access .btn {
+                width: 38px;
+                height: 38px;
+            }
+
+            .ai-quick-access .btn i {
+                font-size: 0.75rem;
+            }
+
+            .ai-quick-access .quick-actions .btn {
+                width: 32px;
+                height: 24px;
             }
         }
 

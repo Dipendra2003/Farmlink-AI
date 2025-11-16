@@ -26,9 +26,9 @@ def initialize_gemini_client():
             return
         
         genai.configure(api_key=api_key)
-        client = genai.GenerativeModel('gemini-2.0-flash')
+        client = genai.GenerativeModel('gemini-2.5-flash-lite')
         client_error = None
-        logger.info("Gemini AI client initialized successfully with gemini-2.0-flash")
+        logger.info("Gemini AI client initialized successfully with gemini-2.5-flash-lite")
         
     except Exception as e:
         logger.error(f"AI client initialization failed: {e}")
@@ -288,7 +288,7 @@ Please provide a helpful, practical response as the Farmlink Voice Assistant. In
 """
 
             # Make API call to Gemini
-            model = genai.GenerativeModel('gemini-2.0-flash')
+            model = genai.GenerativeModel('gemini-2.5-flash-lite')
             response = model.generate_content(
                 f"{system_prompt}\n\n{user_prompt}",
                 generation_config=genai.types.GenerationConfig(
@@ -387,7 +387,7 @@ class EnhancedAnalyticsAI:
 
 # Import crop AI services
 try:
-    from crop_ai_service import EnhancedCropAI as CropAIService, get_crop_suggestions, compare_crops, get_crop_service_status, CROP_AI_AVAILABLE
+    from crop_ai_service import EnhancedCropAI as CropAIService, get_crop_service_status, CROP_AI_AVAILABLE
     logger.info("Crop AI service imported successfully")
 except ImportError as e:
     logger.warning(f"Crop AI service not available: {e}")

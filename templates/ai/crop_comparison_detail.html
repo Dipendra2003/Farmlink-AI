@@ -22,6 +22,19 @@
 body {
     background: linear-gradient(135deg, #E8F5E8 0%, #F1F8E9 100%);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow-x: hidden;
+}
+
+.container-fluid {
+    padding: 0;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 100%;
+    padding-left: 15px;
+    padding-right: 15px;
+    overflow-x: hidden;
 }
 
 .page-header {
@@ -38,6 +51,7 @@ body {
     border-radius: var(--border-radius);
     box-shadow: var(--card-shadow);
     margin-bottom: 2rem;
+    overflow: hidden;
 }
 
 .card-header-custom {
@@ -47,11 +61,17 @@ body {
     border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
+.card-body {
+    padding: 1.5rem;
+    overflow-x: auto;
+}
+
 .crop-comparison-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
     margin-top: 1.5rem;
+    width: 100%;
 }
 
 .crop-card {
@@ -61,6 +81,9 @@ body {
     position: relative;
     border: 2px solid transparent;
     transition: all 0.3s ease;
+    min-width: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .crop-card.winner {
@@ -97,11 +120,16 @@ body {
     padding: 0.5rem;
     background: white;
     border-radius: 8px;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .metric-label {
     font-weight: 500;
     color: var(--primary-dark);
+    flex: 1;
+    min-width: 120px;
+    word-break: break-word;
 }
 
 .metric-value {
@@ -109,6 +137,9 @@ body {
     padding: 0.25rem 0.75rem;
     border-radius: 20px;
     font-size: 0.9rem;
+    white-space: normal;
+    word-break: break-word;
+    max-width: 100%;
 }
 
 .metric-excellent { background: #d4edda; color: #155724; }
@@ -157,19 +188,130 @@ body {
     margin-top: 2rem;
 }
 
+@media (max-width: 1200px) {
+    .crop-comparison-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 992px) {
+    .crop-comparison-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+    
+    .page-header {
+        padding: 2rem 0;
+    }
+    
+    .page-header h1 {
+        font-size: 1.75rem;
+    }
+}
+
 @media (max-width: 768px) {
     .crop-comparison-grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .page-header {
+        padding: 1.5rem 0;
+    }
+    
+    .page-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .page-header .lead {
+        font-size: 0.95rem;
+    }
+    
+    .card-header-custom,
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .crop-card {
+        padding: 1rem;
+    }
+    
+    .comparison-metric {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .metric-label {
+        margin-bottom: 0.25rem;
     }
     
     .action-buttons {
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
     }
     
     .action-buttons .btn {
         width: 100%;
-        max-width: 300px;
+        margin-bottom: 0.5rem;
+    }
+    
+    .breadcrumb-custom {
+        padding: 0.75rem 1rem;
+    }
+    
+    .breadcrumb {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .container {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .page-header h1 {
+        font-size: 1.25rem;
+    }
+    
+    .page-header .btn {
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .crop-card {
+        padding: 0.75rem;
+    }
+    
+    .crop-name {
+        font-size: 1.1rem;
+    }
+    
+    .score-circle {
+        width: 60px;
+        height: 60px;
+        font-size: 1.25rem;
+    }
+    
+    .metric-value {
+        font-size: 0.8rem;
+        padding: 0.2rem 0.5rem;
+    }
+    
+    .recommendation-section {
+        padding: 1rem;
+    }
+    
+    .detail-card h4 {
+        font-size: 1.1rem;
+    }
+    
+    .detail-card h5 {
+        font-size: 1rem;
+    }
+    
+    .detail-card h6 {
+        font-size: 0.9rem;
     }
 }
 </style>

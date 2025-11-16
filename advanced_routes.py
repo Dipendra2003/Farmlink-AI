@@ -85,36 +85,67 @@ def generate_crop_suggestions():
         # Get AI-powered crop suggestions
         suggestions_result = EnhancedCropAI.get_smart_crop_suggestions(input_data)
         
-        if suggestions_result.get('success', False):
-            # Save to database for logged-in users
-            try:
-                history = CropSuggestionHistory(
-                    user_id=current_user.id,
-                    location=input_data['location'],
-                    soil_type=input_data['soil_type'],
-                    soil_ph=input_data['soil_ph'],
-                    water_source=input_data['water_source'],
-                    climate_data=json.dumps({
-                        'temperature_range': input_data['temperature_range'],
-                        'rainfall_range': input_data['rainfall_range'],
-                        'humidity_level': input_data['humidity_level']
-                    }),
-                    fertilizer_availability=input_data['fertilizer_availability'],
-                    budget_preference=input_data['budget_preference'],
-                    season=input_data['season'],
-                    suggestions=json.dumps(suggestions_result['suggestions']),
-                    top_suggestion=suggestions_result['suggestions'][0]['crop_name'] if suggestions_result['suggestions'] else 'No suggestions'
-                )
-                
-                db.session.add(history)
-                db.session.commit()
-                
-                suggestions_result['history_id'] = history.id
-                
-            except Exception as db_error:
-                app.logger.error(f"Error saving crop suggestion history: {str(db_error)}")
-                # Continue without saving to history
-                pass
+        # Check if AI request was successful
+        if not suggestions_result.get('success', False):
+            # Return error response with error_type and service_status
+            return jsonify({
+                'success': False,
+                'error': suggestions_result.get('error', 'Failed to generate crop suggestions'),
+                'error_type': suggestions_result.get('error_type', 'unknown_error'),
+                'service_status': suggestions_result.get('service_status', {})
+            }), 200
+        
+        # Filter low-quality suggestions (data_quality_score < 70)
+        suggestions = suggestions_result.get('suggestions', [])
+        high_quality_suggestions = [
+            s for s in suggestions 
+            if s.get('data_quality_score', 0) >= 70
+        ]
+        
+        # If no high-quality suggestions remain, return error
+        if not high_quality_suggestions:
+            return jsonify({
+                'success': False,
+                'error': 'AI generated suggestions but data quality was insufficient. Please try adjusting your parameters.',
+                'error_type': 'low_quality_data',
+                'suggestions_attempted': len(suggestions),
+                'data_quality_metrics': suggestions_result.get('data_quality_metrics', {})
+            }), 200
+        
+        # Update suggestions_result with filtered suggestions
+        suggestions_result['suggestions'] = high_quality_suggestions
+        suggestions_result['original_count'] = len(suggestions)
+        suggestions_result['filtered_count'] = len(high_quality_suggestions)
+        
+        # Save to database for logged-in users
+        try:
+            history = CropSuggestionHistory(
+                user_id=current_user.id,
+                location=input_data['location'],
+                soil_type=input_data['soil_type'],
+                soil_ph=input_data['soil_ph'],
+                water_source=input_data['water_source'],
+                climate_data=json.dumps({
+                    'temperature_range': input_data['temperature_range'],
+                    'rainfall_range': input_data['rainfall_range'],
+                    'humidity_level': input_data['humidity_level']
+                }),
+                fertilizer_availability=input_data['fertilizer_availability'],
+                budget_preference=input_data['budget_preference'],
+                season=input_data['season'],
+                suggestions=json.dumps(high_quality_suggestions),
+                top_suggestion=high_quality_suggestions[0]['crop_name'] if high_quality_suggestions else 'No suggestions'
+            )
+            
+            db.session.add(history)
+            db.session.commit()
+            
+            suggestions_result['history_id'] = history.id
+            
+        except Exception as db_error:
+            app.logger.error(f"Error saving crop suggestion history: {str(db_error)}")
+            # Continue without saving to history
+            pass
         
         return jsonify(suggestions_result)
         
@@ -2933,7 +2964,7 @@ def pest_disease_analysis():
                     'preventive_measures': analysis.get('treatment_recommendations', {}).get('preventive_measures', []),
                     'additional_diagnoses': analysis.get('alternative_diagnoses', []),
                     'analysis_mode': analysis_mode,
-                    'ai_model': analysis.get('ai_model', 'gemini-2.0-flash'),
+                    'ai_model': analysis.get('ai_model', 'gemini-2.5-flash-lite'),
                     'success': True
                 }
                 

@@ -9,12 +9,8 @@ flask-socketio
 python-socketio
 eventlet
 wtforms
-email-validator
 python-dotenv
 gunicorn
-
-# Email Service
-sendgrid>=6.11.0
 
 # Payment & External Services
 razorpay

@@ -35,7 +35,7 @@ class PestDiseaseDetectionService:
     def __init__(self):
         self.gemini_model = None
         self.client_error = None
-        self.model_name = 'gemini-2.0-flash'
+        self.model_name = 'gemini-2.5-flash-lite'
         self.analysis_cache = {}
         self.cache_ttl = 3600
         self.max_cache_size = 100

@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block title %}Error - AI Crop Suggestions - FarmLink AI{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --primary-color: #2E7D32;
+        --primary-light: #4CAF50;
+        --primary-dark: #1B5E20;
+        --danger-color: #D32F2F;
+        --warning-color: #F57C00;
+        --info-color: #1976D2;
+        --light-bg: #F1F8E9;
+        --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        --card-hover-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        --border-radius: 12px;
+    }
+
+    body {
+        background: linear-gradient(135deg, #E8F5E8 0%, #F1F8E9 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .error-container {
+        padding: 2rem 0;
+        min-height: 100vh;
+    }
+
+    .error-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        padding: 3rem;
+        margin: 2rem auto;
+        max-width: 800px;
+        text-align: center;
+    }
+
+    .error-icon {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .error-icon.danger {
+        color: var(--danger-color);
+    }
+
+    .error-icon.warning {
+        color: var(--warning-color);
+    }
+
+    .error-icon.info {
+        color: var(--info-color);
+    }
+
+    .error-title {
+        color: var(--primary-dark);
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 1rem;
+    }
+
+    .error-message {
+        color: #555;
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
+    .service-status {
+        background: #F5F5F5;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        text-align: left;
+    }
+
+    .service-status h4 {
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+        font-size: 1.2rem;
+    }
+
+    .status-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #E0E0E0;
+    }
+
+    .status-item:last-child {
+        border-bottom: none;
+    }
+
+    .status-label {
+        font-weight: 600;
+        color: #333;
+        flex: 1;
+    }
+
+    .status-value {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .status-indicator.available {
+        background-color: #4CAF50;
+    }
+
+    .status-indicator.unavailable {
+        background-color: #D32F2F;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+
+    .btn-action {
+        padding: 0.75rem 2rem;
+        border-radius: var(--border-radius);
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+        transform: translateY(-2px);
+        box-shadow: var(--card-hover-shadow);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #757575;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #616161;
+        transform: translateY(-2px);
+        box-shadow: var(--card-hover-shadow);
+        color: white;
+    }
+
+    .btn-info {
+        background: var(--info-color);
+        color: white;
+    }
+
+    .btn-info:hover {
+        background: #1565C0;
+        transform: translateY(-2px);
+        box-shadow: var(--card-hover-shadow);
+        color: white;
+    }
+
+    .suggestions-info {
+        background: #FFF3E0;
+        border-left: 4px solid var(--warning-color);
+        padding: 1rem;
+        margin: 1.5rem 0;
+        border-radius: 4px;
+        text-align: left;
+    }
+
+    .suggestions-info h5 {
+        color: var(--warning-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .suggestions-info p {
+        margin: 0;
+        color: #666;
+    }
+
+    .help-section {
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 2px solid #E0E0E0;
+    }
+
+    .help-section h4 {
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+    }
+
+    .help-list {
+        text-align: left;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .help-list li {
+        padding: 0.5rem 0;
+        color: #555;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="container">
+        <div class="error-card">
+            <!-- Error Icon based on error type -->
+            {% if error_type == 'no_api_key' or error_type == 'api_unavailable' %}
+                <div class="error-icon danger">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+            {% elif error_type == 'low_quality_data' %}
+                <div class="error-icon warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+            {% elif error_type == 'timeout' %}
+                <div class="error-icon info">
+                    <i class="fas fa-clock"></i>
+                </div>
+            {% else %}
+                <div class="error-icon warning">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+            {% endif %}
+
+            <!-- Error Title -->
+            <h1 class="error-title">
+                {% if error_type == 'no_api_key' %}
+                    Service Not Configured
+                {% elif error_type == 'api_unavailable' %}
+                    Service Temporarily Unavailable
+                {% elif error_type == 'timeout' %}
+                    Request Timed Out
+                {% elif error_type == 'parsing_error' %}
+                    Processing Error
+                {% elif error_type == 'low_quality_data' %}
+                    Insufficient Data Quality
+                {% elif error_type == 'no_suggestions' %}
+                    No Suitable Crops Found
+                {% else %}
+                    Unable to Generate Suggestions
+                {% endif %}
+            </h1>
+
+            <!-- Error Message -->
+            <p class="error-message">
+                {% if error %}
+                    {{ error }}
+                {% else %}
+                    We encountered an issue while generating crop suggestions. Please try again.
+                {% endif %}
+            </p>
+
+            <!-- Low Quality Data Info -->
+            {% if error_type == 'low_quality_data' and suggestions_attempted %}
+                <div class="suggestions-info">
+                    <h5><i class="fas fa-info-circle"></i> Data Quality Information</h5>
+                    <p>
+                        The AI generated {{ suggestions_attempted }} suggestion(s), but they did not meet our quality standards.
+                        This ensures you only receive accurate and actionable recommendations.
+                    </p>
+                </div>
+            {% endif %}
+
+            <!-- Service Status -->
+            {% if service_status %}
+                <div class="service-status">
+                    <h4><i class="fas fa-server"></i> Service Status</h4>
+                    
+                    {% if service_status.gemini_available is defined %}
+                        <div class="status-item">
+                            <span class="status-label">Gemini AI Service:</span>
+                            <span class="status-value">
+                                <span class="status-indicator {{ 'available' if service_status.gemini_available else 'unavailable' }}"></span>
+                                {{ 'Available' if service_status.gemini_available else 'Unavailable' }}
+                            </span>
+                        </div>
+                    {% endif %}
+
+                    {% if service_status.api_key_configured is defined %}
+                        <div class="status-item">
+                            <span class="status-label">API Configuration:</span>
+                            <span class="status-value">
+                                <span class="status-indicator {{ 'available' if service_status.api_key_configured else 'unavailable' }}"></span>
+                                {{ 'Configured' if service_status.api_key_configured else 'Not Configured' }}
+                            </span>
+                        </div>
+                    {% endif %}
+
+                    {% if service_status.last_successful_call %}
+                        <div class="status-item">
+                            <span class="status-label">Last Successful Request:</span>
+                            <span class="status-value">{{ service_status.last_successful_call }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                {% if error_type == 'timeout' or error_type == 'api_unavailable' %}
+                    <a href="{{ url_for('crop_suggestions') }}" class="btn-action btn-primary">
+                        <i class="fas fa-redo"></i> Try Again
+                    </a>
+                {% elif error_type == 'low_quality_data' or error_type == 'no_suggestions' %}
+                    <a href="{{ url_for('crop_suggestions') }}" class="btn-action btn-primary">
+                        <i class="fas fa-edit"></i> Adjust Parameters
+                    </a>
+                {% elif error_type == 'no_api_key' %}
+                    <a href="mailto:support@farmlink.com" class="btn-action btn-info">
+                        <i class="fas fa-envelope"></i> Contact Support
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('crop_suggestions') }}" class="btn-action btn-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Form
+                    </a>
+                {% endif %}
+
+                <a href="{{ url_for('crop_suggestions_history') }}" class="btn-action btn-secondary">
+                    <i class="fas fa-history"></i> View History
+                </a>
+
+                <a href="{{ url_for('dashboard') }}" class="btn-action btn-secondary">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+            </div>
+
+            <!-- Help Section -->
+            <div class="help-section">
+                <h4><i class="fas fa-question-circle"></i> What can you do?</h4>
+                <ul class="help-list">
+                    {% if error_type == 'timeout' %}
+                        <li><strong>Wait a moment:</strong> The AI service may be experiencing high load. Try again in a few minutes.</li>
+                        <li><strong>Check your connection:</strong> Ensure you have a stable internet connection.</li>
+                    {% elif error_type == 'api_unavailable' %}
+                        <li><strong>Try again later:</strong> The AI service is temporarily unavailable. Please check back soon.</li>
+                        <li><strong>View past suggestions:</strong> Check your history for previous recommendations.</li>
+                    {% elif error_type == 'low_quality_data' or error_type == 'no_suggestions' %}
+                        <li><strong>Adjust your parameters:</strong> Try different soil types, seasons, or location settings.</li>
+                        <li><strong>Broaden your criteria:</strong> Consider more flexible budget or market preferences.</li>
+                        <li><strong>Try a different season:</strong> Some crops may be more suitable for other seasons.</li>
+                    {% elif error_type == 'no_api_key' %}
+                        <li><strong>Contact support:</strong> This is a configuration issue that requires administrator attention.</li>
+                        <li><strong>Use other features:</strong> Explore the marketplace or learning hub while we resolve this.</li>
+                    {% else %}
+                        <li><strong>Try again:</strong> This may be a temporary issue. Refresh and submit your request again.</li>
+                        <li><strong>Simplify your request:</strong> Try with fewer specific requirements.</li>
+                        <li><strong>Contact support:</strong> If the problem persists, reach out to our support team.</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

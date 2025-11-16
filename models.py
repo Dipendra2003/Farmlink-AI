@@ -1231,7 +1231,7 @@ class PestDiseaseAnalysis(db.Model):
     
     # Metadata
     analysis_mode = db.Column(db.String(20), nullable=False)  # 'image', 'symptoms', 'combined'
-    ai_model_used = db.Column(db.String(50), default='gemini-2.0-flash')
+    ai_model_used = db.Column(db.String(50), default='gemini-2.5-flash-lite')
     analysis_status = db.Column(db.String(20), default='completed')  # 'pending', 'completed', 'failed'
     error_message = db.Column(db.Text, nullable=True)
     

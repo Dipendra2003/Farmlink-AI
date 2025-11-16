@@ -33,6 +33,10 @@ class Config:
     GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
     WEATHER_API_KEY = os.environ.get('WEATHER_API_KEY')
     
+    # Crop AI Configuration
+    CROP_AI_STRICT_MODE = os.environ.get('CROP_AI_STRICT_MODE', 'true').lower() == 'true'
+    CROP_AI_MIN_QUALITY_SCORE = int(os.environ.get('CROP_AI_MIN_QUALITY_SCORE', '70'))
+    
     # KYC Encryption Configuration
     KYC_ENCRYPTION_KEY = os.environ.get('KYC_ENCRYPTION_KEY')
     KYC_UPLOAD_DIR = os.environ.get('KYC_UPLOAD_DIR', 'static/uploads/kyc')
@@ -49,21 +53,11 @@ class Config:
     RATING_SUSPICIOUS_IP_THRESHOLD = 5
     RATING_SUSPICIOUS_IP_WINDOW_HOURS = 1
 
-    # SendGrid Configuration (Primary)
-    SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
-    SENDGRID_FROM_EMAIL = os.environ.get('SENDGRID_FROM_EMAIL')
-    
-    # Mail Configuration (SMTP Fallback)
-    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
-    MAIL_PORT = int(os.environ.get('MAIL_PORT', 587))
-    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'True').lower() == 'true'
-    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL', 'False').lower() == 'true'
-    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@farmlink-ai.com')
-    MAIL_MAX_EMAILS = None  # No limit on emails per connection
-    MAIL_SUPPRESS_SEND = False  # Set to True to disable email sending in dev
-    MAIL_ASCII_ATTACHMENTS = False
+    # MailerSend Configuration (Primary - Recommended for Production)
+    # Free tier: 12,000 emails/month - Much better than SendGrid!
+    MAILERSEND_API_KEY = os.environ.get('MAILERSEND_API_KEY', '').strip()
+    MAILERSEND_FROM_EMAIL = os.environ.get('MAILERSEND_FROM_EMAIL', 'noreply@trial-0r83ql3xjx3lzw1j.mlsender.net').strip()
+    MAILERSEND_FROM_NAME = os.environ.get('MAILERSEND_FROM_NAME', 'FarmLink AI').strip()
 
 class DevelopmentConfig(Config):
     """Development configuration"""

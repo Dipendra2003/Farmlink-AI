@@ -208,10 +208,12 @@
                             </div>
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <button class="btn btn-success w-100 btn-sm add-to-cart-btn" 
+                                    {% set is_in_cart = crop.id in cart_items %}
+                                    <button class="btn {% if is_in_cart %}btn-outline-success{% else %}btn-success{% endif %} w-100 btn-sm add-to-cart-btn" 
                                             data-crop-id="{{ crop.id }}"
-                                            title="Add to Cart">
-                                        <i class="fas fa-cart-plus me-1"></i>Add to Cart
+                                            data-in-cart="{{ 'true' if is_in_cart else 'false' }}"
+                                            title="{% if is_in_cart %}Already in Cart{% else %}Add to Cart{% endif %}">
+                                        <i class="fas {% if is_in_cart %}fa-check{% else %}fa-cart-plus{% endif %} me-1"></i>{% if is_in_cart %}In Cart{% else %}Add to Cart{% endif %}
                                     </button>
                                 </div>
                                 <div class="col-6">
@@ -318,5 +320,131 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Cart AJAX functionality is loaded globally from base.html -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle add to cart buttons on browse page
+    const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
+    
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const cropId = this.getAttribute('data-crop-id');
+            const isInCart = this.getAttribute('data-in-cart') === 'true';
+            
+            // If already in cart, redirect to cart page
+            if (isInCart) {
+                window.location.href = '/cart';
+                return;
+            }
+            
+            // Get quantity from the input field
+            const quantityInput = document.querySelector(`.cart-quantity-input[data-crop-id="${cropId}"]`);
+            const quantity = quantityInput ? parseFloat(quantityInput.value) : 1;
+            
+            if (!quantity || quantity <= 0) {
+                showMessage('Please enter a valid quantity', 'error');
+                return;
+            }
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            if (!csrfToken) {
+                showMessage('Security token missing. Please refresh the page.', 'error');
+                return;
+            }
+            
+            // Disable button and show loading state
+            const originalHTML = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Adding...';
+            
+            // Send AJAX request
+            fetch(`/cart/add/${cropId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ quantity: quantity })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update all buttons for this crop (in case it appears multiple times)
+                    const allButtonsForCrop = document.querySelectorAll(`.add-to-cart-btn[data-crop-id="${cropId}"]`);
+                    allButtonsForCrop.forEach(btn => {
+                        btn.innerHTML = '<i class="fas fa-check me-1"></i>In Cart';
+                        btn.classList.remove('btn-success');
+                        btn.classList.add('btn-outline-success');
+                        btn.setAttribute('data-in-cart', 'true');
+                        btn.disabled = false;
+                    });
+                    
+                    // Update cart count
+                    updateCartCount();
+                    
+                    // Show success message
+                    const message = data.updated ? 'Cart updated!' : 'Added to cart!';
+                    showMessage(message, 'success');
+                } else {
+                    // Show error and reset button
+                    showMessage(data.error || 'Failed to add to cart', 'error');
+                    button.innerHTML = originalHTML;
+                    button.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error adding to cart:', error);
+                showMessage('An error occurred. Please try again.', 'error');
+                button.innerHTML = originalHTML;
+                button.disabled = false;
+            });
+        });
+    });
+    
+    // Helper function to show messages
+    function showMessage(message, type) {
+        // Try to use existing message display function or create a simple alert
+        if (typeof window.showMessage === 'function') {
+            window.showMessage(message, type);
+        } else {
+            // Fallback to creating a toast notification
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert ${alertClass} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+            alertDiv.style.zIndex = '9999';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            setTimeout(() => alertDiv.remove(), 3000);
+        }
+    }
+    
+    // Helper function to update cart count
+    function updateCartCount() {
+        fetch('/cart/count', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const cartBadges = document.querySelectorAll('.cart-count, .cart-count-badge, .badge.cart-badge, [data-cart-count]');
+                cartBadges.forEach(badge => {
+                    if (data.count > 0) {
+                        badge.textContent = data.count;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                });
+            }
+        })
+        .catch(error => console.error('Error updating cart count:', error));
+    }
+});
+</script>
 {% endblock %}

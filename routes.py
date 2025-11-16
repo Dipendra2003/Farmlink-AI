@@ -797,7 +797,17 @@ def marketplace():
     
     crops = query.paginate(page=page, per_page=per_page, error_out=False)
     
-    return render_template('marketplace/browse.html', crops=crops, form=form)
+    # Get cart items for current user to show which items are already in cart
+    cart_items = {}
+    if current_user.is_authenticated:
+        from order_service import CartService
+        cart = CartService.get_or_create_cart(current_user.id)
+        if cart:
+            from models import CartItem
+            items = CartItem.query.filter_by(cart_id=cart.id).all()
+            cart_items = {item.crop_id: item.quantity for item in items}
+    
+    return render_template('marketplace/browse.html', crops=crops, form=form, cart_items=cart_items)
 
 @app.route('/marketplace/crop/<int:crop_id>')
 def product_detail(crop_id):
@@ -845,6 +855,19 @@ def product_detail(crop_id):
         for rating in all_ratings:
             rating_distribution[rating.rating] = rating_distribution.get(rating.rating, 0) + 1
     
+    # Check if item is already in user's cart
+    in_cart = False
+    cart_quantity = 0
+    if current_user.is_authenticated:
+        from order_service import CartService
+        cart = CartService.get_or_create_cart(current_user.id)
+        if cart:
+            from models import CartItem
+            cart_item = CartItem.query.filter_by(cart_id=cart.id, crop_id=crop_id).first()
+            if cart_item:
+                in_cart = True
+                cart_quantity = cart_item.quantity
+    
     return render_template('marketplace/product_detail.html', 
                          crop=crop, 
                          other_crops=other_crops,
@@ -853,7 +876,9 @@ def product_detail(crop_id):
                          product_ratings=product_ratings,
                          average_rating=average_rating,
                          total_ratings=total_ratings,
-                         rating_distribution=rating_distribution)
+                         rating_distribution=rating_distribution,
+                         in_cart=in_cart,
+                         cart_quantity=cart_quantity)
 
 # ============================================================================
 # CART ROUTES
@@ -1071,11 +1096,21 @@ def add_to_cart(crop_id):
             updated_cart = CartService.get_or_create_cart(current_user.id)
             cart_count = len(updated_cart.items) if updated_cart else 0
             
+            # Get the cart item details to return quantity
+            cart_item = result.get('item')
+            item_data = None
+            if cart_item:
+                item_data = {
+                    'quantity': cart_item.quantity,
+                    'price_per_unit': cart_item.price_per_unit
+                }
+            
             return jsonify({
                 'success': True,
                 'message': result['message'],
                 'cart_count': cart_count,
-                'updated': result.get('updated', False)
+                'updated': result.get('updated', False),
+                'item': item_data
             })
         else:
             error_code = result.get('error_code', 'CART_ADD_FAILED')

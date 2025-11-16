@@ -148,9 +148,9 @@
                     {% endif %}
 
                     <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-success btn-lg add-to-cart-btn" id="add-to-cart-btn"
-                            data-crop-id="{{ crop.id }}">
-                            <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                        <button type="button" class="btn {% if in_cart %}btn-outline-success{% else %}btn-success{% endif %} btn-lg add-to-cart-btn" id="add-to-cart-btn"
+                            data-crop-id="{{ crop.id }}" data-in-cart="{{ 'true' if in_cart else 'false' }}">
+                            <i class="fas {% if in_cart %}fa-check{% else %}fa-cart-plus{% endif %} me-2"></i>{% if in_cart %}In Cart ({{ cart_quantity }} {{ crop.unit }}){% else %}Add to Cart{% endif %}
                         </button>
                         <button type="button" class="btn btn-outline-success btn-lg buy-now-btn" id="buy-now-btn"
                             data-crop-id="{{ crop.id }}">
@@ -756,6 +756,9 @@
                             // Update cart count immediately
                             updateCartCount();
 
+                            // Mark item as in cart
+                            button.setAttribute('data-in-cart', 'true');
+
                             // Enhanced success state with animation
                             button.innerHTML = '<i class="fas fa-check me-2"></i>Added to Cart!';
                             button.classList.remove('btn-success', 'btn-loading');
@@ -767,15 +770,20 @@
                                 'Item added to cart successfully!';
                             showMessage(message, 'success');
 
-                            // Reset button after 3 seconds with smooth transition
+                            // Update button to show "In Cart" state after animation
                             setTimeout(() => {
-                                button.innerHTML = originalText;
-                                button.className = originalClasses;
+                                // Get the new quantity from the response or calculate it
+                                const newQuantity = data.item ? data.item.quantity : quantity;
+                                const unit = '{{ crop.unit }}';
+                                
+                                button.innerHTML = `<i class="fas fa-check me-2"></i>In Cart (${newQuantity} ${unit})`;
+                                button.classList.remove('btn-loading');
+                                button.classList.add('btn-outline-success');
                                 button.disabled = false;
                                 button.style.minWidth = '';
                                 quantityInput.disabled = false;
                                 isProcessing = false;
-                            }, 3000);
+                            }, 2000);
                         } else {
                             // Handle unexpected success:false response
                             console.error('Unexpected success:false response:', data);

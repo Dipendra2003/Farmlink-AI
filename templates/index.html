@@ -2,6 +2,570 @@
 
 {% block title %}FarmLink AI - Connecting Agriculture{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Mobile Responsive Styles for Homepage */
+    @media (max-width: 768px) {
+        /* Hero Section */
+        .hero-section {
+            padding: 2rem 0 !important;
+        }
+
+        .hero-section h1 {
+            font-size: 2rem !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .hero-section .lead {
+            font-size: 1rem !important;
+            margin-bottom: 1.5rem !important;
+        }
+
+        .hero-section .btn-lg {
+            font-size: 0.95rem !important;
+            padding: 0.6rem 1.2rem !important;
+        }
+
+        .hero-section .d-flex.gap-3 {
+            gap: 0.75rem !important;
+        }
+
+        .hero-stats {
+            padding: 1.5rem !important;
+            margin-top: 2rem !important;
+        }
+
+        .hero-stats h3 {
+            font-size: 1.5rem !important;
+        }
+
+        .hero-stats p {
+            font-size: 0.85rem !important;
+        }
+
+        .hero-stats small {
+            font-size: 0.7rem !important;
+        }
+
+        .testing-mode-badge {
+            font-size: 0.75rem !important;
+            padding: 0.4rem 0.8rem !important;
+        }
+
+        /* Features Section */
+        .display-4 {
+            font-size: 2rem !important;
+        }
+
+        .lead-large {
+            font-size: 1.1rem !important;
+        }
+
+        .feature-card {
+            padding: 1.5rem !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .feature-icon {
+            padding: 1rem !important;
+        }
+
+        .feature-icon i {
+            font-size: 1.5rem !important;
+        }
+
+        .feature-card h5 {
+            font-size: 1.1rem !important;
+            margin-bottom: 0.75rem !important;
+        }
+
+        .feature-card p {
+            font-size: 0.9rem !important;
+        }
+
+        .feature-card .btn-sm {
+            font-size: 0.8rem !important;
+            padding: 0.4rem 0.8rem !important;
+        }
+
+        /* AI Section */
+        .ai-section {
+            padding: 2.5rem 0 !important;
+        }
+
+        .ai-section h2 {
+            font-size: 2rem !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .ai-section .lead {
+            font-size: 1rem !important;
+        }
+
+        .ai-section .badge {
+            font-size: 0.9rem !important;
+            padding: 0.6rem 1.5rem !important;
+        }
+
+        .ai-card {
+            margin-bottom: 1rem !important;
+        }
+
+        .ai-card .card-body {
+            padding: 1.5rem !important;
+        }
+
+        .ai-card h5 {
+            font-size: 1.1rem !important;
+        }
+
+        .ai-card p {
+            font-size: 0.85rem !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .ai-icon-wrapper {
+            width: 60px !important;
+            height: 60px !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .ai-icon-wrapper i {
+            font-size: 1.5rem !important;
+        }
+
+        /* Crop Cards */
+        .crop-card {
+            margin-bottom: 1rem !important;
+        }
+
+        .crop-card-img {
+            height: 200px !important;
+            object-fit: cover;
+        }
+
+        .crop-card .card-body {
+            padding: 1rem !important;
+        }
+
+        .crop-card .card-title {
+            font-size: 1.1rem !important;
+        }
+
+        .crop-card .card-footer {
+            padding: 0.75rem !important;
+        }
+
+        .crop-card .btn {
+            font-size: 0.85rem !important;
+            padding: 0.5rem 0.75rem !important;
+        }
+
+        /* Success Stories */
+        .card blockquote {
+            font-size: 0.9rem !important;
+        }
+
+        .card h6 {
+            font-size: 0.95rem !important;
+        }
+
+        /* Interactive Demo Section */
+        .feature-box-left {
+            padding: 1.25rem !important;
+            margin-bottom: 0.75rem !important;
+        }
+
+        .feature-box-left h6 {
+            font-size: 1rem !important;
+        }
+
+        .feature-box-left p {
+            font-size: 0.85rem !important;
+        }
+
+        .feature-box-left .rounded-circle {
+            width: 50px !important;
+            height: 50px !important;
+        }
+
+        .feature-box-left i {
+            font-size: 1.2rem !important;
+        }
+
+        /* Section Spacing */
+        section {
+            padding: 2rem 0 !important;
+        }
+
+        .py-5 {
+            padding-top: 2rem !important;
+            padding-bottom: 2rem !important;
+        }
+
+        .mb-5 {
+            margin-bottom: 2rem !important;
+        }
+
+        .mb-4 {
+            margin-bottom: 1.5rem !important;
+        }
+    }
+
+    @media (max-width: 576px) {
+        /* Hero Section - Small Phones */
+        .hero-section {
+            padding: 1.5rem 0 !important;
+        }
+
+        .hero-section h1 {
+            font-size: 1.6rem !important;
+            line-height: 1.3 !important;
+        }
+
+        .hero-section .lead {
+            font-size: 0.9rem !important;
+            line-height: 1.5 !important;
+        }
+
+        .hero-section .btn-lg {
+            font-size: 0.85rem !important;
+            padding: 0.5rem 1rem !important;
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero-section .d-flex.gap-3 {
+            flex-direction: column;
+            gap: 0.5rem !important;
+        }
+
+        .hero-stats {
+            padding: 1rem !important;
+        }
+
+        .hero-stats h3 {
+            font-size: 1.3rem !important;
+        }
+
+        .hero-stats p {
+            font-size: 0.75rem !important;
+            margin-bottom: 0.25rem !important;
+        }
+
+        .hero-stats small {
+            font-size: 0.65rem !important;
+        }
+
+        .testing-mode-badge {
+            font-size: 0.65rem !important;
+            padding: 0.3rem 0.6rem !important;
+        }
+
+        /* Typography */
+        .display-4 {
+            font-size: 1.6rem !important;
+            line-height: 1.3 !important;
+        }
+
+        .display-6 {
+            font-size: 1.4rem !important;
+        }
+
+        .lead {
+            font-size: 0.95rem !important;
+        }
+
+        .lead-large {
+            font-size: 1rem !important;
+        }
+
+        /* Feature Cards */
+        .feature-card {
+            padding: 1.25rem !important;
+        }
+
+        .feature-icon {
+            padding: 0.75rem !important;
+        }
+
+        .feature-icon i {
+            font-size: 1.3rem !important;
+        }
+
+        .feature-card h5 {
+            font-size: 1rem !important;
+        }
+
+        .feature-card p {
+            font-size: 0.85rem !important;
+        }
+
+        .feature-card .btn-sm {
+            font-size: 0.75rem !important;
+            padding: 0.35rem 0.7rem !important;
+        }
+
+        /* AI Section */
+        .ai-section {
+            padding: 2rem 0 !important;
+        }
+
+        .ai-section h2 {
+            font-size: 1.6rem !important;
+        }
+
+        .ai-section .badge {
+            font-size: 0.8rem !important;
+            padding: 0.5rem 1.2rem !important;
+        }
+
+        .ai-card .card-body {
+            padding: 1.25rem !important;
+        }
+
+        .ai-card h5 {
+            font-size: 1rem !important;
+        }
+
+        .ai-card p {
+            font-size: 0.8rem !important;
+        }
+
+        .ai-icon-wrapper {
+            width: 50px !important;
+            height: 50px !important;
+        }
+
+        .ai-icon-wrapper i {
+            font-size: 1.3rem !important;
+        }
+
+        /* Crop Cards */
+        .crop-card-img {
+            height: 180px !important;
+        }
+
+        .crop-card .card-body {
+            padding: 0.85rem !important;
+        }
+
+        .crop-card .card-title {
+            font-size: 1rem !important;
+        }
+
+        .crop-card .h5 {
+            font-size: 1.1rem !important;
+        }
+
+        .crop-card .btn {
+            font-size: 0.8rem !important;
+            padding: 0.45rem 0.65rem !important;
+        }
+
+        /* Success Stories */
+        .card {
+            margin-bottom: 1rem !important;
+        }
+
+        .card .card-body {
+            padding: 1.25rem !important;
+        }
+
+        .card blockquote {
+            font-size: 0.85rem !important;
+        }
+
+        .card h6 {
+            font-size: 0.9rem !important;
+        }
+
+        .card img {
+            width: 35px !important;
+            height: 35px !important;
+        }
+
+        /* Interactive Demo */
+        .feature-box-left {
+            padding: 1rem !important;
+        }
+
+        .feature-box-left h6 {
+            font-size: 0.95rem !important;
+        }
+
+        .feature-box-left p {
+            font-size: 0.8rem !important;
+        }
+
+        .feature-box-left .rounded-circle {
+            width: 45px !important;
+            height: 45px !important;
+        }
+
+        .feature-box-left i {
+            font-size: 1.1rem !important;
+        }
+
+        /* Badges and Pills */
+        .badge {
+            font-size: 0.75rem !important;
+            padding: 0.4rem 0.8rem !important;
+        }
+
+        .rounded-pill {
+            padding: 0.4rem 1rem !important;
+        }
+
+        /* Buttons */
+        .btn {
+            font-size: 0.85rem !important;
+        }
+
+        .btn-lg {
+            font-size: 0.9rem !important;
+            padding: 0.6rem 1rem !important;
+        }
+
+        /* Section Spacing */
+        section {
+            padding: 1.5rem 0 !important;
+        }
+
+        .container {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+    }
+
+    @media (max-width: 400px) {
+        /* Very Small Phones */
+        .hero-section h1 {
+            font-size: 1.4rem !important;
+        }
+
+        .hero-section .lead {
+            font-size: 0.85rem !important;
+        }
+
+        .hero-section .btn-lg {
+            font-size: 0.8rem !important;
+            padding: 0.45rem 0.85rem !important;
+        }
+
+        .hero-stats {
+            padding: 0.75rem !important;
+        }
+
+        .hero-stats h3 {
+            font-size: 1.1rem !important;
+        }
+
+        .hero-stats p {
+            font-size: 0.7rem !important;
+        }
+
+        .display-4 {
+            font-size: 1.4rem !important;
+        }
+
+        .feature-card {
+            padding: 1rem !important;
+        }
+
+        .feature-card h5 {
+            font-size: 0.95rem !important;
+        }
+
+        .ai-section h2 {
+            font-size: 1.4rem !important;
+        }
+
+        .ai-card h5 {
+            font-size: 0.95rem !important;
+        }
+
+        .crop-card-img {
+            height: 160px !important;
+        }
+
+        .container {
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+        }
+    }
+
+    @media (max-width: 360px) {
+        /* Extra Small Phones */
+        .hero-section h1 {
+            font-size: 1.3rem !important;
+        }
+
+        .hero-stats h3 {
+            font-size: 1rem !important;
+        }
+
+        .display-4 {
+            font-size: 1.3rem !important;
+        }
+
+        .feature-card {
+            padding: 0.85rem !important;
+        }
+
+        .ai-section h2 {
+            font-size: 1.3rem !important;
+        }
+
+        .crop-card-img {
+            height: 140px !important;
+        }
+    }
+
+    /* Touch-friendly improvements for all mobile devices */
+    @media (max-width: 768px) {
+        /* Ensure minimum touch target size */
+        .btn, a.btn {
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Better spacing for touch */
+        .card {
+            margin-bottom: 1rem;
+        }
+
+        /* Improve readability */
+        body {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Better image handling */
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Prevent horizontal scroll */
+        .row {
+            margin-left: -0.5rem;
+            margin-right: -0.5rem;
+        }
+
+        .row > * {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Hero Section -->
 <section class="hero-section bg-success text-white py-5 position-relative">
@@ -128,7 +692,7 @@
                             <i class="fas fa-bug me-1"></i>Pest AI
                         </a>
                         <a href="{{ url_for('voice_interface') }}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-microphone me-1"></i>Voice AI
+                            <i class="fas fa-microphone me-1"></i>Farmlink AI
                         </a>
                     </div>
                 </div>
@@ -384,7 +948,7 @@
                             <i class="fas fa-quote-left fa-2x"></i>
                         </div>
                         <blockquote class="mb-3">
-                            "The Voice AI helped me identify a pest problem early. Saved my entire tomato crop!"
+                            "The FarmlinkAI helped me identify a pest problem early. Saved my entire tomato crop!"
                         </blockquote>
                         <div class="d-flex align-items-center">
                             <img src="https://ui-avatars.com/api/?name=Ravi+Kumar&background=28a745&color=fff&size=40" 
@@ -396,7 +960,7 @@
                         </div>
                         <div class="mt-3">
                             <a href="{{ url_for('voice_interface') }}" class="btn btn-sm btn-outline-success">
-                                <i class="fas fa-microphone me-1"></i>Try Voice AI
+                                <i class="fas fa-microphone me-1"></i>Try FarmLink AI
                             </a>
                         </div>
                     </div>
