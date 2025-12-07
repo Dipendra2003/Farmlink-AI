@@ -7,21 +7,13 @@ from typing import Dict, List, Any, Optional
 import google.generativeai as genai
 from config import Config
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class EnhancedCropAI:
     """Enhanced AI service for comprehensive crop suggestions - GEMINI AI ONLY"""
     
     def __init__(self, strict_mode=None):
-        """
-        Initialize the Gemini AI client
-        
-        Args:
-            strict_mode: If True, reject crops with quality score < 70.
-                        If None, reads from Config.CROP_AI_STRICT_MODE (default: True)
-        """
+
         self.client = None
         self.model = None
         # Read from config if not explicitly provided

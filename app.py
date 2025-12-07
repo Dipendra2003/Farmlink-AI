@@ -213,6 +213,14 @@ with app.app_context():
         app.logger.error(f"Failed to initialize tracking scheduler: {str(e)}")
         # Continue without scheduler - jobs can be run manually if needed
     
+    # Add security headers for all responses
+    @app.after_request
+    def add_security_headers(response):
+        # Enable microphone access for speech recognition
+        # Only use Permissions-Policy (newer standard)
+        response.headers['Permissions-Policy'] = 'microphone=*, camera=*, geolocation=*'
+        return response
+    
     # Register error handlers
     @app.errorhandler(500)
     def internal_error(error):

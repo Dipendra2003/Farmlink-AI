@@ -10,7 +10,6 @@ from PIL import Image, ImageEnhance, ImageStat
 import google.generativeai as genai
 from config import Config
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

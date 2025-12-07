@@ -5,8 +5,6 @@ from typing import Dict, Any, Optional
 import google.generativeai as genai
 from config import Config
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize client variables

@@ -694,6 +694,59 @@ class ArticleBookmark(db.Model):
     __table_args__ = (db.UniqueConstraint('article_id', 'user_id', name='unique_article_bookmark'),)
 
 
+class AIConversation(db.Model):
+    """Store AI voice assistant conversations"""
+    __tablename__ = 'ai_conversation'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Foreign Keys
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Relationships
+    user = db.relationship('User', backref='ai_conversations')
+    messages = db.relationship('AIMessage', backref='conversation', lazy='dynamic', cascade='all, delete-orphan', order_by='AIMessage.created_at')
+    
+    def to_dict(self):
+        """Convert conversation to dictionary"""
+        return {
+            'id': self.id,
+            'title': self.title,
+            'timestamp': int(self.created_at.timestamp() * 1000),
+            'messages': [msg.to_dict() for msg in self.messages.all()]
+        }
+    
+    def __repr__(self):
+        return f'<AIConversation {self.id} - {self.title}>'
+
+
+class AIMessage(db.Model):
+    """Store individual messages in AI conversations"""
+    __tablename__ = 'ai_message'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(10), nullable=False)  # 'user' or 'ai'
+    content = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Foreign Keys
+    conversation_id = db.Column(db.Integer, db.ForeignKey('ai_conversation.id'), nullable=False)
+    
+    def to_dict(self):
+        """Convert message to dictionary"""
+        return {
+            'type': self.type,
+            'content': self.content,
+            'timestamp': int(self.created_at.timestamp() * 1000)
+        }
+    
+    def __repr__(self):
+        return f'<AIMessage {self.id} - {self.type}>'
+
+
 class ArticleComment(db.Model):
     """Comments on learning articles"""
     id = db.Column(db.Integer, primary_key=True)

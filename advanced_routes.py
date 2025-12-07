@@ -3473,6 +3473,7 @@ def voice_assistant_api():
         query = data.get('query', '').strip()
         language = data.get('language', 'english').lower()
         include_audio = data.get('include_audio', False)
+        conversation_id = data.get('conversation_id')  # Optional conversation ID
         
         if not query:
             return jsonify({'error': 'No query provided'}), 400
@@ -3487,6 +3488,41 @@ def voice_assistant_api():
             'timestamp': datetime.now().isoformat(),
             'success': True
         }
+        
+        # Save to database if conversation_id provided
+        if conversation_id:
+            try:
+                from models import AIConversation, AIMessage
+                conversation = AIConversation.query.filter_by(
+                    id=conversation_id,
+                    user_id=current_user.id
+                ).first()
+                
+                if conversation:
+                    # Add user message
+                    user_msg = AIMessage(
+                        conversation_id=conversation.id,
+                        type='user',
+                        content=query
+                    )
+                    db.session.add(user_msg)
+                    
+                    # Add AI response
+                    ai_msg = AIMessage(
+                        conversation_id=conversation.id,
+                        type='ai',
+                        content=ai_response
+                    )
+                    db.session.add(ai_msg)
+                    
+                    # Update conversation timestamp
+                    conversation.updated_at = datetime.utcnow()
+                    
+                    db.session.commit()
+                    response_data['conversation_id'] = conversation.id
+            except Exception as db_error:
+                logger.error(f"Failed to save conversation: {db_error}")
+                db.session.rollback()
         
         # Generate audio response if requested (placeholder for future TTS integration)
         if include_audio:
@@ -3568,6 +3604,187 @@ def voice_quick_command_api():
             'success': False,
             'error': str(e)
         }), 500
+
+
+# =============================================================================
+# AI CONVERSATION MANAGEMENT ROUTES
+# =============================================================================
+
+@app.route('/api/conversations', methods=['GET'])
+@login_required
+def get_conversations():
+    """Get all conversations for the current user"""
+    try:
+        from models import AIConversation
+        conversations = AIConversation.query.filter_by(
+            user_id=current_user.id
+        ).order_by(AIConversation.updated_at.desc()).all()
+        
+        return jsonify({
+            'success': True,
+            'conversations': [conv.to_dict() for conv in conversations]
+        })
+    except Exception as e:
+        logger.error(f"Error fetching conversations: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/conversations', methods=['POST'])
+@login_required
+def create_conversation():
+    """Create a new conversation"""
+    try:
+        from models import AIConversation
+        data = request.get_json()
+        title = data.get('title', 'New Chat')
+        
+        conversation = AIConversation(
+            user_id=current_user.id,
+            title=title
+        )
+        db.session.add(conversation)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'conversation': conversation.to_dict()
+        })
+    except Exception as e:
+        logger.error(f"Error creating conversation: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/conversations/<int:conversation_id>', methods=['GET'])
+@login_required
+def get_conversation(conversation_id):
+    """Get a specific conversation with all messages"""
+    try:
+        from models import AIConversation
+        conversation = AIConversation.query.filter_by(
+            id=conversation_id,
+            user_id=current_user.id
+        ).first()
+        
+        if not conversation:
+            return jsonify({'success': False, 'error': 'Conversation not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'conversation': conversation.to_dict()
+        })
+    except Exception as e:
+        logger.error(f"Error fetching conversation: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/conversations/<int:conversation_id>', methods=['PUT'])
+@login_required
+def update_conversation(conversation_id):
+    """Update conversation title"""
+    try:
+        from models import AIConversation
+        data = request.get_json()
+        title = data.get('title', '').strip()
+        
+        if not title:
+            return jsonify({'success': False, 'error': 'Title is required'}), 400
+        
+        conversation = AIConversation.query.filter_by(
+            id=conversation_id,
+            user_id=current_user.id
+        ).first()
+        
+        if not conversation:
+            return jsonify({'success': False, 'error': 'Conversation not found'}), 404
+        
+        conversation.title = title
+        conversation.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'conversation': conversation.to_dict()
+        })
+    except Exception as e:
+        logger.error(f"Error updating conversation: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/conversations/<int:conversation_id>', methods=['DELETE'])
+@login_required
+def delete_conversation(conversation_id):
+    """Delete a conversation"""
+    try:
+        from models import AIConversation
+        conversation = AIConversation.query.filter_by(
+            id=conversation_id,
+            user_id=current_user.id
+        ).first()
+        
+        if not conversation:
+            return jsonify({'success': False, 'error': 'Conversation not found'}), 404
+        
+        db.session.delete(conversation)
+        db.session.commit()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        logger.error(f"Error deleting conversation: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/conversations/sync', methods=['POST'])
+@login_required
+def sync_conversations():
+    """Sync local conversations to server"""
+    try:
+        from models import AIConversation, AIMessage
+        data = request.get_json()
+        local_chats = data.get('chats', {})
+        
+        synced_conversations = []
+        
+        for chat_id, chat_data in local_chats.items():
+            # Check if conversation already exists
+            existing = AIConversation.query.filter_by(
+                id=int(chat_id) if str(chat_id).isdigit() else None,
+                user_id=current_user.id
+            ).first()
+            
+            if not existing:
+                # Create new conversation
+                conversation = AIConversation(
+                    user_id=current_user.id,
+                    title=chat_data.get('title', 'New Chat')
+                )
+                db.session.add(conversation)
+                db.session.flush()  # Get the ID
+                
+                # Add messages
+                for msg in chat_data.get('messages', []):
+                    message = AIMessage(
+                        conversation_id=conversation.id,
+                        type=msg.get('type'),
+                        content=msg.get('content')
+                    )
+                    db.session.add(message)
+                
+                synced_conversations.append(conversation.to_dict())
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'synced': len(synced_conversations),
+            'conversations': synced_conversations
+        })
+    except Exception as e:
+        logger.error(f"Error syncing conversations: {e}")
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 # =============================================================================
 # LEARNING HUB ROUTES

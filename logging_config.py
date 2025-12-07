@@ -112,6 +112,7 @@ def setup_logging(app=None, use_json=False):
     # Set specific logger levels
     logging.getLogger('werkzeug').setLevel(logging.WARNING)
     logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
+    logging.getLogger('apscheduler').setLevel(logging.WARNING)
     
     if app:
         app.logger.info("Logging configuration initialized")

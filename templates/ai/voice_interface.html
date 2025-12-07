@@ -9,6 +9,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- Permissions Policy for Microphone Access -->
+<meta http-equiv="Permissions-Policy" content="microphone=*">
+<meta http-equiv="Feature-Policy" content="microphone *">
 <style>
     * {
         margin: 0;
@@ -1968,7 +1971,7 @@
             <div class="setting-item">
                 <div class="toggle-container">
                     <span class="toggle-label">Auto-speak responses</span>
-                    <div class="toggle-switch active" id="autoSpeakToggle" onclick="toggleAutoSpeak()">
+                    <div class="toggle-switch" id="autoSpeakToggle" onclick="toggleAutoSpeak()">
                         <div class="toggle-slider"></div>
                     </div>
                 </div>
@@ -2014,8 +2017,9 @@
             voiceType: 'female',
             speed: 1.0,
             pitch: 1.0,
-            autoSpeak: true,
-            saveHistory: true
+            autoSpeak: false,
+            saveHistory: true,
+            version: 2 // Version to track settings changes
         },
         currentSpeech: null,
         messages: [],
@@ -2114,41 +2118,92 @@
         });
     }
 
-    // Speech Recognition
+    // Speech Recognition - Initialize lazily (only when needed)
     function initSpeechRecognition() {
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            state.recognition = new SpeechRecognition();
-            state.recognition.continuous = false;
-            state.recognition.interimResults = true;
-            state.recognition.lang = getLangCode();
+            try {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                state.recognition = new SpeechRecognition();
+                state.recognition.continuous = false;
+                state.recognition.interimResults = true;
+                state.recognition.lang = getLangCode();
 
-            state.recognition.onstart = () => {
-                document.getElementById('micBtn').classList.add('recording');
-            };
+                state.recognition.onstart = () => {
+                    console.log('🎤 Speech recognition started');
+                    document.getElementById('micBtn').classList.add('recording');
+                    state.isRecording = true;
+                };
 
-            state.recognition.onresult = (event) => {
-                let transcript = '';
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    transcript += event.results[i][0].transcript;
+                state.recognition.onresult = (event) => {
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    console.log('📝 Speech transcript:', transcript);
+                    const inputBox = document.getElementById('inputBox');
+                    inputBox.value = transcript;
+                    
+                    // Enable send button if there's text
+                    document.getElementById('sendBtn').disabled = !transcript.trim();
+                    
+                    // Auto-send only on final result
+                    if (event.results[event.results.length - 1].isFinal && transcript.trim()) {
+                        setTimeout(() => sendMsg(), 500);
+                    }
+                };
+
+                state.recognition.onerror = (event) => {
+                    console.error('❌ Speech recognition error:', event.error);
+                    document.getElementById('micBtn').classList.remove('recording');
+                    state.isRecording = false;
+                    
+                    // Show user-friendly error messages
+                    if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+                        showPermissionHelp();
+                    } else if (event.error === 'no-speech') {
+                        console.log('⚠️ No speech detected');
+                    } else if (event.error === 'network') {
+                        alert('⚠️ Network error. Speech recognition requires internet connection.');
+                    } else if (event.error === 'aborted') {
+                        console.log('Speech recognition aborted');
+                    }
+                };
+
+                state.recognition.onend = () => {
+                    console.log('🛑 Speech recognition ended');
+                    document.getElementById('micBtn').classList.remove('recording');
+                    state.isRecording = false;
+                };
+                
+                console.log('✅ Speech recognition initialized successfully');
+            } catch (error) {
+                console.error('❌ Failed to initialize speech recognition:', error);
+                state.recognition = null;
+                // Disable mic button if initialization fails
+                setTimeout(() => {
+                    const micBtn = document.getElementById('micBtn');
+                    if (micBtn) {
+                        micBtn.disabled = true;
+                        micBtn.title = 'Voice input not available';
+                        micBtn.style.opacity = '0.5';
+                    }
+                }, 100);
+            }
+        } else {
+            console.warn('⚠️ Speech recognition not supported in this browser');
+            // Disable mic button if not supported
+            setTimeout(() => {
+                const micBtn = document.getElementById('micBtn');
+                if (micBtn) {
+                    micBtn.disabled = true;
+                    micBtn.title = 'Voice input not supported in this browser';
+                    micBtn.style.opacity = '0.5';
                 }
-                document.getElementById('inputBox').value = transcript;
-                if (event.results[event.results.length - 1].isFinal) {
-                    sendMsg();
-                }
-            };
-
-            state.recognition.onerror = (event) => {
-                console.error('Speech error:', event.error);
-                document.getElementById('micBtn').classList.remove('recording');
-            };
-
-            state.recognition.onend = () => {
-                document.getElementById('micBtn').classList.remove('recording');
-                state.isRecording = false;
-            };
+            }, 100);
         }
     }
+    
+
 
     // Text to Speech
     function initTextToSpeech() {
@@ -2450,7 +2505,8 @@
             body: JSON.stringify({
                 query: query,
                 language: state.currentLang,
-                include_audio: false
+                include_audio: false,
+                conversation_id: state.currentChatId
             })
         })
             .then(res => res.json())
@@ -2460,6 +2516,23 @@
                     addMessage('ai', data.response);
                     if (state.settings.autoSpeak) {
                         speakText(data.response);
+                    }
+                    
+                    // Update conversation ID if returned from server
+                    if (data.conversation_id && data.conversation_id !== state.currentChatId) {
+                        const oldId = state.currentChatId;
+                        state.currentChatId = data.conversation_id;
+                        
+                        // Update local storage
+                        if (state.chats[oldId]) {
+                            state.chats[data.conversation_id] = {
+                                ...state.chats[oldId],
+                                id: data.conversation_id
+                            };
+                            delete state.chats[oldId];
+                            localStorage.setItem('farmlink-chats', JSON.stringify(state.chats));
+                            updateChatList();
+                        }
                     }
                 } else {
                     addMessage('ai', 'Sorry, I encountered an error. Please try again.');
@@ -2473,25 +2546,102 @@
     }
 
     // Voice Functions
-    function toggleVoice() {
+    async function toggleVoice() {
+        console.log('🎤 Toggle voice clicked, isRecording:', state.isRecording);
+        
         if (!state.recognition) {
-            alert('Speech recognition not available in this browser.');
+            alert('❌ Speech recognition not available in this browser.\n\nPlease use:\n• Chrome\n• Edge\n• Safari\n\nNote: Firefox does not support speech recognition.');
             return;
         }
 
         if (state.isRecording) {
-            state.recognition.stop();
-        } else {
-            if (state.currentSpeech) {
-                speechSynthesis.cancel();
+            console.log('Stopping recording...');
+            try {
+                state.recognition.stop();
+                state.isRecording = false;
+            } catch (error) {
+                console.error('Error stopping recognition:', error);
             }
-            state.recognition.start();
-            state.isRecording = true;
+        } else {
+            console.log('Starting recording...');
+            
+            // First, check microphone permission using MediaDevices API
+            try {
+                console.log('Checking microphone permission...');
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                console.log('✅ Microphone permission granted');
+                
+                // Stop the stream immediately - we just needed to check permission
+                stream.getTracks().forEach(track => track.stop());
+                
+                // Now start speech recognition
+                try {
+                    if (state.currentSpeech) {
+                        speechSynthesis.cancel();
+                    }
+                    
+                    // Update language before starting
+                    state.recognition.lang = getLangCode();
+                    console.log('Recognition language set to:', state.recognition.lang);
+                    
+                    // Start recognition
+                    state.recognition.start();
+                    console.log('✅ Recognition start requested');
+                } catch (error) {
+                    console.error('❌ Error starting speech recognition:', error);
+                    state.isRecording = false;
+                    document.getElementById('micBtn').classList.remove('recording');
+                    
+                    setTimeout(() => {
+                        alert('⚠️ Could not start voice input.\n\nError: ' + error.message);
+                    }, 100);
+                }
+            } catch (error) {
+                console.error('❌ Microphone permission denied:', error);
+                state.isRecording = false;
+                document.getElementById('micBtn').classList.remove('recording');
+                
+                // Show permission help
+                showPermissionHelp();
+            }
         }
     }
+    
+    function showPermissionHelp() {
+        const isChrome = /Chrome/.test(navigator.userAgent);
+        const isEdge = /Edg/.test(navigator.userAgent);
+        const isHTTPS = window.location.protocol === 'https:';
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        
+        let message = '🎤 Microphone Access Required\n\n';
+        
+        // Check if running on HTTP (not HTTPS or localhost)
+        if (!isHTTPS && !isLocalhost) {
+            message += '⚠️ SECURITY WARNING:\n';
+            message += 'Speech recognition requires a secure connection (HTTPS).\n';
+            message += 'Your site is running on HTTP which may block microphone access.\n\n';
+        }
+        
+        message += 'To use voice input, please allow microphone access.\n\n';
+        
+        if (isChrome || isEdge) {
+            message += 'How to enable:\n';
+            message += '1. Click the 🔒 or ⓘ icon in the address bar\n';
+            message += '2. Find "Microphone" permission\n';
+            message += '3. Select "Allow"\n';
+            message += '4. Refresh the page (F5)\n';
+            message += '5. Click the microphone button again\n';
+        } else {
+            message += 'Please check your browser settings to allow microphone access for this site.\n';
+            message += 'You may need to refresh the page after granting permission.';
+        }
+        
+        alert(message);
+    }
 
-    function speakText(text) {
-        if (!state.settings.autoSpeak || !('speechSynthesis' in window)) return;
+    function speakText(text, forceSpeak = false) {
+        if (!forceSpeak && !state.settings.autoSpeak) return;
+        if (!('speechSynthesis' in window)) return;
 
         if (state.currentSpeech) {
             speechSynthesis.cancel();
@@ -2515,8 +2665,28 @@
     }
 
     function speakMsg(btn) {
+        const icon = btn.querySelector('i');
         const text = btn.closest('.message-content').querySelector('.message-text').textContent;
-        speakText(text);
+        
+        // If currently speaking, stop it
+        if (state.currentSpeech && speechSynthesis.speaking) {
+            speechSynthesis.cancel();
+            state.currentSpeech = null;
+            icon.className = 'fas fa-volume-up';
+            return;
+        }
+        
+        // Start speaking
+        icon.className = 'fas fa-volume-mute';
+        speakText(text, true); // Force speak regardless of autoSpeak setting
+        
+        // Reset icon when speech ends
+        if (state.currentSpeech) {
+            state.currentSpeech.onend = () => {
+                state.currentSpeech = null;
+                icon.className = 'fas fa-volume-up';
+            };
+        }
     }
 
     function copyMsg(btn) {
@@ -2588,7 +2758,7 @@
     }
 
     function testVoice() {
-        speakText('This is a test of your voice settings. How does this sound?');
+        speakText('This is a test of your voice settings. How does this sound?', true);
     }
 
     function getLangCode() {
@@ -2608,7 +2778,16 @@
     function loadSettings() {
         const saved = localStorage.getItem('farmlink-settings');
         if (saved) {
-            state.settings = { ...state.settings, ...JSON.parse(saved) };
+            const savedSettings = JSON.parse(saved);
+            
+            // Check version - if old version or no version, reset autoSpeak to false
+            if (!savedSettings.version || savedSettings.version < 2) {
+                console.log('Resetting autoSpeak to false due to version update');
+                savedSettings.autoSpeak = false;
+                savedSettings.version = 2;
+            }
+            
+            state.settings = { ...state.settings, ...savedSettings };
             document.getElementById('langSelect').value = state.settings.language;
             document.getElementById('voiceSelect').value = state.settings.voiceType;
             document.getElementById('speedRange').value = state.settings.speed;
@@ -2616,14 +2795,28 @@
             document.getElementById('speedValue').textContent = state.settings.speed;
             document.getElementById('pitchValue').textContent = state.settings.pitch;
 
-            if (!state.settings.autoSpeak) {
-                document.getElementById('autoSpeakToggle').classList.remove('active');
+            // Update toggle UI based on actual state
+            const autoSpeakToggle = document.getElementById('autoSpeakToggle');
+            if (state.settings.autoSpeak) {
+                autoSpeakToggle.classList.add('active');
+            } else {
+                autoSpeakToggle.classList.remove('active');
             }
-            if (!state.settings.saveHistory) {
-                document.getElementById('historyToggle').classList.remove('active');
+            
+            const historyToggle = document.getElementById('historyToggle');
+            if (state.settings.saveHistory) {
+                historyToggle.classList.add('active');
+            } else {
+                historyToggle.classList.remove('active');
             }
 
             state.currentLang = state.settings.language;
+            
+            // Save updated settings with new version
+            saveSettings();
+        } else {
+            // No saved settings - ensure UI reflects default state (autoSpeak = false)
+            document.getElementById('autoSpeakToggle').classList.remove('active');
         }
     }
 
@@ -2631,6 +2824,8 @@
         if (!state.settings.saveHistory || state.messages.length === 0) return;
 
         const title = state.messages.find(m => m.type === 'user')?.content.substring(0, 30) || 'New Chat';
+        
+        // Save to localStorage as backup
         state.chats[state.currentChatId] = {
             id: state.currentChatId,
             title: title,
@@ -2638,10 +2833,121 @@
             timestamp: Date.now()
         };
         localStorage.setItem('farmlink-chats', JSON.stringify(state.chats));
+        
+        // Save to server
+        saveChatToServer(state.currentChatId, title, state.messages);
+        
         updateChatList();
     }
 
-    function loadChats() {
+    async function saveChatToServer(chatId, title, messages) {
+        try {
+            // Check if this is a new conversation or existing one
+            const isNewConversation = !chatId || typeof chatId === 'string' || chatId > 1000000000000;
+            
+            if (isNewConversation) {
+                // Create new conversation on server
+                const response = await fetch('/api/conversations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name=csrf-token]').content
+                    },
+                    body: JSON.stringify({ title: title })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    const newId = data.conversation.id;
+                    
+                    // Update local state with server ID
+                    const oldChatData = state.chats[chatId];
+                    delete state.chats[chatId];
+                    state.chats[newId] = {
+                        ...oldChatData,
+                        id: newId
+                    };
+                    state.currentChatId = newId;
+                    
+                    // Save messages to the new conversation
+                    for (const msg of messages) {
+                        await saveMessageToServer(newId, msg.type, msg.content);
+                    }
+                    
+                    localStorage.setItem('farmlink-chats', JSON.stringify(state.chats));
+                    updateChatList();
+                }
+            } else {
+                // Update existing conversation title
+                await fetch(`/api/conversations/${chatId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name=csrf-token]').content
+                    },
+                    body: JSON.stringify({ title: title })
+                });
+            }
+        } catch (error) {
+            console.error('Error saving chat to server:', error);
+            // Continue with localStorage backup
+        }
+    }
+
+    async function saveMessageToServer(conversationId, type, content) {
+        try {
+            // Messages are saved through the voice-assistant API
+            // This is just a placeholder for direct message saving if needed
+            return true;
+        } catch (error) {
+            console.error('Error saving message to server:', error);
+            return false;
+        }
+    }
+
+    async function loadChats() {
+        try {
+            // First, try to load from server
+            const response = await fetch('/api/conversations', {
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').content
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.conversations) {
+                    console.log(`Loaded ${data.conversations.length} conversations from server`);
+                    // Convert server conversations to local format
+                    state.chats = {};
+                    data.conversations.forEach(conv => {
+                        console.log(`Conversation ${conv.id}: ${conv.messages.length} messages`);
+                        state.chats[conv.id] = conv;
+                    });
+                    
+                    // Merge with localStorage (for any unsaved local chats)
+                    const localSaved = localStorage.getItem('farmlink-chats');
+                    if (localSaved) {
+                        const localChats = JSON.parse(localSaved);
+                        // Only add local chats that don't exist on server
+                        Object.keys(localChats).forEach(key => {
+                            if (!state.chats[key]) {
+                                state.chats[key] = localChats[key];
+                            }
+                        });
+                    }
+                    
+                    // Save merged chats back to localStorage
+                    localStorage.setItem('farmlink-chats', JSON.stringify(state.chats));
+                    updateChatList();
+                    return;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading chats from server:', error);
+        }
+        
+        // Fallback to localStorage
         const saved = localStorage.getItem('farmlink-chats');
         if (saved) {
             state.chats = JSON.parse(saved);
@@ -2722,7 +3028,7 @@
         });
     }
 
-    function loadChat(id) {
+    async function loadChat(id) {
         const chat = state.chats[id];
         if (!chat) return;
 
@@ -2732,10 +3038,45 @@
         }
 
         state.currentChatId = id;
-        state.messages = [...chat.messages]; // Create a copy
+
+        // Fetch fresh data from server to get all messages
+        try {
+            const response = await fetch(`/api/conversations/${id}`, {
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name=csrf-token]').content
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.conversation) {
+                    console.log(`Loaded conversation ${id} with ${data.conversation.messages.length} messages from server`);
+                    // Update local state with server data
+                    state.chats[id] = data.conversation;
+                    state.messages = [...data.conversation.messages];
+                    
+                    // Save to localStorage
+                    localStorage.setItem('farmlink-chats', JSON.stringify(state.chats));
+                } else {
+                    console.warn('Failed to load conversation from server, using local data');
+                    // Fallback to local data
+                    state.messages = [...chat.messages];
+                }
+            } else {
+                console.warn('Server returned error, using local data');
+                // Fallback to local data
+                state.messages = [...chat.messages];
+            }
+        } catch (error) {
+            console.error('Error fetching conversation from server:', error);
+            // Fallback to local data
+            state.messages = [...chat.messages];
+        }
 
         const wrapper = document.getElementById('messagesWrapper');
-        wrapper.innerHTML = '';
+        
+        // Show loading indicator
+        wrapper.innerHTML = '<div class="loading-messages" style="text-align: center; padding: 20px; color: #666;"><i class="fas fa-spinner fa-spin"></i> Loading messages...</div>';
 
         // Create empty state element if it doesn't exist
         let emptyState = document.getElementById('emptyState');
@@ -2773,6 +3114,8 @@
             wrapper.appendChild(emptyState);
         }
 
+        // Clear wrapper after loading
+        wrapper.innerHTML = '';
         emptyState.style.display = 'none';
 
         // Recreate all messages
@@ -2871,8 +3214,26 @@
         closeSidebar();
     }
 
-    function clearChats() {
+    async function clearChats() {
         if (confirm('Clear all conversations? This cannot be undone.')) {
+            // Delete all conversations from server
+            try {
+                const chatIds = Object.keys(state.chats);
+                for (const chatId of chatIds) {
+                    if (typeof chatId === 'number' || !isNaN(parseInt(chatId))) {
+                        await fetch(`/api/conversations/${chatId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRFToken': document.querySelector('meta[name=csrf-token]').content
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error clearing chats from server:', error);
+            }
+            
+            // Clear local storage
             state.chats = {};
             localStorage.removeItem('farmlink-chats');
             startNewChat();
