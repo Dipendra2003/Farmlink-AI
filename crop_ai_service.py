@@ -34,7 +34,8 @@ class EnhancedCropAI:
             
             genai.configure(api_key=api_key)
             self.model = genai.GenerativeModel('gemini-2.5-flash-lite')
-            logger.info("Gemini AI client initialized successfully with gemini-2.5-flash-lite model")
+            if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+                logger.info("Gemini AI client initialized successfully with gemini-2.5-flash-lite model")
             
         except Exception as e:
             logger.error(f"CRITICAL: Failed to initialize Gemini AI client: {e}")
@@ -1313,7 +1314,8 @@ def get_crop_service_status() -> Dict[str, Any]:
 CROP_AI_AVAILABLE = True
 try:
     enhanced_crop_ai = EnhancedCropAI()
-    logger.info("Enhanced Crop AI service initialized successfully")
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        logger.info("Enhanced Crop AI service initialized successfully")
 except Exception as e:
     CROP_AI_AVAILABLE = False
     enhanced_crop_ai = None

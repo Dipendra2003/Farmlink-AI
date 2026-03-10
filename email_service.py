@@ -20,52 +20,75 @@ class EmailService:
     def __init__(self):
         self.from_email = os.environ.get('MAIL_USERNAME', 'farmlink76@gmail.com')
     
-    def send_email(self, to_email, subject, html_content, text_content=None):
-        """Send email using Flask-Mail"""
-        try:
-            log_notification_operation(
-                logging.getLogger(__name__),
-                'send_attempt',
-                notification_type=subject,
-                recipient_email=to_email,
-                success=None
-            )
-            
-            msg = Message(
-                subject=subject,
-                sender=self.from_email,
-                recipients=[to_email]
-            )
-            msg.html = html_content
-            if text_content:
-                msg.body = text_content
-            
-            # Send the email
-            mail.send(msg)
-            
-            log_notification_operation(
-                logging.getLogger(__name__),
-                'send_success',
-                notification_type=subject,
-                recipient_email=to_email,
-                success=True
-            )
-            
-            return {"success": True, "status_code": 200, "message": "Email sent successfully"}
-        except Exception as e:
-            error_msg = f"Failed to send email to {to_email}: {str(e)}"
-            
-            log_notification_operation(
-                logging.getLogger(__name__),
-                'send_failure',
-                notification_type=subject,
-                recipient_email=to_email,
-                success=False,
-                error=error_msg
-            )
-            
-            logging.exception("Detailed error traceback:")
-            return {"success": False, "error": error_msg, "status_code": 500}
+    def send_email(self, to_email, subject, html_content, text_content=None, max_retries=3):
+        """Send email using Flask-Mail with retry logic for connection issues"""
+        import time
+        
+        log_notification_operation(
+            logging.getLogger(__name__),
+            'send_attempt',
+            notification_type=subject,
+            recipient_email=to_email,
+            success=None
+        )
+        
+        msg = Message(
+            subject=subject,
+            sender=self.from_email,
+            recipients=[to_email]
+        )
+        msg.html = html_content
+        if text_content:
+            msg.body = text_content
+        
+        last_error = None
+        for attempt in range(max_retries):
+            try:
+                # Create a fresh connection for each send to avoid connection reuse issues
+                with mail.connect() as conn:
+                    conn.send(msg)
+                
+                log_notification_operation(
+                    logging.getLogger(__name__),
+                    'send_success',
+                    notification_type=subject,
+                    recipient_email=to_email,
+                    success=True
+                )
+                
+                return {"success": True, "status_code": 200, "message": "Email sent successfully"}
+            except Exception as e:
+                last_error = e
+                error_str = str(e)
+                
+                # Check if it's a connection-related error that's worth retrying
+                is_connection_error = any(err in error_str.lower() for err in [
+                    'connection', 'disconnected', 'aborted', 'connect() first',
+                    'timed out', 'reset by peer', 'broken pipe'
+                ])
+                
+                if is_connection_error and attempt < max_retries - 1:
+                    wait_time = (attempt + 1) * 2  # Exponential backoff: 2s, 4s, 6s
+                    logging.warning(f"Email send attempt {attempt + 1} failed, retrying in {wait_time}s: {error_str}")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    break
+        
+        # All retries failed
+        error_msg = f"Failed to send email to {to_email}: {str(last_error)}"
+        
+        log_notification_operation(
+            logging.getLogger(__name__),
+            'send_failure',
+            notification_type=subject,
+            recipient_email=to_email,
+            success=False,
+            error=error_msg
+        )
+        
+        logging.exception("Detailed error traceback:")
+        return {"success": False, "error": error_msg, "status_code": 500}
     
     def send_login_alert(self, user, ip_address, user_agent, location=None):
         """Send login activity alert"""

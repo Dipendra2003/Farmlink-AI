@@ -203,7 +203,8 @@ class PestDiseaseDetectionService:
             genai.configure(api_key=api_key)
             self.gemini_model = genai.GenerativeModel(self.model_name)
             self.client_error = None
-            logger.info(f"Pest Detection Service initialized with {self.model_name}")
+            if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+                logger.info(f"Pest Detection Service initialized with {self.model_name}")
             
         except Exception as e:
             error_msg = f"Failed to initialize Gemini AI: {str(e)}"

@@ -98,16 +98,18 @@
                         <div class="btn-group" role="group">
                             <!-- Voting -->
                             <button type="button" 
-                                    class="btn btn-outline-success btn-sm"
+                                    class="btn {% if user_post_vote == 'upvote' %}btn-success{% else %}btn-outline-success{% endif %} btn-sm"
                                     data-action="upvote-post"
-                                    data-post-id="{{ post.id }}">
+                                    data-post-id="{{ post.id }}"
+                                    id="upvote-btn-post">
                                 <i class="fas fa-thumbs-up me-1"></i>
                                 <span id="post-upvotes">{{ post.upvotes }}</span>
                             </button>
                             <button type="button" 
-                                    class="btn btn-outline-danger btn-sm"
+                                    class="btn {% if user_post_vote == 'downvote' %}btn-danger{% else %}btn-outline-danger{% endif %} btn-sm"
                                     data-action="downvote-post"
-                                    data-post-id="{{ post.id }}">
+                                    data-post-id="{{ post.id }}"
+                                    id="downvote-btn-post">
                                 <i class="fas fa-thumbs-down me-1"></i>
                                 <span id="post-downvotes">{{ post.downvotes }}</span>
                             </button>
@@ -247,16 +249,18 @@
                                 <div class="btn-group btn-group-sm" role="group">
                                     <!-- Voting -->
                                     <button type="button" 
-                                            class="btn btn-outline-success"
+                                            class="btn {% if user_reply_votes.get(reply.id) == 'upvote' %}btn-success{% else %}btn-outline-success{% endif %}"
                                             data-action="upvote-reply"
-                                            data-reply-id="{{ reply.id }}">
+                                            data-reply-id="{{ reply.id }}"
+                                            id="upvote-btn-reply-{{ reply.id }}">
                                         <i class="fas fa-thumbs-up me-1"></i>
                                         <span id="reply-upvotes-{{ reply.id }}">{{ reply.upvotes }}</span>
                                     </button>
                                     <button type="button" 
-                                            class="btn btn-outline-danger"
+                                            class="btn {% if user_reply_votes.get(reply.id) == 'downvote' %}btn-danger{% else %}btn-outline-danger{% endif %}"
                                             data-action="downvote-reply"
-                                            data-reply-id="{{ reply.id }}">
+                                            data-reply-id="{{ reply.id }}"
+                                            id="downvote-btn-reply-{{ reply.id }}">
                                         <i class="fas fa-thumbs-down me-1"></i>
                                         <span id="reply-downvotes-{{ reply.id }}">{{ reply.downvotes }}</span>
                                     </button>
@@ -371,7 +375,16 @@ document.addEventListener('click', function(e) {
     const button = e.target.closest('[data-action]');
     if (!button) return;
     
+    // Prevent multiple clicks
+    if (button.disabled) return;
+    
     const action = button.dataset.action;
+    
+    // Prevent event bubbling for vote actions
+    if (action.includes('vote') || action.includes('follow') || action.includes('delete')) {
+        e.stopPropagation();
+        e.preventDefault();
+    }
     
     switch(action) {
         case 'upvote-post':
@@ -493,6 +506,21 @@ if (!document.querySelector('#toast-animations')) {
 }
 
 function upvotePost(postId) {
+    const upvoteBtn = document.getElementById('upvote-btn-post');
+    const downvoteBtn = document.getElementById('downvote-btn-post');
+    
+    // Prevent multiple rapid clicks
+    if (upvoteBtn && upvoteBtn.disabled) {
+        return;
+    }
+    
+    if (upvoteBtn) {
+        upvoteBtn.disabled = true;
+    }
+    if (downvoteBtn) {
+        downvoteBtn.disabled = true;
+    }
+    
     fetch(`/expert-forum/post/${postId}/vote`, {
         method: 'POST',
         headers: {
@@ -512,16 +540,19 @@ function upvotePost(postId) {
     .then(data => {
         if (data.success) {
             // Update vote counts
-            document.getElementById('post-upvotes').textContent = data.upvotes;
-            document.getElementById('post-downvotes').textContent = data.downvotes;
+            const upvotesEl = document.getElementById('post-upvotes');
+            const downvotesEl = document.getElementById('post-downvotes');
+            if (upvotesEl) upvotesEl.textContent = data.upvotes;
+            if (downvotesEl) downvotesEl.textContent = data.downvotes;
             
-            // Show success message based on action
-            if (data.action === 'added') {
-                showToast('Upvoted!', 'success');
+            // Update button styles
+            if (data.action === 'added' || data.action === 'changed') {
+                if (upvoteBtn) upvoteBtn.className = 'btn btn-success btn-sm';
+                if (downvoteBtn) downvoteBtn.className = 'btn btn-outline-danger btn-sm';
+                showToast(data.action === 'added' ? 'Upvoted!' : 'Changed to upvote', 'success');
             } else if (data.action === 'removed') {
+                if (upvoteBtn) upvoteBtn.className = 'btn btn-outline-success btn-sm';
                 showToast('Upvote removed', 'info');
-            } else if (data.action === 'changed') {
-                showToast('Changed to upvote', 'success');
             }
         } else {
             showToast(data.message || 'Failed to vote', 'error');
@@ -530,10 +561,32 @@ function upvotePost(postId) {
     .catch(error => {
         console.error('Error voting:', error);
         showToast('Failed to vote. Please try again.', 'error');
+    })
+    .finally(() => {
+        // Re-enable buttons after a short delay to prevent rapid clicking
+        setTimeout(() => {
+            if (upvoteBtn) upvoteBtn.disabled = false;
+            if (downvoteBtn) downvoteBtn.disabled = false;
+        }, 500);
     });
 }
 
 function downvotePost(postId) {
+    const upvoteBtn = document.getElementById('upvote-btn-post');
+    const downvoteBtn = document.getElementById('downvote-btn-post');
+    
+    // Prevent multiple rapid clicks
+    if (downvoteBtn && downvoteBtn.disabled) {
+        return;
+    }
+    
+    if (upvoteBtn) {
+        upvoteBtn.disabled = true;
+    }
+    if (downvoteBtn) {
+        downvoteBtn.disabled = true;
+    }
+    
     fetch(`/expert-forum/post/${postId}/vote`, {
         method: 'POST',
         headers: {
@@ -553,16 +606,19 @@ function downvotePost(postId) {
     .then(data => {
         if (data.success) {
             // Update vote counts
-            document.getElementById('post-upvotes').textContent = data.upvotes;
-            document.getElementById('post-downvotes').textContent = data.downvotes;
+            const upvotesEl = document.getElementById('post-upvotes');
+            const downvotesEl = document.getElementById('post-downvotes');
+            if (upvotesEl) upvotesEl.textContent = data.upvotes;
+            if (downvotesEl) downvotesEl.textContent = data.downvotes;
             
-            // Show success message based on action
-            if (data.action === 'added') {
-                showToast('Downvoted!', 'success');
+            // Update button styles
+            if (data.action === 'added' || data.action === 'changed') {
+                if (downvoteBtn) downvoteBtn.className = 'btn btn-danger btn-sm';
+                if (upvoteBtn) upvoteBtn.className = 'btn btn-outline-success btn-sm';
+                showToast(data.action === 'added' ? 'Downvoted!' : 'Changed to downvote', 'success');
             } else if (data.action === 'removed') {
+                if (downvoteBtn) downvoteBtn.className = 'btn btn-outline-danger btn-sm';
                 showToast('Downvote removed', 'info');
-            } else if (data.action === 'changed') {
-                showToast('Changed to downvote', 'success');
             }
         } else {
             showToast(data.message || 'Failed to vote', 'error');
@@ -571,10 +627,24 @@ function downvotePost(postId) {
     .catch(error => {
         console.error('Error voting:', error);
         showToast('Failed to vote. Please try again.', 'error');
+    })
+    .finally(() => {
+        // Re-enable buttons after a short delay to prevent rapid clicking
+        setTimeout(() => {
+            if (upvoteBtn) upvoteBtn.disabled = false;
+            if (downvoteBtn) downvoteBtn.disabled = false;
+        }, 500);
     });
 }
 
 function upvoteReply(replyId) {
+    const upvoteBtn = document.getElementById(`upvote-btn-reply-${replyId}`);
+    const downvoteBtn = document.getElementById(`downvote-btn-reply-${replyId}`);
+    
+    if (upvoteBtn) {
+        upvoteBtn.disabled = true;
+    }
+    
     fetch(`/expert-forum/reply/${replyId}/vote`, {
         method: 'POST',
         headers: {
@@ -594,16 +664,19 @@ function upvoteReply(replyId) {
     .then(data => {
         if (data.success) {
             // Update vote counts
-            document.getElementById(`reply-upvotes-${replyId}`).textContent = data.upvotes;
-            document.getElementById(`reply-downvotes-${replyId}`).textContent = data.downvotes;
+            const upvotesEl = document.getElementById(`reply-upvotes-${replyId}`);
+            const downvotesEl = document.getElementById(`reply-downvotes-${replyId}`);
+            if (upvotesEl) upvotesEl.textContent = data.upvotes;
+            if (downvotesEl) downvotesEl.textContent = data.downvotes;
             
-            // Show success message based on action
-            if (data.action === 'added') {
-                showToast('Upvoted!', 'success');
+            // Update button styles
+            if (data.action === 'added' || data.action === 'changed') {
+                if (upvoteBtn) upvoteBtn.className = 'btn btn-success';
+                if (downvoteBtn) downvoteBtn.className = 'btn btn-outline-danger';
+                showToast(data.action === 'added' ? 'Upvoted!' : 'Changed to upvote', 'success');
             } else if (data.action === 'removed') {
+                if (upvoteBtn) upvoteBtn.className = 'btn btn-outline-success';
                 showToast('Upvote removed', 'info');
-            } else if (data.action === 'changed') {
-                showToast('Changed to upvote', 'success');
             }
         } else {
             showToast(data.message || 'Failed to vote', 'error');
@@ -612,10 +685,20 @@ function upvoteReply(replyId) {
     .catch(error => {
         console.error('Error voting on reply:', error);
         showToast('Failed to vote. Please try again.', 'error');
+    })
+    .finally(() => {
+        if (upvoteBtn) upvoteBtn.disabled = false;
     });
 }
 
 function downvoteReply(replyId) {
+    const upvoteBtn = document.getElementById(`upvote-btn-reply-${replyId}`);
+    const downvoteBtn = document.getElementById(`downvote-btn-reply-${replyId}`);
+    
+    if (downvoteBtn) {
+        downvoteBtn.disabled = true;
+    }
+    
     fetch(`/expert-forum/reply/${replyId}/vote`, {
         method: 'POST',
         headers: {
@@ -635,16 +718,19 @@ function downvoteReply(replyId) {
     .then(data => {
         if (data.success) {
             // Update vote counts
-            document.getElementById(`reply-upvotes-${replyId}`).textContent = data.upvotes;
-            document.getElementById(`reply-downvotes-${replyId}`).textContent = data.downvotes;
+            const upvotesEl = document.getElementById(`reply-upvotes-${replyId}`);
+            const downvotesEl = document.getElementById(`reply-downvotes-${replyId}`);
+            if (upvotesEl) upvotesEl.textContent = data.upvotes;
+            if (downvotesEl) downvotesEl.textContent = data.downvotes;
             
-            // Show success message based on action
-            if (data.action === 'added') {
-                showToast('Downvoted!', 'success');
+            // Update button styles
+            if (data.action === 'added' || data.action === 'changed') {
+                if (downvoteBtn) downvoteBtn.className = 'btn btn-danger';
+                if (upvoteBtn) upvoteBtn.className = 'btn btn-outline-success';
+                showToast(data.action === 'added' ? 'Downvoted!' : 'Changed to downvote', 'success');
             } else if (data.action === 'removed') {
+                if (downvoteBtn) downvoteBtn.className = 'btn btn-outline-danger';
                 showToast('Downvote removed', 'info');
-            } else if (data.action === 'changed') {
-                showToast('Changed to downvote', 'success');
             }
         } else {
             showToast(data.message || 'Failed to vote', 'error');
@@ -653,6 +739,9 @@ function downvoteReply(replyId) {
     .catch(error => {
         console.error('Error voting on reply:', error);
         showToast('Failed to vote. Please try again.', 'error');
+    })
+    .finally(() => {
+        if (downvoteBtn) downvoteBtn.disabled = false;
     });
 }
 
@@ -789,10 +878,19 @@ function deleteReply(replyId) {
 function followUser(userId) {
     const followBtn = document.getElementById(`follow-btn-${userId}`);
     const followText = document.getElementById(`follow-text-${userId}`);
+    
+    if (!followBtn) {
+        console.error('Follow button not found for user:', userId);
+        showToast('Error: Button not found', 'error');
+        return;
+    }
+    
     const followIcon = followBtn.querySelector('i');
     
     // Disable button during request
     followBtn.disabled = true;
+    const originalHtml = followBtn.innerHTML;
+    followBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Loading...';
     
     fetch(`/expert-forum/user/${userId}/follow`, {
         method: 'POST',
@@ -801,28 +899,36 @@ function followUser(userId) {
             'X-CSRFToken': getCSRFToken()
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
             if (data.action === 'followed') {
-                followText.textContent = 'Unfollow';
+                if (followText) followText.textContent = 'Unfollow';
                 followBtn.className = 'btn btn-primary btn-sm';
-                followIcon.className = 'fas fa-user-minus me-1';
+                followBtn.innerHTML = '<i class="fas fa-user-minus me-1"></i><span id="follow-text-' + userId + '">Unfollow</span>';
+                showToast(data.message || 'Successfully followed!', 'success');
             } else {
-                followText.textContent = 'Follow';
+                if (followText) followText.textContent = 'Follow';
                 followBtn.className = 'btn btn-outline-primary btn-sm';
-                followIcon.className = 'fas fa-user-plus me-1';
+                followBtn.innerHTML = '<i class="fas fa-user-plus me-1"></i><span id="follow-text-' + userId + '">Follow</span>';
+                showToast(data.message || 'Successfully unfollowed!', 'success');
             }
-            
-            // Show success message
-            showNotification(data.message, 'success');
         } else {
-            showNotification(data.message, 'error');
+            // Restore original button state on error
+            followBtn.innerHTML = originalHtml;
+            showToast(data.message || 'Failed to update follow status', 'error');
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        showNotification('An error occurred while updating follow status', 'error');
+        console.error('Error following user:', error);
+        // Restore original button state on error
+        followBtn.innerHTML = originalHtml;
+        showToast('An error occurred while updating follow status. Please try again.', 'error');
     })
     .finally(() => {
         // Re-enable button
@@ -830,25 +936,9 @@ function followUser(userId) {
     });
 }
 
-// Helper function to show notifications
+// Helper function to show notifications (alias for showToast for backward compatibility)
 function showNotification(message, type) {
-    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
-    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `;
-    
-    document.body.appendChild(alertDiv);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (alertDiv.parentNode) {
-            alertDiv.parentNode.removeChild(alertDiv);
-        }
-    }, 5000);
+    showToast(message, type);
 }
 
 function reportPost(postId) {

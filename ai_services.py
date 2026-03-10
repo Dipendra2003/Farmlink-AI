@@ -26,7 +26,8 @@ def initialize_gemini_client():
         genai.configure(api_key=api_key)
         client = genai.GenerativeModel('gemini-2.5-flash-lite')
         client_error = None
-        logger.info("Gemini AI client initialized successfully with gemini-2.5-flash-lite")
+        if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+            logger.info("Gemini AI client initialized successfully with gemini-2.5-flash-lite")
         
     except Exception as e:
         logger.error(f"AI client initialization failed: {e}")
@@ -258,21 +259,29 @@ YOUR CAPABILITIES:
 
 RESPONSE GUIDELINES:
 1. Be conversational, warm, and farmer-friendly
-2. Provide practical, step-by-step advice
-3. Include specific examples when helpful
-4. Consider local Indian farming conditions
-5. Keep responses concise but complete
+2. Provide practical, step-by-step advice when needed
+3. Keep responses CONCISE but COMPLETE - aim for 3-5 key points
+4. Use bullet points (•) for better readability
+5. Consider local Indian farming conditions
 6. Always give real, actionable information (no placeholder data)
 7. If you don't know something specific, say so honestly
 8. Focus on solutions that increase farmer income and reduce risk
+9. For simple questions, give brief answers (2-3 sentences)
+10. For complex questions, provide structured guidance (but keep it under 200 words)
+
+RESPONSE LENGTH RULES:
+- Simple greetings/questions: 1-2 sentences
+- General info queries: 3-5 bullet points
+- Technical advice: 4-6 key points with brief explanations
+- Emergency/disease issues: Immediate action + detailed steps (max 150 words)
 
 QUERY TYPES TO HANDLE:
-- Weather: "What's the weather forecast?" → Real weather advice
-- Crops: "What should I plant?" → Seasonal crop recommendations  
-- Prices: "Rice price today?" → Current market information
-- Diseases: "Tomato leaves turning yellow" → Diagnosis + treatment
-- Fertilizer: "What fertilizer for wheat?" → Specific recommendations
-- General: "How can you help?" → Platform capabilities overview
+- Weather: "What's the weather forecast?" → Brief forecast + farming impact
+- Crops: "What should I plant?" → Top 3-4 seasonal recommendations  
+- Prices: "Rice price today?" → Current price + brief trend
+- Diseases: "Tomato leaves turning yellow" → Quick diagnosis + treatment steps
+- Fertilizer: "What fertilizer for wheat?" → Specific recommendations (NPK ratios)
+- General: "How can you help?" → Brief platform overview (5-6 points)
 
 Always respond as if you have access to real-time data and provide practical farming guidance.
 """
@@ -282,7 +291,7 @@ Always respond as if you have access to real-time data and provide practical far
 Farmer Query: "{query}"
 Language: {language}
 
-Please provide a helpful, practical response as the Farmlink Voice Assistant. Include specific farming advice, actionable steps, and relevant information that would help an Indian farmer.
+Please provide a helpful, practical response as the Farmlink Voice Assistant. Keep it concise but complete - focus on the most important information the farmer needs to know.
 """
 
             # Make API call to Gemini
@@ -291,8 +300,9 @@ Please provide a helpful, practical response as the Farmlink Voice Assistant. In
                 f"{system_prompt}\n\n{user_prompt}",
                 generation_config=genai.types.GenerationConfig(
                     temperature=0.7,
-                    max_output_tokens=400,
+                    max_output_tokens=800,  # Increased from 400 to allow complete responses
                     top_p=0.8,
+                    top_k=40,
                 )
             )
             
@@ -386,7 +396,8 @@ class EnhancedAnalyticsAI:
 # Import crop AI services
 try:
     from crop_ai_service import EnhancedCropAI as CropAIService, get_crop_service_status, CROP_AI_AVAILABLE
-    logger.info("Crop AI service imported successfully")
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+        logger.info("Crop AI service imported successfully")
 except ImportError as e:
     logger.warning(f"Crop AI service not available: {e}")
     CROP_AI_AVAILABLE = False

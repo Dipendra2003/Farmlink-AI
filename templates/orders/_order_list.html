@@ -58,7 +58,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <div>
                         <h5 class="card-title mb-0">Order #{{ order.id }}</h5>
-                        <small class="text-muted">{{ order.created_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                        <small class="text-muted">{{ format_datetime(order.created_at) }}</small>
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         {% if order.status == 'pending' %}
@@ -97,7 +97,7 @@
                         
                         {% if order.payment_status == 'paid' %}
                             <span class="badge bg-success fs-6">
-                                <i class="fas fa-dollar-sign me-1"></i>Paid
+                                <i class="fas fa-indian-rupee-sign me-1"></i>Paid
                             </span>
                         {% elif order.payment_status == 'failed' %}
                             <span class="badge bg-danger fs-6">
@@ -204,10 +204,10 @@
                             </h6>
                             <p class="mb-1"><strong>Tracking Number:</strong> {{ order.tracking_number }}</p>
                             {% if order.shipped_at %}
-                                <p class="mb-0"><strong>Shipped On:</strong> {{ order.shipped_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                                <p class="mb-0"><strong>Shipped On:</strong> {{ format_datetime(order.shipped_at) }}</p>
                             {% endif %}
                             {% if order.delivered_at %}
-                                <p class="mb-0"><strong>Delivered On:</strong> {{ order.delivered_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                                <p class="mb-0"><strong>Delivered On:</strong> {{ format_datetime(order.delivered_at) }}</p>
                             {% endif %}
                         </div>
                     {% endif %}
@@ -236,7 +236,7 @@
                             </h6>
                             <p class="mb-1">{{ order.cancellation_reason }}</p>
                             {% if order.cancelled_at %}
-                                <small class="text-muted">Cancelled on: {{ order.cancelled_at.strftime('%B %d, %Y at %I:%M %p') }}</small>
+                                <small class="text-muted">Cancelled on: {{ format_datetime(order.cancelled_at) }}</small>
                             {% endif %}
                         </div>
                     {% endif %}
@@ -244,7 +244,7 @@
                     <div class="mt-3 d-flex justify-content-between align-items-center">
                         <div>
                             <small class="text-muted">
-                                Last updated: {{ order.updated_at.strftime('%B %d, %Y at %I:%M %p') }}
+                                Last updated: {{ format_datetime(order.updated_at) }}
                             </small>
                         </div>
                         <div class="d-flex gap-2 flex-wrap">

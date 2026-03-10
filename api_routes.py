@@ -1116,7 +1116,8 @@ def api_get_seller_reputation(seller_id):
         }), 500
 
 
-logger.info("API routes loaded successfully")
+if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    logger.info("API routes loaded successfully")
 
 
 # =============================================================================

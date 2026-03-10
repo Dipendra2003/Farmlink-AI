@@ -539,8 +539,7 @@ def delete_expert_reply(reply_id):
 @login_required
 def vote_on_post(post_id):
     """Vote on a post (upvote/downvote with weight)"""
-    from sqlalchemy.exc import IntegrityError, OperationalError
-    import time
+    from sqlalchemy.exc import IntegrityError
     
     post = ExpertPost.query.get_or_404(post_id)
     vote_type = request.json.get('vote_type')  # 'upvote' or 'downvote'
@@ -548,129 +547,124 @@ def vote_on_post(post_id):
     if vote_type not in ['upvote', 'downvote']:
         return jsonify({'success': False, 'message': 'Invalid vote type'}), 400
     
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            # Start a new transaction for each retry
-            if attempt > 0:
-                time.sleep(0.1 * (2 ** attempt))  # Exponential backoff: 0.2s, 0.4s, 0.8s
-                # Refresh the session to get latest data
-                db.session.expire_all()
-            
-            # Check existing vote with FOR UPDATE to lock the row
-            existing_vote = PostVote.query.filter_by(
-                post_id=post_id,
-                user_id=current_user.id
-            ).with_for_update().first()
-            
-            if existing_vote:
-                if existing_vote.vote_type == vote_type:
-                    # Remove vote if same type (clicking same button again)
-                    db.session.delete(existing_vote)
-                    action = 'removed'
-                else:
-                    # Change vote type (switching from upvote to downvote or vice versa)
-                    existing_vote.vote_type = vote_type
-                    existing_vote.weight = calculate_vote_weight(current_user)
-                    existing_vote.updated_at = datetime.utcnow()
-                    action = 'changed'
+    try:
+        # Check existing vote using a fresh query
+        existing_vote = PostVote.query.filter_by(
+            post_id=post_id,
+            user_id=current_user.id
+        ).first()
+        
+        action = None
+        
+        if existing_vote:
+            if existing_vote.vote_type == vote_type:
+                # Remove vote if same type (toggle off)
+                vote_id = existing_vote.id
+                PostVote.query.filter_by(id=vote_id).delete()
+                action = 'removed'
             else:
-                # New vote - use merge to handle race conditions
-                vote = PostVote(
-                    post_id=post_id,
-                    user_id=current_user.id,
-                    vote_type=vote_type,
-                    weight=calculate_vote_weight(current_user)
-                )
-                db.session.merge(vote)
-                action = 'added'
-            
-            # Commit the vote change first
-            db.session.commit()
-            
-            # Update vote counts in a separate transaction to avoid conflicts
+                # Change vote type
+                existing_vote.vote_type = vote_type
+                existing_vote.weight = calculate_vote_weight(current_user)
+                existing_vote.updated_at = datetime.utcnow()
+                action = 'changed'
+        else:
+            # New vote - create it
+            new_vote = PostVote(
+                post_id=post_id,
+                user_id=current_user.id,
+                vote_type=vote_type,
+                weight=calculate_vote_weight(current_user)
+            )
+            db.session.add(new_vote)
+            action = 'added'
+        
+        db.session.commit()
+        
+        # Recalculate vote counts from database
+        upvote_count = PostVote.query.filter_by(post_id=post_id, vote_type='upvote').count()
+        downvote_count = PostVote.query.filter_by(post_id=post_id, vote_type='downvote').count()
+        
+        # Update post vote counts
+        post.upvotes = upvote_count
+        post.downvotes = downvote_count
+        db.session.commit()
+        
+        # Notify post author for upvotes
+        if vote_type == 'upvote' and action == 'added' and post.author_id != current_user.id:
             try:
-                update_post_votes(post, commit=True)
-            except Exception as count_error:
-                # Don't fail if count update fails - it will be corrected on next vote
-                app.logger.warning(f'Failed to update vote counts: {str(count_error)}')
-            
-            # Notify post author for upvotes
-            if vote_type == 'upvote' and action in ['added', 'changed'] and post.author_id != current_user.id:
-                try:
-                    create_notification(
-                        user_id=post.author_id,
-                        notification_type='post_upvoted',
-                        title='Your post was upvoted!',
-                        message=f'Your post "{post.title}" received an upvote',
-                        sender_id=current_user.id,
-                        post_id=post_id
-                    )
-                except Exception as notif_error:
-                    # Don't fail the vote if notification fails
-                    app.logger.warning(f'Failed to send vote notification: {str(notif_error)}')
-            
-            # Refresh post to get updated counts
-            db.session.refresh(post)
-            
-            return jsonify({
-                'success': True,
-                'action': action,
-                'upvotes': post.upvotes,
-                'downvotes': post.downvotes,
-                'score': post.vote_score
-            })
-            
-        except (IntegrityError, OperationalError) as e:
-            db.session.rollback()
-            error_msg = str(e)
-            
-            # Check if it's a deadlock error (1213) or lock wait timeout (1205)
-            if '1213' in error_msg or '1205' in error_msg or 'Deadlock' in error_msg:
-                if attempt < max_retries - 1:
-                    app.logger.warning(f'Database deadlock detected, retrying... (attempt {attempt + 1}/{max_retries})')
-                    continue
-                else:
-                    app.logger.error(f'Failed to vote after {max_retries} attempts due to deadlock')
-                    return jsonify({'success': False, 'message': 'Server is busy. Please try again.'}), 503
-            elif 'Duplicate' in error_msg or '1062' in error_msg or 'duplicate key' in error_msg.lower() or 'unique_post_vote' in error_msg:
-                # Duplicate key - vote already exists, retry to handle it properly
-                if attempt < max_retries - 1:
-                    app.logger.warning(f'Duplicate vote detected, retrying... (attempt {attempt + 1}/{max_retries})')
-                    db.session.expire_all()
-                    continue
-                else:
-                    # Last attempt - just return current state
-                    db.session.expire_all()
-                    existing = PostVote.query.filter_by(post_id=post_id, user_id=current_user.id).first()
-                    db.session.refresh(post)
+                create_notification(
+                    user_id=post.author_id,
+                    notification_type='post_upvoted',
+                    title='Your post was upvoted!',
+                    message=f'Your post "{post.title}" received an upvote',
+                    sender_id=current_user.id,
+                    post_id=post_id
+                )
+            except Exception as notif_error:
+                app.logger.warning(f'Failed to send vote notification: {str(notif_error)}')
+        
+        app.logger.info(f'Vote action: {action} for post {post_id} by user {current_user.id}. Upvotes: {upvote_count}, Downvotes: {downvote_count}')
+        
+        return jsonify({
+            'success': True,
+            'action': action,
+            'upvotes': upvote_count,
+            'downvotes': downvote_count,
+            'score': upvote_count - downvote_count
+        })
+        
+    except IntegrityError as e:
+        db.session.rollback()
+        error_msg = str(e)
+        app.logger.error(f'IntegrityError voting on post {post_id}: {error_msg}')
+        
+        # Duplicate key - vote already exists, try to toggle it
+        if 'Duplicate' in error_msg or 'duplicate key' in error_msg.lower() or 'unique' in error_msg.lower():
+            try:
+                existing_vote = PostVote.query.filter_by(post_id=post_id, user_id=current_user.id).first()
+                
+                if existing_vote:
+                    if existing_vote.vote_type == vote_type:
+                        PostVote.query.filter_by(id=existing_vote.id).delete()
+                        action = 'removed'
+                    else:
+                        existing_vote.vote_type = vote_type
+                        existing_vote.weight = calculate_vote_weight(current_user)
+                        action = 'changed'
+                    
+                    db.session.commit()
+                    
+                    upvote_count = PostVote.query.filter_by(post_id=post_id, vote_type='upvote').count()
+                    downvote_count = PostVote.query.filter_by(post_id=post_id, vote_type='downvote').count()
+                    
+                    post.upvotes = upvote_count
+                    post.downvotes = downvote_count
+                    db.session.commit()
+                    
                     return jsonify({
                         'success': True,
-                        'action': 'already_voted',
-                        'upvotes': post.upvotes,
-                        'downvotes': post.downvotes,
-                        'score': post.vote_score
+                        'action': action,
+                        'upvotes': upvote_count,
+                        'downvotes': downvote_count,
+                        'score': upvote_count - downvote_count
                     })
-            else:
-                app.logger.error(f'Database error voting on post: {error_msg}')
-                return jsonify({'success': False, 'message': 'Failed to vote. Please try again.'}), 400
-                
-        except Exception as e:
-            db.session.rollback()
-            app.logger.error(f'Error voting on post: {str(e)}')
-            import traceback
-            app.logger.error(f'Traceback: {traceback.format_exc()}')
-            return jsonify({'success': False, 'message': 'Failed to vote. Please try again.'}), 400
-    
-    # Should not reach here, but just in case
-    return jsonify({'success': False, 'message': 'Server is busy. Please try again later.'}), 503
+            except Exception as retry_error:
+                db.session.rollback()
+                app.logger.error(f'Retry failed: {str(retry_error)}')
+        
+        return jsonify({'success': False, 'message': 'Failed to vote. Please try again.'}), 400
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Error voting on post {post_id}: {str(e)}')
+        return jsonify({'success': False, 'message': 'Failed to vote. Please try again.'}), 400
 
 @app.route('/expert-forum/reply/<int:reply_id>/vote', methods=['POST'])
 @login_required
 def vote_on_reply(reply_id):
     """Vote on a reply (upvote/downvote with weight)"""
-    from sqlalchemy.exc import IntegrityError, OperationalError
-    import time
+    from sqlalchemy.exc import IntegrityError
     
     reply = ExpertReply.query.get_or_404(reply_id)
     vote_type = request.json.get('vote_type')  # 'upvote' or 'downvote'
@@ -678,123 +672,119 @@ def vote_on_reply(reply_id):
     if vote_type not in ['upvote', 'downvote']:
         return jsonify({'success': False, 'message': 'Invalid vote type'}), 400
     
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            # Start a new transaction for each retry
-            if attempt > 0:
-                time.sleep(0.1 * (2 ** attempt))  # Exponential backoff: 0.2s, 0.4s, 0.8s
-                # Refresh the session to get latest data
-                db.session.expire_all()
-            
-            # Check existing vote with FOR UPDATE to lock the row
-            existing_vote = ReplyVote.query.filter_by(
-                reply_id=reply_id,
-                user_id=current_user.id
-            ).with_for_update().first()
-            
-            if existing_vote:
-                if existing_vote.vote_type == vote_type:
-                    # Remove vote if same type (clicking same button again)
-                    db.session.delete(existing_vote)
-                    action = 'removed'
-                else:
-                    # Change vote type (switching from upvote to downvote or vice versa)
-                    existing_vote.vote_type = vote_type
-                    existing_vote.weight = calculate_vote_weight(current_user)
-                    existing_vote.updated_at = datetime.utcnow()
-                    action = 'changed'
+    try:
+        # Check existing vote using a fresh query
+        existing_vote = ReplyVote.query.filter_by(
+            reply_id=reply_id,
+            user_id=current_user.id
+        ).first()
+        
+        action = None
+        
+        if existing_vote:
+            if existing_vote.vote_type == vote_type:
+                # Remove vote if same type (toggle off)
+                vote_id = existing_vote.id
+                ReplyVote.query.filter_by(id=vote_id).delete()
+                action = 'removed'
             else:
-                # New vote - use merge to handle race conditions
-                vote = ReplyVote(
-                    reply_id=reply_id,
-                    user_id=current_user.id,
-                    vote_type=vote_type,
-                    weight=calculate_vote_weight(current_user)
-                )
-                db.session.merge(vote)
-                action = 'added'
-            
-            # Commit the vote change first
-            db.session.commit()
-            
-            # Update vote counts in a separate transaction to avoid conflicts
+                # Change vote type
+                existing_vote.vote_type = vote_type
+                existing_vote.weight = calculate_vote_weight(current_user)
+                existing_vote.updated_at = datetime.utcnow()
+                action = 'changed'
+        else:
+            # New vote - create it
+            new_vote = ReplyVote(
+                reply_id=reply_id,
+                user_id=current_user.id,
+                vote_type=vote_type,
+                weight=calculate_vote_weight(current_user)
+            )
+            db.session.add(new_vote)
+            action = 'added'
+        
+        db.session.commit()
+        
+        # Recalculate vote counts from database
+        upvote_count = ReplyVote.query.filter_by(reply_id=reply_id, vote_type='upvote').count()
+        downvote_count = ReplyVote.query.filter_by(reply_id=reply_id, vote_type='downvote').count()
+        
+        # Update reply vote counts
+        reply.upvotes = upvote_count
+        reply.downvotes = downvote_count
+        db.session.commit()
+        
+        # Notify reply author for upvotes
+        if vote_type == 'upvote' and action == 'added' and reply.author_id != current_user.id:
             try:
-                update_reply_votes(reply, commit=True)
-            except Exception as count_error:
-                # Don't fail if count update fails - it will be corrected on next vote
-                app.logger.warning(f'Failed to update vote counts: {str(count_error)}')
-            
-            # Notify reply author for upvotes
-            if vote_type == 'upvote' and action in ['added', 'changed'] and reply.author_id != current_user.id:
-                try:
-                    create_notification(
-                        user_id=reply.author_id,
-                        notification_type='reply_upvoted',
-                        title='Your reply was upvoted!',
-                        message=f'Your reply in "{reply.post.title}" received an upvote',
-                        sender_id=current_user.id,
-                        post_id=reply.post_id,
-                        reply_id=reply_id
-                    )
-                except Exception as notif_error:
-                    # Don't fail the vote if notification fails
-                    app.logger.warning(f'Failed to send vote notification: {str(notif_error)}')
-            
-            # Refresh reply to get updated counts
-            db.session.refresh(reply)
-            
-            return jsonify({
-                'success': True,
-                'action': action,
-                'upvotes': reply.upvotes,
-                'downvotes': reply.downvotes,
-                'score': reply.vote_score
-            })
-            
-        except (IntegrityError, OperationalError) as e:
-            db.session.rollback()
-            error_msg = str(e)
-            
-            # Check if it's a deadlock error (1213) or lock wait timeout (1205)
-            if '1213' in error_msg or '1205' in error_msg or 'Deadlock' in error_msg:
-                if attempt < max_retries - 1:
-                    app.logger.warning(f'Database deadlock detected, retrying... (attempt {attempt + 1}/{max_retries})')
-                    continue
-                else:
-                    app.logger.error(f'Failed to vote after {max_retries} attempts due to deadlock')
-                    return jsonify({'success': False, 'message': 'Server is busy. Please try again.'}), 503
-            elif 'Duplicate' in error_msg or '1062' in error_msg or 'duplicate key' in error_msg.lower() or 'unique_reply_vote' in error_msg:
-                # Duplicate key - vote already exists, retry to handle it properly
-                if attempt < max_retries - 1:
-                    app.logger.warning(f'Duplicate vote detected, retrying... (attempt {attempt + 1}/{max_retries})')
-                    db.session.expire_all()
-                    continue
-                else:
-                    # Last attempt - just return current state
-                    db.session.expire_all()
-                    existing = ReplyVote.query.filter_by(reply_id=reply_id, user_id=current_user.id).first()
-                    db.session.refresh(reply)
+                create_notification(
+                    user_id=reply.author_id,
+                    notification_type='reply_upvoted',
+                    title='Your reply was upvoted!',
+                    message=f'Your reply in "{reply.post.title}" received an upvote',
+                    sender_id=current_user.id,
+                    post_id=reply.post_id,
+                    reply_id=reply_id
+                )
+            except Exception as notif_error:
+                app.logger.warning(f'Failed to send vote notification: {str(notif_error)}')
+        
+        app.logger.info(f'Vote action: {action} for reply {reply_id} by user {current_user.id}. Upvotes: {upvote_count}, Downvotes: {downvote_count}')
+        
+        return jsonify({
+            'success': True,
+            'action': action,
+            'upvotes': upvote_count,
+            'downvotes': downvote_count,
+            'score': upvote_count - downvote_count
+        })
+        
+    except IntegrityError as e:
+        db.session.rollback()
+        error_msg = str(e)
+        app.logger.error(f'IntegrityError voting on reply {reply_id}: {error_msg}')
+        
+        # Duplicate key - vote already exists, try to toggle it
+        if 'Duplicate' in error_msg or 'duplicate key' in error_msg.lower() or 'unique' in error_msg.lower():
+            try:
+                existing_vote = ReplyVote.query.filter_by(reply_id=reply_id, user_id=current_user.id).first()
+                
+                if existing_vote:
+                    if existing_vote.vote_type == vote_type:
+                        ReplyVote.query.filter_by(id=existing_vote.id).delete()
+                        action = 'removed'
+                    else:
+                        existing_vote.vote_type = vote_type
+                        existing_vote.weight = calculate_vote_weight(current_user)
+                        action = 'changed'
+                    
+                    db.session.commit()
+                    
+                    upvote_count = ReplyVote.query.filter_by(reply_id=reply_id, vote_type='upvote').count()
+                    downvote_count = ReplyVote.query.filter_by(reply_id=reply_id, vote_type='downvote').count()
+                    
+                    reply.upvotes = upvote_count
+                    reply.downvotes = downvote_count
+                    db.session.commit()
+                    
                     return jsonify({
                         'success': True,
-                        'action': 'already_voted',
-                        'upvotes': reply.upvotes,
-                        'downvotes': reply.downvotes,
-                        'score': reply.vote_score
+                        'action': action,
+                        'upvotes': upvote_count,
+                        'downvotes': downvote_count,
+                        'score': upvote_count - downvote_count
                     })
-            else:
-                app.logger.error(f'Database error voting on reply: {error_msg}')
-                return jsonify({'success': False, 'message': 'Failed to vote. Please try again.'}), 400
-                
-        except Exception as e:
-            db.session.rollback()
-            app.logger.error(f'Error voting on reply: {str(e)}')
-            import traceback
-            app.logger.error(f'Traceback: {traceback.format_exc()}')
-            return jsonify({'success': False, 'message': 'Failed to vote. Please try again.'}), 400
-    
-    # Should not reach here, but just in case
-    return jsonify({'success': False, 'message': 'Server is busy. Please try again later.'}), 503
+            except Exception as retry_error:
+                db.session.rollback()
+                app.logger.error(f'Retry failed: {str(retry_error)}')
+        
+        return jsonify({'success': False, 'message': 'Failed to vote. Please try again.'}), 400
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Error voting on reply {reply_id}: {str(e)}')
+        return jsonify({'success': False, 'message': 'Failed to vote. Please try again.'}), 400
 
 # ============================================================================
 # FOLLOWING ROUTES
@@ -805,108 +795,102 @@ def vote_on_reply(reply_id):
 def follow_user(user_id):
     """Follow/unfollow a user"""
     from sqlalchemy.exc import IntegrityError, OperationalError
-    import time
     
     user = User.query.get_or_404(user_id)
     
     if user.id == current_user.id:
         return jsonify({'success': False, 'message': 'You cannot follow yourself'}), 400
     
-    max_retries = 3
-    for attempt in range(max_retries):
-        try:
-            if attempt > 0:
-                time.sleep(0.1 * attempt)  # Exponential backoff
-            
-            # Check if already following
-            is_following = current_user.is_following(user)
-            
-            if is_following:
-                # Unfollow
-                follow_record = UserFollow.query.filter_by(
-                    follower_id=current_user.id,
-                    followed_id=user.id
-                ).first()
-                
-                if follow_record:
-                    db.session.delete(follow_record)
-                    action = 'unfollowed'
-                    message = f'You are no longer following {user.full_name or user.username}'
-                else:
-                    # Edge case: is_following returned True but no record found
-                    return jsonify({'success': False, 'message': 'Follow status inconsistent. Please refresh.'}), 400
-            else:
-                # Follow
-                follow_record = UserFollow(
-                    follower_id=current_user.id,
-                    followed_id=user.id
-                )
-                db.session.add(follow_record)
-                action = 'followed'
-                message = f'You are now following {user.full_name or user.username}'
-            
+    try:
+        # Expire any cached data to get fresh state from database
+        db.session.expire_all()
+        
+        # Direct database query to check follow status (avoid stale cache)
+        existing_follow = UserFollow.query.filter_by(
+            follower_id=current_user.id,
+            followed_id=user.id
+        ).first()
+        
+        if existing_follow:
+            # Already following - unfollow
+            db.session.delete(existing_follow)
             db.session.commit()
-            
-            # Send notification after successful commit (only for follow action)
-            if action == 'followed':
-                try:
-                    create_notification(
-                        user_id=user.id,
-                        notification_type='new_follower',
-                        title='New follower!',
-                        message=f'{current_user.full_name or current_user.username} started following you',
-                        sender_id=current_user.id
-                    )
-                except Exception as notif_error:
-                    # Don't fail the follow if notification fails
-                    app.logger.warning(f'Failed to send follow notification: {str(notif_error)}')
             
             return jsonify({
                 'success': True,
-                'action': action,
-                'message': message,
+                'action': 'unfollowed',
+                'message': f'You are no longer following {user.full_name or user.username}',
+                'follower_count': user.get_follower_count()
+            })
+        else:
+            # Not following - follow
+            new_follow = UserFollow(
+                follower_id=current_user.id,
+                followed_id=user.id
+            )
+            db.session.add(new_follow)
+            db.session.commit()
+            
+            # Send notification
+            try:
+                create_notification(
+                    user_id=user.id,
+                    notification_type='new_follower',
+                    title='New follower!',
+                    message=f'{current_user.full_name or current_user.username} started following you',
+                    sender_id=current_user.id
+                )
+            except Exception as notif_error:
+                app.logger.warning(f'Failed to send follow notification: {str(notif_error)}')
+            
+            return jsonify({
+                'success': True,
+                'action': 'followed',
+                'message': f'You are now following {user.full_name or user.username}',
                 'follower_count': user.get_follower_count()
             })
             
-        except (IntegrityError, OperationalError) as e:
-            db.session.rollback()
-            error_msg = str(e)
+    except IntegrityError as e:
+        db.session.rollback()
+        error_msg = str(e)
+        
+        # Duplicate key means user is already following - handle as unfollow request
+        if 'Duplicate' in error_msg or 'unique' in error_msg.lower():
+            # Race condition: record was inserted between our check and insert
+            # Treat this as an unfollow request
+            db.session.expire_all()
+            existing_follow = UserFollow.query.filter_by(
+                follower_id=current_user.id,
+                followed_id=user.id
+            ).first()
             
-            # Check if it's a deadlock error or duplicate key
-            if '1213' in error_msg or '1205' in error_msg or 'Deadlock' in error_msg:
-                if attempt < max_retries - 1:
-                    app.logger.warning(f'Database deadlock detected in follow, retrying... (attempt {attempt + 1}/{max_retries})')
-                    continue
-                else:
-                    app.logger.error(f'Failed to follow/unfollow after {max_retries} attempts due to deadlock')
-                    return jsonify({'success': False, 'message': 'Server is busy. Please try again.'}), 503
-            elif 'Duplicate' in error_msg:
-                # User already following - return success
+            if existing_follow:
+                db.session.delete(existing_follow)
+                db.session.commit()
                 return jsonify({
                     'success': True,
-                    'action': 'followed',
-                    'message': f'You are already following {user.full_name or user.username}',
+                    'action': 'unfollowed',
+                    'message': f'You are no longer following {user.full_name or user.username}',
                     'follower_count': user.get_follower_count()
                 })
             else:
-                app.logger.error(f'Database error in follow/unfollow: {error_msg}')
-                if attempt < max_retries - 1:
-                    continue
-                return jsonify({'success': False, 'message': 'Failed to update follow status. Please try again.'}), 400
-                
-        except Exception as e:
-            db.session.rollback()
-            app.logger.error(f'Error following/unfollowing user {user_id}: {str(e)}')
-            import traceback
-            app.logger.error(f'Traceback: {traceback.format_exc()}')
-            
-            if attempt < max_retries - 1:
-                continue
-            
-            return jsonify({
-                'success': False, 
-                'message': 'An error occurred while updating follow status. Please try again.'
-            }), 500
+                return jsonify({
+                    'success': True,
+                    'action': 'followed',
+                    'message': f'You are now following {user.full_name or user.username}',
+                    'follower_count': user.get_follower_count()
+                })
+        
+        app.logger.error(f'Database error in follow/unfollow: {error_msg}')
+        return jsonify({'success': False, 'message': 'Failed to update follow status. Please try again.'}), 400
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Error following/unfollowing user {user_id}: {str(e)}')
+        return jsonify({
+            'success': False, 
+            'message': 'An error occurred while updating follow status. Please try again.'
+        }), 500
     
     # Should not reach here, but just in case
     return jsonify({'success': False, 'message': 'Server is busy. Please try again later.'}), 503

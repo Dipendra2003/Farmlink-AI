@@ -178,9 +178,12 @@ with app.app_context():
     if os.environ.get('FLASK_ENV') != 'production':
         try:
             db.create_all()
-            app.logger.info("Database tables created successfully")
+            # Only log in main process to avoid duplicate messages
+            if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+                app.logger.info("Database tables created successfully")
         except Exception as e:
-            app.logger.warning(f"Could not create tables (may already exist): {str(e)}")
+            if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+                app.logger.warning(f"Could not create tables (may already exist): {str(e)}")
     
     # Import and register routes
     import advanced_routes  # Import first for helper functions
@@ -208,9 +211,12 @@ with app.app_context():
     try:
         from tracking_scheduler import init_tracking_scheduler
         init_tracking_scheduler(app)
-        app.logger.info("Tracking scheduler initialized successfully")
+        # Only log in main process to avoid duplicate messages
+        if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+            app.logger.info("Tracking scheduler initialized successfully")
     except Exception as e:
-        app.logger.error(f"Failed to initialize tracking scheduler: {str(e)}")
+        if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+            app.logger.error(f"Failed to initialize tracking scheduler: {str(e)}")
         # Continue without scheduler - jobs can be run manually if needed
     
     # Add security headers for all responses
