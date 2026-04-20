@@ -68,6 +68,11 @@ class RequestIDFilter(logging.Filter):
             record.request_id = getattr(g, 'request_id', None)
         else:
             record.request_id = None
+        
+        # Suppress debugger messages
+        if 'Debugger is active' in record.getMessage() or 'Debugger PIN' in record.getMessage():
+            return False
+        
         return True
 
 
@@ -81,7 +86,7 @@ def setup_logging(app=None, use_json=False):
     """
     # Get root logger
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
+    root_logger.setLevel(logging.WARNING)  # Changed from INFO to WARNING
     
     # Remove existing handlers
     for handler in root_logger.handlers[:]:
@@ -89,7 +94,7 @@ def setup_logging(app=None, use_json=False):
     
     # Create console handler
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.WARNING)  # Changed from INFO to WARNING
     
     # Set formatter based on configuration
     if use_json:
@@ -109,13 +114,19 @@ def setup_logging(app=None, use_json=False):
     # Add handler to root logger
     root_logger.addHandler(console_handler)
     
-    # Set specific logger levels
+    # Set specific logger levels - suppress all INFO logs
     logging.getLogger('werkzeug').setLevel(logging.WARNING)
     logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
     logging.getLogger('apscheduler').setLevel(logging.WARNING)
+    logging.getLogger('app').setLevel(logging.WARNING)
+    logging.getLogger('ai_services').setLevel(logging.WARNING)
+    logging.getLogger('crop_ai_service').setLevel(logging.WARNING)
+    logging.getLogger('pest_detection_service').setLevel(logging.WARNING)
+    logging.getLogger('api_routes').setLevel(logging.WARNING)
+    logging.getLogger('tracking_scheduler').setLevel(logging.WARNING)
     
     if app:
-        app.logger.info("Logging configuration initialized")
+        pass  # Removed the info log to keep console clean
 
 
 def get_request_id() -> Optional[str]:

@@ -2975,6 +2975,8 @@ def pest_disease_analysis():
                     analysis['analysis_id'] = analysis_id
                     flash('Analysis completed successfully! You can view it in your analysis history.', 'success')
                     app.logger.info(f"Analysis saved with ID: {analysis_id}")
+                    # Redirect to the specific analysis results page
+                    return redirect(url_for('view_pest_analysis', analysis_id=analysis_id))
                 else:
                     flash('Analysis completed but could not be saved to history.', 'warning')
                     app.logger.warning("Failed to save analysis to database")

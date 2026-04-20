@@ -627,4 +627,40 @@
         </div>
     </div>
 </div>
+
+<style>
+/* Fix table header text contrast in My Shipments section - High Priority Override */
+.card .table thead th {
+    color: #000000 !important;
+    font-weight: 700 !important;
+    background-color: #f8f9fa !important;
+    text-shadow: none !important;
+}
+
+/* Ensure table body text is dark and readable */
+.card .table tbody td {
+    color: #000000 !important;
+    font-weight: 500 !important;
+}
+
+/* Status column specific styling */
+.card .table tbody td:nth-child(4) {
+    color: #000000 !important;
+    font-weight: 600 !important;
+}
+
+/* Status badge styling for better visibility */
+.table tbody td .badge {
+    font-size: 0.875rem;
+    padding: 0.35em 0.65em;
+    font-weight: 600;
+}
+
+/* Force override any existing styles */
+table.table thead.table-light th {
+    color: #000000 !important;
+    background-color: #f8f9fa !important;
+}
+</style>
+
 {% endblock %}

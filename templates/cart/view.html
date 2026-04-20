@@ -101,7 +101,9 @@
                                                             <i class="fas fa-minus"></i>
                                                       </button>
                                                       <input type="number" class="form-control text-center qty-input"
-                                                            value="{{ item.quantity }}" min="0.1" step="0.1"
+                                                            value="{{ item.quantity }}" 
+                                                            min="{% if item.crop and item.crop.unit == 'kg' %}1{% else %}0.1{% endif %}" 
+                                                            step="{% if item.crop and item.crop.unit == 'kg' %}1{% else %}0.1{% endif %}"
                                                             data-item-id="{{ item.id }}" {% if item.crop
                                                             %}max="{{ item.crop.quantity }}" {% endif %}>
                                                       <button class="btn btn-outline-secondary qty-increase"

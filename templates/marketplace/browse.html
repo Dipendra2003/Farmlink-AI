@@ -197,9 +197,9 @@
                                     <div class="input-group input-group-sm">
                                         <input type="number" class="form-control cart-quantity-input" 
                                                data-crop-id="{{ crop.id }}" 
-                                               min="0.1" 
+                                               min="{% if crop.unit == 'kg' %}1{% else %}0.1{% endif %}" 
                                                max="{{ crop.quantity }}" 
-                                               step="0.1" 
+                                               step="{% if crop.unit == 'kg' %}1{% else %}0.1{% endif %}" 
                                                value="1" 
                                                placeholder="Qty">
                                         <span class="input-group-text">{{ crop.unit }}</span>

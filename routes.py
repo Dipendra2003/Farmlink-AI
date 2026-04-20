@@ -171,10 +171,14 @@ def login():
         ip_address = request.remote_addr
         user_agent = request.user_agent.string
         
+        # Debug logging
+        app.logger.warning(f"Login attempt - Identifier: {identifier}")
+        
         # Always apply rate limiting regardless of role
         from security_utils import rate_limit_login
         if not rate_limit_login(ip_address):
             flash('Too many login attempts. Please try again later.', 'danger')
+            app.logger.warning(f"Rate limit exceeded for IP: {ip_address}")
             return render_template('auth/login.html', form=form)
             
         # Try to find user by username, email, or phone
@@ -186,25 +190,36 @@ def login():
             )
         ).first()
         
+        # Debug logging
+        if user:
+            app.logger.warning(f"User found: {user.username}, Active: {user.is_active}, Email verified: {user.email_verified}, Role: {user.role}")
+        else:
+            app.logger.warning(f"No user found with identifier: {identifier}")
+        
         login_success = False
         
         if user and user.check_password(form.password.data):
+            app.logger.warning(f"Password check passed for user: {user.username}")
             if not user.is_active:
                 flash('Your account has been deactivated. Please contact support.', 'danger')
+                app.logger.warning(f"Account inactive: {user.username}")
                 login_success = False
             # Check email verification status (admins bypass this check)
             elif not user.email_verified and user.role != 'admin':
                 flash('Please verify your email address before logging in. A verification code has been sent to your email.', 'warning')
+                app.logger.warning(f"Email not verified: {user.username}")
                 return redirect(url_for('verify_email', user_id=user.id))
             # Temporarily allow admin login without HTTPS for development
             # Allow admin login in development
             # Allow admin login in development mode
             elif user.role == 'admin' and not request.is_secure and os.environ.get('FLASK_ENV') == 'production':
                 flash('Admin login requires a secure connection in production.', 'danger')
+                app.logger.warning(f"Admin login requires HTTPS in production: {user.username}")
                 login_success = False
             else:
                 login_success = True
                 login_user(user)
+                app.logger.warning(f"Login successful for user: {user.username}")
                 next_page = request.args.get('next')
                 if next_page and not next_page.startswith('/'):
                     next_page = None  # Prevent open redirect
@@ -243,6 +258,8 @@ def login():
                 # Always redirect to role-specific dashboard after login
                 return redirect(url_for(target_route))
         else:
+            if user:
+                app.logger.warning(f"Password check FAILED for user: {user.username}")
             flash('Invalid username or password.', 'danger')
         
         # Log the attempt
@@ -2560,6 +2577,8 @@ def remove_profile_picture():
 @login_required
 def get_profile_ai_insights():
     """Get AI-powered profile insights and recommendations"""
+    import json
+    import re
     try:
         from ai_services import client
         import google.generativeai as genai
@@ -2648,8 +2667,6 @@ def get_profile_ai_insights():
         )
         
         # Parse JSON response
-        import json
-        import re
         response_text = response.text.strip()
         
         # Extract JSON from markdown code blocks if present
@@ -2673,11 +2690,19 @@ def get_profile_ai_insights():
         }), 500
     except Exception as e:
         app.logger.error(f"Error generating AI insights: {str(e)}")
+        
+        # Check for quota exceeded error
+        error_message = str(e)
+        if 'quota' in error_message.lower() or '429' in error_message:
+            return jsonify({
+                'success': False,
+                'error': 'AI service quota exceeded. Please try again later.'
+            }), 429
+        
         return jsonify({
             'success': False,
             'error': 'An error occurred while generating insights.'
         }), 500
-        flash('An error occurred while removing your profile picture.', 'danger')
     
     return redirect(url_for('edit_profile'))
 

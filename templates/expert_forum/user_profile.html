@@ -297,10 +297,39 @@
     .rating-stars i {
         transition: all 0.2s ease;
         cursor: pointer;
+        color: #dee2e6;
     }
 
     .rating-stars i:hover {
         transform: scale(1.2);
+        color: #ffc107;
+    }
+
+    .rating-stars i.fas {
+        color: #ffc107;
+    }
+
+    .rating-stars i.far {
+        color: #dee2e6;
+    }
+
+    #starRating i {
+        font-size: 2rem;
+        margin: 0 0.1rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    #starRating i:hover {
+        transform: scale(1.2);
+    }
+
+    #starRating i.fas.fa-star {
+        color: #ffc107 !important;
+    }
+
+    #starRating i.far.fa-star {
+        color: #dee2e6 !important;
     }
 
     .modal-modern .modal-content {
@@ -715,10 +744,20 @@
 
     // Event delegation for all button actions
     document.addEventListener('click', function (e) {
-        const button = e.target.closest('[data-action]');
+        // Check if clicked element or its parent has data-action
+        let button = e.target;
+        
+        // If clicked on the icon inside the star, get the parent
+        if (button.tagName === 'I' && button.hasAttribute('data-action')) {
+            // This is the star itself
+        } else {
+            button = e.target.closest('[data-action]');
+        }
+        
         if (!button) return;
 
         const action = button.dataset.action;
+        console.log('Button clicked with action:', action, 'Element:', button);
 
         switch (action) {
             case 'toggle-follow':
@@ -726,9 +765,6 @@
                 break;
             case 'show-rating-modal':
                 showRatingModal();
-                break;
-            case 'set-rating':
-                setRating(parseInt(button.dataset.rating));
                 break;
             case 'submit-rating':
                 submitRating();
@@ -756,54 +792,177 @@
         }
     }
 
-    function setRating(rating) {
-        selectedRating = rating;
-        document.getElementById('ratingValue').value = rating;
-
-        // Update star display with animation
+    function highlightStars(rating, isHover = false) {
         const stars = document.querySelectorAll('#starRating i');
         stars.forEach((star, index) => {
-            setTimeout(() => {
-                if (index < rating) {
-                    star.className = 'fas fa-star text-warning';
-                    star.style.transform = 'scale(1.3)';
-                    setTimeout(() => {
-                        star.style.transform = 'scale(1)';
-                    }, 200);
-                } else {
-                    star.className = 'far fa-star text-muted';
-                }
-            }, index * 50);
+            if (index < rating) {
+                star.className = 'fas fa-star text-warning';
+            } else {
+                star.className = 'far fa-star text-muted';
+            }
         });
-
-        // Update rating text
-        document.getElementById('ratingText').textContent = ratingTexts[rating];
-        document.getElementById('ratingText').style.color = rating >= 4 ? '#28a745' : rating >= 3 ? '#ffc107' : '#dc3545';
     }
 
-    function showRatingModal() {
-        const modal = new bootstrap.Modal(document.getElementById('ratingModal'));
-        modal.show();
-
-        // Reset form
-        selectedRating = 0;
-        document.getElementById('ratingValue').value = '';
-        document.getElementById('feedback').value = '';
-        document.getElementById('ratingText').textContent = '';
-
+    function clearStars() {
         const stars = document.querySelectorAll('#starRating i');
         stars.forEach(star => {
             star.className = 'far fa-star text-muted';
         });
     }
 
+    function setRating(rating) {
+        console.log('=== setRating called ===');
+        console.log('Rating parameter:', rating, 'Type:', typeof rating);
+        
+        if (!rating || isNaN(rating)) {
+            console.error('Invalid rating value:', rating);
+            return;
+        }
+        
+        selectedRating = parseInt(rating);
+        console.log('selectedRating set to:', selectedRating);
+        
+        const ratingValueInput = document.getElementById('ratingValue');
+        if (ratingValueInput) {
+            ratingValueInput.value = selectedRating;
+            console.log('Hidden input value set to:', ratingValueInput.value);
+        } else {
+            console.error('ratingValue input not found!');
+        }
+
+        // Update star display with animation
+        const stars = document.querySelectorAll('#starRating i');
+        console.log('Found stars:', stars.length);
+        
+        stars.forEach((star, index) => {
+            if (index < selectedRating) {
+                star.className = 'fas fa-star text-warning';
+                // Add a brief scale animation
+                star.style.transition = 'transform 0.2s ease';
+                star.style.transform = 'scale(1.3)';
+                setTimeout(() => {
+                    star.style.transform = 'scale(1)';
+                }, 200);
+            } else {
+                star.className = 'far fa-star text-muted';
+            }
+        });
+
+        // Update rating text
+        const ratingTextEl = document.getElementById('ratingText');
+        if (ratingTextEl) {
+            ratingTextEl.textContent = ratingTexts[selectedRating] || '';
+            ratingTextEl.style.color = selectedRating >= 4 ? '#28a745' : selectedRating >= 3 ? '#ffc107' : '#dc3545';
+            ratingTextEl.style.fontWeight = 'bold';
+            console.log('Rating text updated:', ratingTextEl.textContent);
+        } else {
+            console.error('ratingText element not found!');
+        }
+    }
+
+    function showRatingModal() {
+        console.log('showRatingModal called');
+        const modalEl = document.getElementById('ratingModal');
+        if (!modalEl) {
+            console.error('Modal element not found!');
+            return;
+        }
+
+        const modal = new bootstrap.Modal(modalEl);
+        
+        // Reset form
+        selectedRating = 0;
+        const ratingValueInput = document.getElementById('ratingValue');
+        const feedbackInput = document.getElementById('feedback');
+        const ratingTextEl = document.getElementById('ratingText');
+        
+        if (ratingValueInput) ratingValueInput.value = '';
+        if (feedbackInput) feedbackInput.value = '';
+        if (ratingTextEl) ratingTextEl.textContent = '';
+
+        // Clear all stars
+        clearStars();
+
+        // Show modal
+        modal.show();
+
+        // Add event listeners after modal is fully shown
+        modalEl.addEventListener('shown.bs.modal', function onModalShown() {
+            console.log('Modal fully shown, adding star listeners');
+            const stars = document.querySelectorAll('#starRating i');
+            console.log('Found stars in modal:', stars.length);
+            
+            stars.forEach((star, index) => {
+                const rating = parseInt(star.dataset.rating);
+                console.log(`Setting up star ${index + 1} with rating ${rating}`);
+                
+                star.style.cursor = 'pointer';
+                
+                // Remove old listeners if any
+                star.replaceWith(star.cloneNode(true));
+            });
+
+            // Re-query after cloning
+            const freshStars = document.querySelectorAll('#starRating i');
+            freshStars.forEach((star) => {
+                star.style.cursor = 'pointer';
+                
+                // Click event
+                star.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const rating = parseInt(this.dataset.rating);
+                    console.log('Star clicked! Rating:', rating);
+                    setRating(rating);
+                };
+
+                // Hover events
+                star.onmouseenter = function() {
+                    const rating = parseInt(this.dataset.rating);
+                    highlightStars(rating, true);
+                };
+
+                star.onmouseleave = function() {
+                    if (selectedRating > 0) {
+                        highlightStars(selectedRating, false);
+                    } else {
+                        clearStars();
+                    }
+                };
+            });
+
+            // Add submit button listener
+            const submitBtn = document.querySelector('[data-action="submit-rating"]');
+            if (submitBtn) {
+                console.log('Found submit button, adding click listener');
+                submitBtn.onclick = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Submit button clicked!');
+                    submitRating();
+                };
+            } else {
+                console.error('Submit button not found!');
+            }
+
+            // Remove this event listener after first execution
+            modalEl.removeEventListener('shown.bs.modal', onModalShown);
+        }, { once: true });
+    }
+
     function submitRating() {
-        if (selectedRating === 0) {
+        console.log('=== submitRating called ===');
+        console.log('selectedRating value:', selectedRating);
+        console.log('selectedRating type:', typeof selectedRating);
+        
+        if (!selectedRating || selectedRating === 0) {
+            console.log('No rating selected, showing warning');
             showToast('Please select a rating', 'warning');
             return;
         }
 
-        const feedback = document.getElementById('feedback').value;
+        const feedbackEl = document.getElementById('feedback');
+        const feedback = feedbackEl ? feedbackEl.value : '';
         const csrfToken = document.querySelector('meta[name=csrf-token]');
 
         const payload = {
@@ -811,43 +970,80 @@
             feedback: feedback
         };
 
+        console.log('Submitting rating payload:', JSON.stringify(payload));
+
         // Disable submit button
         const submitBtn = document.querySelector('[data-action="submit-rating"]');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Submitting...';
+        }
 
-        fetch(`/expert-forum/user/{{ user.id }}/rate`, {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+
+        // Add CSRF token if available
+        if (csrfToken) {
+            headers['X-CSRFToken'] = csrfToken.getAttribute('content');
+            console.log('CSRF token added to headers');
+        } else {
+            console.warn('CSRF token not found!');
+        }
+
+        const url = `/expert-forum/user/{{ user.id }}/rate`;
+        console.log('Sending POST request to:', url);
+
+        fetch(url, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken ? csrfToken.getAttribute('content') : ''
-            },
+            headers: headers,
             body: JSON.stringify(payload)
         })
-            .then(response => response.json())
+            .then(response => {
+                console.log('Response received, status:', response.status);
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        console.error('Error response body:', text);
+                        throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('Response data:', data);
                 if (data.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('ratingModal')).hide();
-                    showToast('Rating submitted successfully!', 'success');
+                    const modalEl = document.getElementById('ratingModal');
+                    if (modalEl) {
+                        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                        if (modalInstance) {
+                            modalInstance.hide();
+                        }
+                    }
+                    showToast(data.message || 'Rating submitted successfully!', 'success');
 
                     // Update the rating display dynamically
                     if (data.avg_rating !== undefined && data.total_ratings !== undefined) {
                         updateRatingDisplay(data.avg_rating, data.total_ratings);
                     }
 
-                    // Still reload after a delay to ensure everything is in sync
+                    // Reload after a delay to ensure everything is in sync
                     setTimeout(() => location.reload(), 1500);
                 } else {
-                    showToast('Failed to submit rating: ' + data.message, 'error');
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Submit Rating';
+                    console.error('Submission failed:', data.message);
+                    showToast('Failed to submit rating: ' + (data.message || 'Unknown error'), 'error');
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Submit Rating';
+                    }
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                showToast('An error occurred while submitting the rating', 'error');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Submit Rating';
+                console.error('Error submitting rating:', error);
+                showToast('An error occurred while submitting the rating: ' + error.message, 'error');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Submit Rating';
+                }
             });
     }
 
@@ -944,6 +1140,8 @@
 
     // Animate stats on page load
     document.addEventListener('DOMContentLoaded', function () {
+        console.log('DOM Content Loaded');
+        
         const statNumbers = document.querySelectorAll('.stat-number');
         statNumbers.forEach(stat => {
             const target = parseInt(stat.textContent);
@@ -968,6 +1166,17 @@
             setTimeout(() => {
                 reputationFill.style.width = targetWidth + '%';
             }, 500);
+        }
+
+        // Test star rating elements
+        const starRating = document.getElementById('starRating');
+        console.log('Star rating container:', starRating);
+        if (starRating) {
+            const stars = starRating.querySelectorAll('i');
+            console.log('Number of stars found:', stars.length);
+            stars.forEach((star, index) => {
+                console.log(`Star ${index + 1}:`, star.dataset.rating, star.dataset.action);
+            });
         }
     });
 </script>

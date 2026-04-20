@@ -23,6 +23,9 @@ from logging_config import setup_logging
 use_json_logging = os.environ.get('USE_JSON_LOGGING', 'false').lower() == 'true'
 setup_logging(use_json=use_json_logging)
 
+# Set werkzeug to INFO to show HTTP requests, but filter out debugger messages
+logging.getLogger('werkzeug').setLevel(logging.INFO)
+
 # Create the app with explicit template and static folders
 template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'templates'))
 static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'static'))

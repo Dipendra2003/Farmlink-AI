@@ -345,10 +345,13 @@
 
             let quantity = parseFloat(input.value);
             if (isNaN(quantity)) quantity = 0;
+            
+            // Get step value from input, default to 1
+            const step = parseFloat(input.getAttribute('step')) || 1;
 
             if (!max || quantity < max) {
-                quantity += 0.1;
-                input.value = quantity.toFixed(1);
+                quantity += step;
+                input.value = quantity.toFixed(step < 1 ? 1 : 0);
                 this.updateCartItemQuantity(itemId, quantity);
             } else {
                 this.showToast(`Maximum available quantity is ${max}`, 'warning');
@@ -364,11 +367,15 @@
             if (!input) return;
 
             let quantity = parseFloat(input.value);
-            if (isNaN(quantity)) quantity = 0.1;
+            // Get step value from input, default to 1
+            const step = parseFloat(input.getAttribute('step')) || 1;
+            const minQuantity = step;
+            
+            if (isNaN(quantity)) quantity = minQuantity;
 
-            if (quantity > 0.1) {
-                quantity = Math.max(0.1, quantity - 0.1);
-                input.value = quantity.toFixed(1);
+            if (quantity > minQuantity) {
+                quantity = Math.max(minQuantity, quantity - step);
+                input.value = quantity.toFixed(step < 1 ? 1 : 0);
                 this.updateCartItemQuantity(itemId, quantity);
             }
         },

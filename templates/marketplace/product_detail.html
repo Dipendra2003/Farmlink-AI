@@ -126,8 +126,11 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Quantity ({{ crop.unit }})</label>
-                        <input type="number" id="product-quantity" class="form-control" min="0.1"
-                            max="{{ crop.quantity }}" step="0.1" value="1" placeholder="Enter quantity"
+                        <input type="number" id="product-quantity" class="form-control" 
+                            min="{% if crop.unit == 'kg' %}1{% else %}0.1{% endif %}"
+                            max="{{ crop.quantity }}" 
+                            step="{% if crop.unit == 'kg' %}1{% else %}0.1{% endif %}" 
+                            value="1" placeholder="Enter quantity"
                             data-crop-id="{{ crop.id }}">
                         <div class="form-text">Maximum available: {{ crop.quantity }} {{ crop.unit }}</div>
                     </div>

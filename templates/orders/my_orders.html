@@ -388,32 +388,52 @@
                             <!-- Cancel Order Modal -->
                             {% if current_user.role == 'buyer' and order.status in ['pending', 'confirmed'] %}
                             <div class="modal fade" id="cancelOrderModal{{ order.id }}" tabindex="-1" aria-labelledby="cancelOrderModalLabel{{ order.id }}" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="cancelOrderModalLabel{{ order.id }}">Cancel Order #{{ order.id }}</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content border-0 shadow-lg">
+                                        <div class="modal-header bg-danger text-white border-0">
+                                            <h5 class="modal-title fw-bold" id="cancelOrderModalLabel{{ order.id }}">
+                                                <i class="fas fa-exclamation-circle me-2"></i>Cancel Order #{{ order.id }}
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
                                         <form action="{{ url_for('cancel_order', order_id=order.id) }}" method="POST">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                            <div class="modal-body">
-                                                <p>Are you sure you want to cancel this order?</p>
-                                                <div class="mb-3">
-                                                    <label for="cancellationReason{{ order.id }}" class="form-label">Reason for Cancellation</label>
-                                                    <textarea class="form-control" id="cancellationReason{{ order.id }}" name="reason" rows="3" required></textarea>
-                                                    <div class="form-text">Please provide a reason for cancelling this order.</div>
-                                                </div>
-                                                {% if order.payment_status == 'paid' %}
-                                                <div class="alert alert-info">
+                                            <div class="modal-body p-4">
+                                                <div class="alert alert-warning border-0 mb-4">
                                                     <i class="fas fa-info-circle me-2"></i>
-                                                    A refund will be initiated for this order.
+                                                    <strong>Are you sure you want to cancel this order?</strong>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <label for="cancellationReason{{ order.id }}" class="form-label fw-semibold">
+                                                        Reason for Cancellation <span class="text-danger">*</span>
+                                                    </label>
+                                                    <textarea class="form-control border-2" 
+                                                              id="cancellationReason{{ order.id }}" 
+                                                              name="reason" 
+                                                              rows="4" 
+                                                              required
+                                                              placeholder="Please explain why you're cancelling this order..."
+                                                              style="resize: none;"></textarea>
+                                                    <div class="form-text">
+                                                        <i class="fas fa-lightbulb me-1"></i>
+                                                        Please provide a detailed reason for cancelling this order.
+                                                    </div>
+                                                </div>
+                                                
+                                                {% if order.payment_status == 'paid' %}
+                                                <div class="alert alert-info border-0 mb-0">
+                                                    <i class="fas fa-money-bill-wave me-2"></i>
+                                                    <strong>Refund Information:</strong> A full refund will be initiated and processed within 5-7 business days.
                                                 </div>
                                                 {% endif %}
                                             </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Order</button>
-                                                <button type="submit" class="btn btn-danger">
-                                                    <i class="fas fa-ban me-1"></i>Cancel Order
+                                            <div class="modal-footer border-0 bg-light">
+                                                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+                                                    <i class="fas fa-times me-2"></i>Keep Order
+                                                </button>
+                                                <button type="submit" class="btn btn-danger px-4">
+                                                    <i class="fas fa-ban me-2"></i>Cancel Order
                                                 </button>
                                             </div>
                                         </form>
@@ -456,4 +476,145 @@
         </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Enhanced Cancel Order Modal Styles */
+    .modal {
+        z-index: 1055 !important;
+    }
+    
+    .modal-backdrop {
+        z-index: 1050 !important;
+        background-color: rgba(0, 0, 0, 0.6);
+    }
+    
+    .modal-content {
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+        z-index: 1056;
+    }
+    
+    .modal-dialog {
+        pointer-events: none;
+        margin: 1.75rem auto;
+        max-width: 500px;
+        position: relative;
+    }
+    
+    .modal-content {
+        pointer-events: auto;
+        transform: none !important;
+    }
+    
+    .modal.fade .modal-dialog {
+        transition: transform 0.2s ease-out;
+        transform: scale(0.9) translateY(-50px);
+    }
+    
+    .modal.show .modal-dialog {
+        transform: scale(1) translateY(0);
+    }
+    
+    /* Prevent any hover effects on modal */
+    .modal-content:hover {
+        transform: none !important;
+    }
+    
+    /* Prevent modal shake/vibration */
+    .modal-dialog-centered {
+        display: flex !important;
+        align-items: center !important;
+        min-height: calc(100vh - 3.5rem) !important;
+        margin: 1.75rem auto !important;
+    }
+    
+    /* Smooth button hover effects */
+    .modal-footer .btn {
+        transition: all 0.2s ease;
+        border: none;
+    }
+    
+    .modal-footer .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    .modal-footer .btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    
+    .modal-footer .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .modal-footer .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+    
+    .modal-footer .btn-danger {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .modal-footer .btn-danger:hover {
+        background-color: #c82333;
+    }
+    
+    /* Enhanced textarea styling */
+    .modal-body textarea.form-control {
+        border-radius: 8px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        font-size: 14px;
+    }
+    
+    .modal-body textarea.form-control:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.15);
+        outline: none;
+    }
+    
+    /* Alert styling improvements */
+    .modal-body .alert {
+        border-radius: 8px;
+        animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Modal header styling */
+    .modal-header.bg-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+    
+    /* Ensure modal is always on top */
+    body.modal-open {
+        overflow: hidden;
+        padding-right: 0 !important;
+    }
+    
+    /* Fix for modal positioning */
+    .modal.show {
+        display: flex !important;
+        align-items: center;
+        padding-left: 0 !important;
+    }
+    
+    .modal.show .modal-dialog {
+        margin: auto;
+    }
+</style>
 {% endblock %}

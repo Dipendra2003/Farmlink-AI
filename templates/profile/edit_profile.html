@@ -16,18 +16,52 @@
                     <!-- Profile Header -->
                     <div class="row mb-4">
                         <div class="col-md-3 text-center">
-                            <div class="profile-image-container">
+                            <div class="profile-image-container position-relative">
                                 {% if current_user.profile_image and current_user.profile_image != 'default.jpg' %}
                                 <img id="profileImagePreview"
                                     src="{{ url_for('static', filename=current_user.profile_image) }}"
                                     class="rounded-circle border border-3 border-white" width="150" height="150"
-                                    alt="Profile Picture" style="object-fit: cover;">
+                                    alt="Profile Picture" style="object-fit: cover; cursor: pointer;"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
                                 {% else %}
                                 <img id="profileImagePreview"
                                     src="https://ui-avatars.com/api/?name={{ current_user.full_name }}&background=667eea&color=fff&size=150&bold=true"
                                     class="rounded-circle border border-3 border-white" width="150" height="150"
-                                    alt="Profile Picture" style="object-fit: cover;">
+                                    alt="Profile Picture" style="object-fit: cover; cursor: pointer;"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
                                 {% endif %}
+                                
+                                <!-- Profile Picture Menu -->
+                                <ul class="dropdown-menu dropdown-menu-center shadow-lg border-0" style="min-width: 200px;">
+                                    <li>
+                                        <a class="dropdown-item" href="#" id="viewProfilePic">
+                                            <i class="fas fa-eye me-2 text-primary"></i>View Photo
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" id="editProfilePic">
+                                            <i class="fas fa-wand-magic-sparkles me-2 text-success"></i>Edit Photo
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" id="uploadNewPhoto">
+                                            <i class="fas fa-upload me-2 text-info"></i>Upload New
+                                        </a>
+                                    </li>
+                                    {% if current_user.profile_image and current_user.profile_image != 'default.jpg' %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <form method="POST" action="{{ url_for('remove_profile_picture') }}" style="display: inline;">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                                            <button type="submit" class="dropdown-item text-danger"
+                                                onclick="return confirm('Are you sure you want to remove your profile picture?');">
+                                                <i class="fas fa-trash-alt me-2"></i>Remove Photo
+                                            </button>
+                                        </form>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                                
                                 <div class="position-absolute bottom-0 end-0 camera-btn">
                                     <label for="profile_picture" class="btn btn-sm btn-primary rounded-circle shadow-lg"
                                         style="width: 45px; height: 45px; padding: 0; cursor: pointer;"
@@ -37,7 +71,7 @@
                                 </div>
                             </div>
                             {% if current_user.profile_image and current_user.profile_image != 'default.jpg' %}
-                            <div class="mt-2">
+                            <div class="mt-2 d-none">
                                 <form method="POST" action="{{ url_for('remove_profile_picture') }}"
                                     style="display: inline;">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
@@ -397,137 +431,191 @@
     </div>
 </div>
 
-<!-- Enhanced Image Crop Modal -->
-<div class="modal" id="cropModal" tabindex="-1" aria-labelledby="cropModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-gradient"
+<!-- Modern Image Crop Modal -->
+<div class="modal fade" id="cropModal" tabindex="-1" aria-labelledby="cropModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen-md-down modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden; max-height: 95vh;">
+            <div class="modal-header border-0 py-3 px-4"
                 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h5 class="modal-title text-white" id="cropModalLabel">
-                    <i class="fas fa-magic me-2"></i>✨ Advanced Photo Editor
+                <h5 class="modal-title text-white fw-bold" id="cropModalLabel">
+                    <i class="fas fa-wand-magic-sparkles me-2"></i>Photo Editor
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                     aria-label="Close"></button>
             </div>
-            <div class="modal-body p-0">
-                <!-- Toolbar -->
-                <div class="bg-light border-bottom p-3">
+            <div class="modal-body p-0" style="background: #f8f9fa; overflow-y: auto;">
+                <!-- Modern Toolbar -->
+                <div class="border-bottom p-3 bg-white">
                     <div class="row g-2 align-items-center">
-                        <!-- Aspect Ratio Presets -->
-                        <div class="col-md-4">
-                            <label class="form-label small mb-1 fw-bold">
-                                <i class="fas fa-crop me-1"></i>Aspect Ratio
+                        <!-- Aspect Ratio -->
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small text-muted mb-1 fw-semibold d-none d-md-block">
+                                <i class="fas fa-crop-simple me-1"></i>Aspect Ratio
                             </label>
                             <div class="btn-group w-100" role="group">
                                 <button type="button" class="btn btn-sm btn-outline-primary aspect-btn active"
-                                    data-ratio="1">
-                                    <i class="fas fa-square"></i> 1:1
+                                    data-ratio="1" title="Square (1:1)">
+                                    <i class="fas fa-square"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-primary aspect-btn"
-                                    data-ratio="1.33">
-                                    <i class="fas fa-rectangle-landscape"></i> 4:3
+                                    data-ratio="1.33" title="Landscape (4:3)">
+                                    <i class="fas fa-image"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-primary aspect-btn"
-                                    data-ratio="1.78">
-                                    <i class="fas fa-tv"></i> 16:9
+                                    data-ratio="1.78" title="Widescreen (16:9)">
+                                    <i class="fas fa-panorama"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-outline-primary aspect-btn"
-                                    data-ratio="free">
-                                    <i class="fas fa-expand"></i> Free
+                                    data-ratio="free" title="Free Form">
+                                    <i class="fas fa-expand"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Quality Selector -->
-                        <div class="col-md-4">
-                            <label class="form-label small mb-1 fw-bold">
-                                <i class="fas fa-sliders-h me-1"></i>Quality
+                        <!-- Quality -->
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small text-muted mb-1 fw-semibold d-none d-md-block">
+                                <i class="fas fa-gauge-high me-1"></i>Quality
                             </label>
                             <select class="form-select form-select-sm" id="qualitySelect">
-                                <option value="0.95">High (95%)</option>
-                                <option value="0.92" selected>Standard (92%)</option>
-                                <option value="0.85">Medium (85%)</option>
-                                <option value="0.75">Low (75%)</option>
+                                <option value="0.95">High</option>
+                                <option value="0.92" selected>Standard</option>
+                                <option value="0.85">Medium</option>
                             </select>
                         </div>
 
                         <!-- Output Size -->
-                        <div class="col-md-4">
-                            <label class="form-label small mb-1 fw-bold">
-                                <i class="fas fa-expand-arrows-alt me-1"></i>Output Size
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small text-muted mb-1 fw-semibold d-none d-md-block">
+                                <i class="fas fa-expand-arrows-alt me-1"></i>Size
                             </label>
                             <select class="form-select form-select-sm" id="sizeSelect">
-                                <option value="400">400x400 (Standard)</option>
-                                <option value="600">600x600 (High)</option>
-                                <option value="800">800x800 (Ultra)</option>
-                                <option value="300">300x300 (Small)</option>
+                                <option value="400">400px</option>
+                                <option value="600">600px</option>
+                                <option value="800">800px</option>
                             </select>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="col-6 col-md-3">
+                            <label class="form-label small text-muted mb-1 fw-semibold d-none d-md-block">
+                                <i class="fas fa-bolt me-1"></i>Actions
+                            </label>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" id="resetCrop"
+                                    title="Reset All">
+                                    <i class="fas fa-rotate-left"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-info flex-fill" id="compareBtn"
+                                    title="Compare">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="row g-0">
-                    <!-- Left Sidebar - Controls -->
-                    <div class="col-md-3 bg-light border-end p-3">
-                        <h6 class="fw-bold mb-3">
-                            <i class="fas fa-tools me-2"></i>Tools
-                        </h6>
-
-                        <!-- Transform Controls -->
-                        <div class="mb-4">
-                            <label class="small fw-bold text-muted mb-2">TRANSFORM</label>
-                            <div class="d-grid gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="zoomIn">
-                                    <i class="fas fa-search-plus me-1"></i>Zoom In <kbd>+</kbd>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="zoomOut">
-                                    <i class="fas fa-search-minus me-1"></i>Zoom Out <kbd>-</kbd>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="rotateLeft">
-                                    <i class="fas fa-undo me-1"></i>Rotate Left <kbd>L</kbd>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="rotateRight">
-                                    <i class="fas fa-redo me-1"></i>Rotate Right <kbd>R</kbd>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="flipH">
-                                    <i class="fas fa-arrows-alt-h me-1"></i>Flip Horizontal <kbd>H</kbd>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="flipV">
-                                    <i class="fas fa-arrows-alt-v me-1"></i>Flip Vertical <kbd>V</kbd>
-                                </button>
+                    <!-- Left Sidebar - Modern Controls -->
+                    <div class="col-lg-3 order-2 order-lg-1 border-end bg-white p-3" style="max-height: 500px; overflow-y: auto;">
+                        <!-- Transform Section -->
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-dark mb-2 d-flex align-items-center small">
+                                <span class="badge bg-primary me-2">
+                                    <i class="fas fa-arrows-alt"></i>
+                                </span>
+                                Transform
+                            </h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="zoomIn"
+                                        title="Zoom In">
+                                        <i class="fas fa-search-plus"></i>
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="zoomOut"
+                                        title="Zoom Out">
+                                        <i class="fas fa-search-minus"></i>
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="rotateLeft"
+                                        title="Rotate Left">
+                                        <i class="fas fa-rotate-left"></i>
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="rotateRight"
+                                        title="Rotate Right">
+                                        <i class="fas fa-rotate-right"></i>
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="flipH"
+                                        title="Flip Horizontal">
+                                        <i class="fas fa-arrows-left-right"></i>
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="flipV"
+                                        title="Flip Vertical">
+                                        <i class="fas fa-arrows-up-down"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Filters -->
-                        <div class="mb-4">
-                            <label class="small fw-bold text-muted mb-2">FILTERS</label>
+                        <!-- Filters Section -->
+                        <div class="mb-3">
+                            <h6 class="fw-bold text-dark mb-2 d-flex align-items-center small">
+                                <span class="badge bg-warning me-2">
+                                    <i class="fas fa-wand-magic-sparkles"></i>
+                                </span>
+                                Filters
+                            </h6>
 
-                            <div class="mb-3">
-                                <label class="form-label small mb-1">
-                                    <i class="fas fa-sun me-1"></i>Brightness: <span id="brightnessValue">100</span>%
-                                </label>
+                            <!-- Brightness -->
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label small mb-0 text-muted">
+                                        <i class="fas fa-sun text-warning"></i> Brightness
+                                    </label>
+                                    <span class="badge bg-light text-dark" id="brightnessValue">100</span>
+                                </div>
                                 <input type="range" class="form-range" id="brightness" min="0" max="200" value="100">
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label small mb-1">
-                                    <i class="fas fa-adjust me-1"></i>Contrast: <span id="contrastValue">100</span>%
-                                </label>
+                            <!-- Contrast -->
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label small mb-0 text-muted">
+                                        <i class="fas fa-circle-half-stroke text-secondary"></i> Contrast
+                                    </label>
+                                    <span class="badge bg-light text-dark" id="contrastValue">100</span>
+                                </div>
                                 <input type="range" class="form-range" id="contrast" min="0" max="200" value="100">
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label small mb-1">
-                                    <i class="fas fa-palette me-1"></i>Saturation: <span
-                                        id="saturationValue">100</span>%
-                                </label>
+                            <!-- Saturation -->
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label small mb-0 text-muted">
+                                        <i class="fas fa-palette text-info"></i> Saturation
+                                    </label>
+                                    <span class="badge bg-light text-dark" id="saturationValue">100</span>
+                                </div>
                                 <input type="range" class="form-range" id="saturation" min="0" max="200" value="100">
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label small mb-1">
-                                    <i class="fas fa-blur me-1"></i>Blur: <span id="blurValue">0</span>px
-                                </label>
+                            <!-- Blur -->
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label small mb-0 text-muted">
+                                        <i class="fas fa-droplet text-primary"></i> Blur
+                                    </label>
+                                    <span class="badge bg-light text-dark" id="blurValue">0</span>
+                                </div>
                                 <input type="range" class="form-range" id="blur" min="0" max="10" value="0">
                             </div>
 
@@ -536,51 +624,59 @@
                             </button>
                         </div>
 
-                        <!-- History -->
-                        <div class="mb-3">
-                            <label class="small fw-bold text-muted mb-2">HISTORY</label>
-                            <div class="d-grid gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="undoBtn" disabled>
-                                    <i class="fas fa-undo me-1"></i>Undo <kbd>Ctrl+Z</kbd>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="redoBtn" disabled>
-                                    <i class="fas fa-redo me-1"></i>Redo <kbd>Ctrl+Y</kbd>
-                                </button>
+                        <!-- History Section -->
+                        <div>
+                            <h6 class="fw-bold text-dark mb-2 d-flex align-items-center small">
+                                <span class="badge bg-success me-2">
+                                    <i class="fas fa-clock-rotate-left"></i>
+                                </span>
+                                History
+                            </h6>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="undoBtn" disabled>
+                                        <i class="fas fa-undo"></i>
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="redoBtn" disabled>
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-
-                        <button type="button" class="btn btn-sm btn-outline-warning w-100" id="resetCrop">
-                            <i class="fas fa-sync-alt me-1"></i>Reset All
-                        </button>
                     </div>
 
                     <!-- Center - Image Preview -->
-                    <div class="col-md-9 p-4">
-                        <div class="alert alert-info alert-dismissible fade show mb-3">
-                            <i class="fas fa-info-circle me-2"></i>
-                            <strong>Pro Tips:</strong> Drag to move • Scroll to zoom • Use keyboard shortcuts for faster
-                            editing
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <div class="col-lg-9 order-1 order-lg-2 p-3 position-relative">
+                        <!-- Info Alert -->
+                        <div class="alert alert-info alert-dismissible fade show mb-2 border-0 shadow-sm py-2">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            <small><strong>Tip:</strong> Drag to move • Scroll to zoom</small>
+                            <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
                         </div>
 
-                        <div class="crop-container position-relative"
-                            style="height: 500px; overflow: hidden; background: #f8f9fa; border-radius: 8px;">
+                        <!-- Crop Container -->
+                        <div class="crop-container position-relative rounded-3 shadow-sm"
+                            style="min-height: 300px; height: 60vh; max-height: 500px; overflow: hidden; background: #ffffff; border: 2px dashed #dee2e6;">
                             <img id="cropImage" style="max-width: 100%; display: block;">
 
                             <!-- Loading Overlay -->
                             <div id="loadingOverlay" class="position-absolute top-0 start-0 w-100 h-100 d-none"
-                                style="background: rgba(0,0,0,0.7); z-index: 1000;">
+                                style="background: rgba(0,0,0,0.8); z-index: 1000; backdrop-filter: blur(5px);">
                                 <div class="d-flex align-items-center justify-content-center h-100">
                                     <div class="text-center text-white">
-                                        <div class="spinner-border mb-3" role="status"></div>
-                                        <p>Processing image...</p>
+                                        <div class="spinner-border mb-3" role="status" style="width: 3rem; height: 3rem;">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="fw-bold">Processing...</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Image Info -->
-                        <div class="mt-3 text-center">
+                        <div class="mt-2 text-center">
                             <small class="text-muted">
                                 <span id="imageInfo"></span>
                             </small>
@@ -589,21 +685,15 @@
                 </div>
             </div>
 
-            <div class="modal-footer bg-light">
-                <div class="d-flex justify-content-between align-items-center w-100">
-                    <div>
-                        <button type="button" class="btn btn-outline-secondary" id="compareBtn">
-                            <i class="fas fa-exchange-alt me-1"></i>Compare Before/After
-                        </button>
-                    </div>
-                    <div>
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times me-1"></i>Cancel
-                        </button>
-                        <button type="button" class="btn btn-success" id="cropAndSave">
-                            <i class="fas fa-check me-1"></i>✓ Apply & Save
-                        </button>
-                    </div>
+            <!-- Modern Footer -->
+            <div class="modal-footer border-0 bg-light p-3">
+                <div class="d-flex justify-content-between align-items-center w-100 gap-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1 d-none d-sm-inline"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-success px-4" id="cropAndSave">
+                        <i class="fas fa-check me-1 d-none d-sm-inline"></i>Apply & Save
+                    </button>
                 </div>
             </div>
         </div>
@@ -618,6 +708,31 @@
             <i class="fas fa-cloud-upload-alt fa-5x mb-3"></i>
             <h3>Drop your image here</h3>
             <p>Release to upload</p>
+        </div>
+    </div>
+</div>
+
+<!-- View Profile Picture Modal -->
+<div class="modal fade" id="viewProfilePicModal" tabindex="-1" aria-labelledby="viewProfilePicLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-dark border-0">
+            <div class="modal-header border-0 bg-transparent">
+                <h5 class="modal-title text-white" id="viewProfilePicLabel">
+                    <i class="fas fa-user-circle me-2"></i>Profile Picture
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-0">
+                <img id="viewProfilePicImage" src="" alt="Profile Picture" class="img-fluid" style="max-height: 70vh; width: auto;">
+            </div>
+            <div class="modal-footer border-0 bg-transparent justify-content-center">
+                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Close
+                </button>
+                <button type="button" class="btn btn-primary" id="editFromView">
+                    <i class="fas fa-edit me-2"></i>Edit Photo
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -712,6 +827,46 @@
     .profile-image-container:hover .camera-btn {
         opacity: 1;
         transform: scale(1);
+    }
+    
+    /* Profile Picture Dropdown Menu */
+    .profile-image-container .dropdown-menu {
+        border-radius: 12px;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+    
+    .profile-image-container .dropdown-item {
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .profile-image-container .dropdown-item:hover {
+        background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        transform: translateX(5px);
+    }
+    
+    .profile-image-container .dropdown-item i {
+        width: 20px;
+        text-align: center;
+    }
+    
+    /* View Profile Picture Modal */
+    #viewProfilePicModal .modal-content {
+        background: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(10px);
+    }
+    
+    #viewProfilePicModal .modal-body {
+        background: #000;
+    }
+    
+    #viewProfilePicImage {
+        border-radius: 8px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     }
 
     /* Enhanced Form Controls */
@@ -851,98 +1006,193 @@
         }
     }
 
-    /* Modal Enhancements */
+    /* Modern Modal Styles */
     .modal-content {
-        border-radius: 20px;
+        border-radius: 20px !important;
         border: none;
         overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     }
 
     .modal-header {
         border: none;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
     .modal-footer {
         border: none;
+        background: #f8f9fa;
     }
 
-    /* Crop Modal Toolbar */
-    .crop-toolbar {
-        background: linear-gradient(to right, #f8f9fa, #e9ecef);
+    /* Modern Buttons */
+    .btn {
+        border-radius: 10px;
+        font-weight: 500;
+        transition: all 0.3s ease;
     }
 
-    /* Range Slider Styling */
+    .btn-group .btn {
+        border-radius: 0;
+    }
+
+    .btn-group .btn:first-child {
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+    }
+
+    .btn-group .btn:last-child {
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn:active {
+        transform: translateY(0);
+    }
+
+    /* Modern Range Sliders */
     .form-range {
         height: 6px;
+        border-radius: 3px;
     }
 
     .form-range::-webkit-slider-thumb {
-        width: 18px;
-        height: 18px;
-        background: var(--primary-gradient);
+        width: 20px;
+        height: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: 3px solid white;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .form-range::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
     .form-range::-moz-range-thumb {
-        width: 18px;
-        height: 18px;
-        background: var(--primary-gradient);
+        width: 20px;
+        height: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: 3px solid white;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        transition: all 0.3s ease;
     }
 
-    /* Keyboard Shortcuts */
-    kbd {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 0.2rem 0.5rem;
-        border-radius: 5px;
-        font-size: 0.75rem;
+    .form-range::-moz-range-thumb:hover {
+        transform: scale(1.2);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    /* Badge Styles */
+    .badge {
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
         font-weight: 600;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     }
 
-    /* Loading Animation */
-    .spinner-border {
-        width: 3rem;
-        height: 3rem;
-        border-width: 0.3rem;
+    /* Crop Container */
+    .crop-container {
+        background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%),
+                    linear-gradient(-45deg, #f8f9fa 25%, transparent 25%),
+                    linear-gradient(45deg, transparent 75%, #f8f9fa 75%),
+                    linear-gradient(-45deg, transparent 75%, #f8f9fa 75%);
+        background-size: 20px 20px;
+        background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        background-color: #ffffff;
     }
 
-    /* Drag & Drop Zone */
-    #dropZone {
+    /* Alert Styles */
+    .alert {
+        border-radius: 12px;
+        border: none;
+    }
+
+    .alert-info {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        color: #1976d2;
+    }
+
+    /* Scrollbar */
+    .col-lg-3::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .col-lg-3::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .col-lg-3::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+    }
+
+    .col-lg-3::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+
+    /* Aspect Ratio Buttons */
+    .aspect-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+        color: white;
+    }
+
+    /* Loading Overlay */
+    #loadingOverlay {
         backdrop-filter: blur(10px);
-        animation: fadeIn 0.3s ease-out;
     }
 
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
+    /* Responsive */
+    @media (max-width: 991px) {
+        .col-lg-3 {
+            max-height: 400px !important;
         }
-
-        to {
-            opacity: 1;
+        
+        .crop-container {
+            height: 50vh !important;
+            min-height: 250px !important;
+        }
+        
+        .modal-body .row {
+            flex-direction: column;
         }
     }
 
-    /* Tooltip Enhancements */
-    [title] {
-        position: relative;
+    @media (max-width: 767px) {
+        .modal-dialog {
+            margin: 0;
+        }
+        
+        .crop-container {
+            height: 40vh !important;
+            min-height: 200px !important;
+        }
+        
+        .modal-header h5 {
+            font-size: 1rem;
+        }
+        
+        .btn-sm {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
     }
 
-    /* Responsive Adjustments */
-    @media (max-width: 768px) {
-        .card {
-            border-radius: 15px;
+    @media (max-width: 575px) {
+        .modal-body .border-bottom .row {
+            gap: 0.5rem;
         }
-
-        .btn {
-            padding: 0.6rem 1.2rem;
-        }
-
-        .profile-image-container .camera-btn {
-            opacity: 1;
+        
+        .form-label {
+            font-size: 0.75rem;
         }
     }
 
@@ -1131,151 +1381,4 @@
 {% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 <script src="{{ url_for('static', filename='js/profile-editor.js') }}"></script>
-<script>
-    // AI Profile Insights functionality
-    function loadAIInsights() {
-        const loadingDiv = document.getElementById('aiInsightsLoading');
-        const contentDiv = document.getElementById('aiInsightsContent');
-        const errorDiv = document.getElementById('aiInsightsError');
-        const refreshBtn = document.getElementById('refreshInsightsBtn');
-
-        // Show loading state
-        loadingDiv.classList.remove('d-none');
-        contentDiv.classList.add('d-none');
-        errorDiv.classList.add('d-none');
-        refreshBtn.disabled = true;
-
-        fetch('{{ url_for("get_profile_ai_insights") }}')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.insights) {
-                    displayAIInsights(data.insights);
-                    loadingDiv.classList.add('d-none');
-                    contentDiv.classList.remove('d-none');
-                } else {
-                    throw new Error(data.error || 'Failed to load insights');
-                }
-            })
-            .catch(error => {
-                console.error('Error loading AI insights:', error);
-                loadingDiv.classList.add('d-none');
-                errorDiv.classList.remove('d-none');
-                document.getElementById('aiInsightsErrorText').textContent = error.message || 'Unable to load AI insights. Please try again later.';
-            })
-            .finally(() => {
-                refreshBtn.disabled = false;
-            });
-    }
-
-    function displayAIInsights(insights) {
-        try {
-            // Display profile score
-            const profileScoreEl = document.getElementById('profileScore');
-            if (profileScoreEl) {
-                profileScoreEl.textContent = insights.profile_score || '--';
-            }
-
-            const statusBadge = document.getElementById('profileStatus');
-            if (statusBadge) {
-                statusBadge.textContent = insights.profile_status || '--';
-
-                // Set badge color based on status
-                statusBadge.className = 'badge mt-2';
-                if (insights.profile_status === 'Excellent') {
-                    statusBadge.classList.add('bg-success');
-                } else if (insights.profile_status === 'Good') {
-                    statusBadge.classList.add('bg-info');
-                } else if (insights.profile_status === 'Fair') {
-                    statusBadge.classList.add('bg-warning');
-                } else {
-                    statusBadge.classList.add('bg-secondary');
-                }
-            }
-
-            // Display key insights
-            const insightsList = document.getElementById('keyInsightsList');
-            if (insightsList) {
-                insightsList.innerHTML = '';
-                if (insights.key_insights && insights.key_insights.length > 0) {
-                    insights.key_insights.forEach(insight => {
-                        const li = document.createElement('li');
-                        li.className = 'mb-2';
-                        li.innerHTML = `<i class="fas fa-check-circle text-success me-2"></i>${insight}`;
-                        insightsList.appendChild(li);
-                    });
-                } else {
-                    insightsList.innerHTML = '<li class="text-muted">No insights available</li>';
-                }
-            }
-
-            // Display personalized message
-            const messageEl = document.getElementById('personalizedMessageText');
-            if (messageEl) {
-                messageEl.textContent = insights.personalized_message || 'Keep up the great work!';
-            }
-
-            // Display recommendations
-            const recommendationsList = document.getElementById('recommendationsList');
-            if (recommendationsList) {
-                recommendationsList.innerHTML = '';
-                if (insights.recommendations && insights.recommendations.length > 0) {
-                    insights.recommendations.forEach(rec => {
-                        const col = document.createElement('div');
-                        col.className = 'col-md-6';
-
-                        const priorityColor = rec.priority === 'high' ? 'danger' : rec.priority === 'medium' ? 'warning' : 'info';
-                        const priorityIcon = rec.priority === 'high' ? 'exclamation-circle' : rec.priority === 'medium' ? 'star' : 'info-circle';
-
-                        col.innerHTML = `
-                        <div class="card border-${priorityColor} h-100">
-                            <div class="card-body">
-                                <h6 class="card-title">
-                                    <i class="fas fa-${priorityIcon} text-${priorityColor} me-2"></i>${rec.title || 'Recommendation'}
-                                </h6>
-                                <p class="card-text small">${rec.description || ''}</p>
-                                ${rec.action_url ? `<a href="${rec.action_url}" class="btn btn-sm btn-outline-${priorityColor}">Take Action</a>` : ''}
-                            </div>
-                        </div>
-                    `;
-                        recommendationsList.appendChild(col);
-                    });
-                } else {
-                    recommendationsList.innerHTML = '<div class="col-12"><p class="text-muted">No recommendations at this time</p></div>';
-                }
-            }
-
-            // Display next steps
-            const nextStepsList = document.getElementById('nextStepsList');
-            if (nextStepsList) {
-                nextStepsList.innerHTML = '';
-                if (insights.next_steps && insights.next_steps.length > 0) {
-                    insights.next_steps.forEach((step, index) => {
-                        const item = document.createElement('div');
-                        item.className = 'list-group-item d-flex align-items-start';
-                        item.innerHTML = `
-                        <div class="me-3">
-                            <span class="badge bg-primary rounded-circle" style="width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
-                                ${index + 1}
-                            </span>
-                        </div>
-                        <div class="flex-grow-1">
-                            <p class="mb-0">${step}</p>
-                        </div>
-                    `;
-                        nextStepsList.appendChild(item);
-                    });
-                } else {
-                    nextStepsList.innerHTML = '<div class="list-group-item text-muted">No action items at this time</div>';
-                }
-            }
-        } catch (error) {
-            console.error('Error displaying AI insights:', error);
-        }
-    }
-
-    // Load AI insights when page loads
-    document.addEventListener('DOMContentLoaded', function () {
-        loadAIInsights();
-    });
-</script>
 {% endblock %}
