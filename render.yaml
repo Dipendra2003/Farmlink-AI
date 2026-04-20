@@ -1,29 +1,39 @@
+# Render Configuration with Supabase Database
+# Use this if you want to use Supabase for database instead of Render's PostgreSQL
+
 services:
   - type: web
     name: farmlink-ai
     env: python
+    runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --workers 4 --timeout 120
+    startCommand: gunicorn app:app --workers 4 --timeout 120 --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: 3.11.6
+      
+      # Supabase Database URL
+      # Get this from Supabase Dashboard → Settings → Database → Connection String (URI)
+      # Format: postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
       - key: DATABASE_URL
-        fromDatabase:
-          name: farmlink-db
-          property: connectionString
+        sync: false  # Set manually in Render dashboard
+      
       - key: SESSION_SECRET
         generateValue: true
+      
       - key: FLASK_APP
-        value: app.py
+        value: main.py
+      
       - key: FLASK_DEBUG
         value: 0
+      
       - key: FLASK_ENV
         value: production
+      
       - key: USE_JSON_LOGGING
         value: true
-      # IMPORTANT: Set BASE_URL to your actual Render URL
-      # Example: https://farmlink-ai.onrender.com
-      # Add other environment variables in Render dashboard:
+      
+      # Add these manually in Render dashboard:
       # - GEMINI_API_KEY
       # - WEATHER_API_KEY
       # - AGMARKNET_API_KEY
@@ -32,10 +42,11 @@ services:
       # - MAIL_DEFAULT_SENDER
       # - RAZORPAY_KEY_ID
       # - RAZORPAY_KEY_SECRET
-      # - KYC_ENCRYPTION_KEY
-      # - ENCRYPTION_KEY
+      # - KYC_ENCRYPTION_KEY (generate random 32 char string)
+      # - ENCRYPTION_KEY (generate random 32 char string)
+      # - CLOUDINARY_CLOUD_NAME
+      # - CLOUDINARY_API_KEY
+      # - CLOUDINARY_API_SECRET
 
-databases:
-  - name: farmlink-db
-    databaseName: farmlink_db
-    user: farmlink_user
+# Note: No database section here because we're using Supabase
+# Create database on Supabase.com and add connection string to Render

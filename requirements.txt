@@ -16,6 +16,9 @@ gunicorn
 razorpay
 google-generativeai
 
+# Cloud Storage
+cloudinary
+
 # Database - PostgreSQL
 psycopg2-binary
 

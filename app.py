@@ -48,6 +48,27 @@ def parse_json(value):
     except (json.JSONDecodeError, TypeError):
         return None
 
+def get_image_url(image_path):
+    """
+    Get proper image URL - handles both local paths and Cloudinary URLs
+    
+    Args:
+        image_path: Local path or Cloudinary URL
+        
+    Returns:
+        str: Proper URL for the image
+    """
+    if not image_path:
+        return None
+    
+    # If it's already a full URL (Cloudinary), return as-is
+    if image_path.startswith('http'):
+        return image_path
+    
+    # If it's a local path, convert to static URL
+    from flask import url_for
+    return url_for('static', filename=image_path)
+
 def markdown_to_html(text):
     """Convert markdown text to HTML"""
     if not text:
@@ -83,7 +104,8 @@ app.jinja_env.globals.update(
     format_currency=format_currency,
     get_order_status_badge_class=get_order_status_badge_class,
     get_shipment_status_badge_class=get_shipment_status_badge_class,
-    get_weather_history=get_weather_history
+    get_weather_history=get_weather_history,
+    get_image_url=get_image_url
 )
 app.jinja_env.filters['parse_json'] = parse_json
 

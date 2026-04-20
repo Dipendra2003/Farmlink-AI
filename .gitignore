@@ -63,3 +63,9 @@ test_*.py
 # Upload directories (but keep structure)
 static/uploads/*
 !static/uploads/.gitkeep
+
+# Cloudinary cache (if any)
+cloudinary_cache/
+
+# Documentation files (keep only essential ones)
+# Keep: README.md, DEPLOYMENT_README.md, CLOUDINARY_SETUP.md, SUPABASE_DATABASE_SETUP.md

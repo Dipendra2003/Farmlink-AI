@@ -2832,19 +2832,23 @@ def pest_disease_analysis():
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                     unique_filename = f"{current_user.id}_{timestamp}_{filename}"
                     
-                    # Create upload directory if it doesn't exist
-                    upload_folder = os.path.join(app.config.get('UPLOAD_FOLDER', 'static/uploads'), 'pest_analysis')
+                    # Save image to Cloudinary
+                    from storage_utils import save_image, PEST_FOLDER
+                    
                     try:
-                        os.makedirs(upload_folder, exist_ok=True)
-                    except OSError as dir_error:
-                        logger.error(f"Failed to create upload directory: {dir_error}")
+                        image_url = save_image(form.plant_image.data, folder=PEST_FOLDER)
+                        if not image_url:
+                            flash('Failed to upload image. Please try again.', 'danger')
+                            return render_template('ai/pest_disease_analysis.html', 
+                                                 form=form, analysis=None, user_crops=user_crops)
+                        
+                        app.logger.info(f"Image uploaded to Cloudinary: {image_url}")
+                        
+                    except Exception as upload_error:
+                        logger.error(f"Failed to upload image to Cloudinary: {upload_error}")
                         flash('Server error: Unable to save image. Please contact support.', 'danger')
                         return render_template('ai/pest_disease_analysis.html', 
                                              form=form, analysis=None, user_crops=user_crops)
-                    
-                    # Save image
-                    image_path = os.path.join(upload_folder, unique_filename)
-                    form.plant_image.data.save(image_path)
                     
                     # Validate file size (max 10MB)
                     try:
@@ -2955,7 +2959,7 @@ def pest_disease_analysis():
                     'plant_stage': plant_stage,
                     'urgency_level': urgency,
                     'location': location,
-                    'image_path': relative_image_path,
+                    'image_path': image_url,  # Now using Cloudinary URL
                     'identified_issue': analysis.get('identified_issue'),
                     'issue_type': analysis.get('issue_type'),
                     'confidence_score': analysis.get('confidence_score'),
@@ -4792,13 +4796,19 @@ def ai_pest_analysis():
         plant_stage = request.form.get('plant_stage', '')
         urgency = request.form.get('urgency', 'medium')
         
-        filename = secure_filename(image_file.filename)
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"api_{timestamp}_{filename}"
-        upload_path = os.path.join(app.config.get('UPLOAD_FOLDER', 'static/uploads'), 'pest_analysis')
-        os.makedirs(upload_path, exist_ok=True)
-        image_path = os.path.join(upload_path, filename)
-        image_file.save(image_path)
+        # Upload image to Cloudinary
+        from storage_utils import save_image, PEST_FOLDER
+        
+        try:
+            image_url = save_image(image_file, folder=PEST_FOLDER)
+            if not image_url:
+                return jsonify({'success': False, 'message': 'Failed to upload image'}), 400
+            
+            app.logger.info(f"API: Image uploaded to Cloudinary: {image_url}")
+            
+        except Exception as upload_error:
+            app.logger.error(f"API: Failed to upload image to Cloudinary: {upload_error}")
+            return jsonify({'success': False, 'message': 'Failed to upload image'}), 500
         
         context = {
             'location': location,
@@ -4807,9 +4817,9 @@ def ai_pest_analysis():
         }
         
         if symptoms:
-            analysis = pest_detection_service.combined_analysis(image_path, crop_type, symptoms, context)
+            analysis = pest_detection_service.combined_analysis(image_url, crop_type, symptoms, context)
         else:
-            analysis = pest_detection_service.analyze_image(image_path, crop_type, context)
+            analysis = pest_detection_service.analyze_image(image_url, crop_type, context)
         
         if not analysis.get('success'):
             return jsonify(analysis), 400
@@ -4829,9 +4839,14 @@ def ai_pest_analysis():
         analysis_data = {
             **analysis,
             'symptoms_description': symptoms,
-            'image_path': image_path
+            'image_path': image_url  # Now using Cloudinary URL
         }
         analysis_id = pest_detection_service.save_analysis(current_user.id, analysis_data)
+        
+        if analysis_id:
+            analysis['analysis_id'] = analysis_id
+        
+        return jsonify(analysis)
         
         if analysis_id:
             analysis['analysis_id'] = analysis_id
