@@ -6,11 +6,20 @@ services:
     name: farmlink-ai
     env: python
     runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --workers 4 --timeout 120 --bind 0.0.0.0:$PORT
+    buildCommand: |
+      pip install --upgrade pip wheel
+      pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 2 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.6
+      
+      # Build optimization - Enable pip caching
+      - key: PIP_DISABLE_PIP_VERSION_CHECK
+        value: 1
+      
+      - key: PIP_NO_COMPILE
+        value: 1
       
       # Supabase Database URL
       # Get this from Supabase Dashboard → Settings → Database → Connection String (URI)

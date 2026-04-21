@@ -1,36 +1,36 @@
 # Core Flask Dependencies
-flask
-flask-sqlalchemy
-flask-login
-flask-mail
-flask-wtf
-flask-limiter
-flask-socketio
-python-socketio
-eventlet
-wtforms
-python-dotenv
-gunicorn
+flask==3.0.0
+flask-sqlalchemy==3.1.1
+flask-login==0.6.3
+flask-mail==0.9.1
+flask-wtf==1.2.1
+flask-limiter==3.5.0
+flask-socketio==5.3.5
+python-socketio==5.10.0
+eventlet==0.33.3
+wtforms==3.1.1
+python-dotenv==1.0.0
+gunicorn==21.2.0
 
 # Payment & External Services
-razorpay
-google-generativeai
+razorpay==1.4.1
+google-generativeai==0.3.1
 
 # Cloud Storage
-cloudinary
+cloudinary==1.36.0
 
 # Database - PostgreSQL
-psycopg2-binary
+psycopg2-binary==2.9.9
 
 # Security & Authentication
 cryptography>=41.0.0
 pyotp==2.9.0
 qrcode==7.4.2
-bleach
+bleach==6.1.0
 
 # File Processing & Image Handling
 Pillow>=10.0.0
-werkzeug
+werkzeug==3.0.1
 
 # File Security & Virus Scanning
 pyclamd==0.4.0
@@ -38,12 +38,12 @@ python-magic-bin==0.4.14; platform_system == "Windows"
 python-magic==0.4.27; platform_system != "Windows"
 
 # Document Generation
-reportlab
-python-docx
+reportlab==4.0.7
+python-docx==1.1.0
 
 # Utilities
 setuptools<81
-pytz
+pytz==2024.1
 
 # Background Job Scheduling
 apscheduler>=3.10.0
@@ -51,9 +51,11 @@ apscheduler>=3.10.0
 # SMS Notifications
 twilio>=8.10.0
 
-# Price Forecast Dependencies
+# Price Forecast Dependencies - Pinned versions for faster binary wheel installation
 requests==2.31.0
-pandas==2.2.3
-numpy==1.26.2
-statsmodels==0.14.1
 python-dateutil==2.8.2
+numpy==1.26.2
+scipy==1.11.4
+pandas==2.2.3
+statsmodels==0.14.1
+
