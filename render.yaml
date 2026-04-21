@@ -5,11 +5,10 @@ services:
   - type: web
     name: farmlink-ai
     env: python
-    runtime: python-3.11.6
     buildCommand: |
       pip install --upgrade pip wheel setuptools
       pip install -r requirements.txt
-    startCommand: gunicorn app:app --workers 2 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT
+    startCommand: gunicorn app:app --workers 2 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT --log-level debug --access-logfile - --error-logfile -
     envVars:
       
       # Build optimization - Enable pip caching
@@ -24,12 +23,6 @@ services:
       # Format: postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
       - key: DATABASE_URL
         sync: false  # Set manually in Render dashboard
-      
-      - key: SESSION_SECRET
-        generateValue: true
-      
-      - key: FLASK_APP
-        value: main.py
       
       - key: FLASK_DEBUG
         value: 0
