@@ -8,7 +8,6 @@ services:
     runtime: python-3.11.6
     buildCommand: |
       pip install --upgrade pip wheel
-      pip install --only-binary=:all: numpy scipy
       pip install -r requirements.txt
     startCommand: gunicorn app:app --workers 2 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT
     envVars:
