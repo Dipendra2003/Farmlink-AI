@@ -16,14 +16,30 @@ mail = Mail()
 load_dotenv()
 
 # Validate critical environment variables
-if not os.environ.get('DATABASE_URL'):
-    print("ERROR: DATABASE_URL environment variable is not set!")
-    print("Please set DATABASE_URL in Render dashboard.")
+database_url_check = os.environ.get('DATABASE_URL')
+if not database_url_check:
+    error_msg = """
+    ================================================================================
+    ERROR: DATABASE_URL environment variable is not set!
+    
+    For Render deployment:
+    1. Go to your Render dashboard
+    2. Select your web service
+    3. Go to "Environment" tab
+    4. Add DATABASE_URL with your Supabase connection string
+    
+    Example: postgresql://postgres.xxx:password@aws-1-us-east-1.pooler.supabase.com:5432/postgres
+    ================================================================================
+    """
+    print(error_msg)
+    logging.error(error_msg)
     import sys
     sys.exit(1)
 
 if not os.environ.get('SESSION_SECRET'):
-    print("WARNING: SESSION_SECRET not set, using default (not secure for production)")
+    warning_msg = "WARNING: SESSION_SECRET not set, using default (not secure for production)"
+    print(warning_msg)
+    logging.warning(warning_msg)
 
 # Import and setup structured logging
 from logging_config import setup_logging
@@ -219,6 +235,14 @@ with app.app_context():
         except Exception as e:
             if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
                 app.logger.warning(f"Could not create tables (may already exist): {str(e)}")
+    else:
+        # In production, verify database connection
+        try:
+            db.engine.connect()
+            app.logger.info("Database connection verified")
+        except Exception as e:
+            app.logger.error(f"Database connection failed: {str(e)}")
+            # Don't exit - let the app start and show error pages
     
     # Import and register routes
     import advanced_routes  # Import first for helper functions
