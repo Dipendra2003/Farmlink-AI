@@ -24,6 +24,10 @@ services:
       - key: DATABASE_URL
         sync: false  # Set manually in Render dashboard
       
+      # Session Secret (REQUIRED - generate a random string)
+      - key: SESSION_SECRET
+        sync: false  # Set manually in Render dashboard
+      
       - key: FLASK_DEBUG
         value: 0
       
