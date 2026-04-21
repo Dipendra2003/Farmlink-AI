@@ -8,7 +8,7 @@ services:
     buildCommand: |
       pip install --upgrade pip wheel setuptools
       pip install -r requirements.txt
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 120 --log-level info --access-logfile - --error-logfile - --capture-output --enable-stdio-inheritance
+    startCommand: chmod +x start.sh && ./start.sh
     envVars:
       
       # Build optimization - Enable pip caching
