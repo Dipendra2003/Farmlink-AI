@@ -18,6 +18,12 @@ class Config:
     if database_url and database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     
+    # Fix for Supabase IPv6 issue on Render
+    # Supabase direct connections use IPv6, but Render doesn't support it
+    # Solution: Use Supabase's IPv4 connection pooler (port 6543) instead of direct connection (port 5432)
+    if database_url and "supabase.co" in database_url and ":5432" in database_url:
+        database_url = database_url.replace(":5432", ":6543")
+    
     SQLALCHEMY_DATABASE_URI = database_url
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_size": 10,
@@ -25,6 +31,10 @@ class Config:
         "pool_pre_ping": True,
         "max_overflow": 20,
         "pool_timeout": 30,
+        "connect_args": {
+            "options": "-c statement_timeout=30000",
+            "connect_timeout": 10,
+        }
     }
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
