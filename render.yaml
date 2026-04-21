@@ -5,10 +5,11 @@ services:
   - type: web
     name: farmlink-ai
     env: python
+    runtime: python-3.12  # Use Python 3.12 for better compatibility
     buildCommand: |
       pip install --upgrade pip wheel setuptools
       pip install -r requirements.txt
-    startCommand: chmod +x start.sh && ./start.sh
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --log-level info --access-logfile - --error-logfile -
     envVars:
       
       # Build optimization - Enable pip caching
