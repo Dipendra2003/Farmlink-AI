@@ -30,16 +30,18 @@ if not database_url_check:
     4. Add DATABASE_URL with your Supabase connection string
     
     Example: postgresql://postgres.xxx:password@aws-1-us-east-1.pooler.supabase.com:5432/postgres
+    
+    See RENDER_SETUP_INSTRUCTIONS.md for complete setup guide.
     ================================================================================
     """
-    print(error_msg)
+    print(error_msg, flush=True)
     logging.error(error_msg)
     import sys
     sys.exit(1)
 
 if not os.environ.get('SESSION_SECRET'):
     warning_msg = "WARNING: SESSION_SECRET not set, using default (not secure for production)"
-    print(warning_msg)
+    print(warning_msg, flush=True)
     logging.warning(warning_msg)
 
 # Import and setup structured logging

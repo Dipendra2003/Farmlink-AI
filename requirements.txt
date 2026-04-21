@@ -20,7 +20,9 @@ google-generativeai==0.3.1
 cloudinary==1.36.0
 
 # Database - PostgreSQL
-# Using psycopg (v3) for Python 3.14 compatibility
+# Using psycopg2-binary for SQLAlchemy compatibility
+psycopg2-binary>=2.9.9
+# Also include psycopg3 for future compatibility
 psycopg[binary]>=3.1.0
 
 # Security & Authentication
