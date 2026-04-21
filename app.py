@@ -15,6 +15,16 @@ mail = Mail()
 # Load environment variables first
 load_dotenv()
 
+# Validate critical environment variables
+if not os.environ.get('DATABASE_URL'):
+    print("ERROR: DATABASE_URL environment variable is not set!")
+    print("Please set DATABASE_URL in Render dashboard.")
+    import sys
+    sys.exit(1)
+
+if not os.environ.get('SESSION_SECRET'):
+    print("WARNING: SESSION_SECRET not set, using default (not secure for production)")
+
 # Import and setup structured logging
 from logging_config import setup_logging
 
