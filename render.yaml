@@ -5,14 +5,12 @@ services:
   - type: web
     name: farmlink-ai
     env: python
-    runtime: python
+    runtime: python-3.11.6
     buildCommand: |
       pip install --upgrade pip wheel
       pip install -r requirements.txt
     startCommand: gunicorn app:app --workers 2 --threads 4 --timeout 120 --bind 0.0.0.0:$PORT
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.6
       
       # Build optimization - Enable pip caching
       - key: PIP_DISABLE_PIP_VERSION_CHECK
