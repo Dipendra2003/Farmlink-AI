@@ -6,7 +6,6 @@ from flask_wtf.csrf import CSRFProtect
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 from extensions import db, login_manager
-from init_uploads import init_upload_directories
 
 # Initialize Flask extensions
 csrf = CSRFProtect()
@@ -61,9 +60,6 @@ static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'static'))
 app = Flask(__name__, 
            template_folder=template_dir,
            static_folder=static_dir)
-
-# Initialize upload directories
-init_upload_directories()
 
 # Import utility functions
 from utils import format_datetime, format_currency, get_order_status_badge_class, get_shipment_status_badge_class, get_weather_history

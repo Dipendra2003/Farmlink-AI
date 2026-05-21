@@ -86,7 +86,7 @@ def setup_logging(app=None, use_json=False):
     """
     # Get root logger
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.WARNING)  # Changed from INFO to WARNING
+    root_logger.setLevel(logging.INFO)  # Set to INFO to show HTTP requests
     
     # Remove existing handlers
     for handler in root_logger.handlers[:]:
@@ -94,7 +94,7 @@ def setup_logging(app=None, use_json=False):
     
     # Create console handler
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.WARNING)  # Changed from INFO to WARNING
+    console_handler.setLevel(logging.INFO)  # Set to INFO to show HTTP requests
     
     # Set formatter based on configuration
     if use_json:
@@ -114,11 +114,11 @@ def setup_logging(app=None, use_json=False):
     # Add handler to root logger
     root_logger.addHandler(console_handler)
     
-    # Set specific logger levels - suppress all INFO logs
-    logging.getLogger('werkzeug').setLevel(logging.WARNING)
+    # Set specific logger levels - show HTTP requests
+    logging.getLogger('werkzeug').setLevel(logging.INFO)  # Show HTTP requests
     logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
     logging.getLogger('apscheduler').setLevel(logging.WARNING)
-    logging.getLogger('app').setLevel(logging.WARNING)
+    logging.getLogger('app').setLevel(logging.INFO)
     logging.getLogger('ai_services').setLevel(logging.WARNING)
     logging.getLogger('crop_ai_service').setLevel(logging.WARNING)
     logging.getLogger('pest_detection_service').setLevel(logging.WARNING)

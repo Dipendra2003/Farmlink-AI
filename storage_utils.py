@@ -31,6 +31,17 @@ PROFILE_FOLDER = 'farmlink/profiles'
 PEST_FOLDER = 'farmlink/pest_analysis'
 KYC_FOLDER = 'farmlink/kyc'
 
+# Local storage folders (fallback)
+LOCAL_UPLOAD_BASE = 'static/uploads'
+LOCAL_CROP_FOLDER = os.path.join(LOCAL_UPLOAD_BASE, 'crops')
+LOCAL_PROFILE_FOLDER = os.path.join(LOCAL_UPLOAD_BASE, 'profiles')
+LOCAL_PEST_FOLDER = os.path.join(LOCAL_UPLOAD_BASE, 'pest_analysis')
+LOCAL_KYC_FOLDER = os.path.join(LOCAL_UPLOAD_BASE, 'kyc')
+
+# Ensure local directories exist
+for folder in [LOCAL_CROP_FOLDER, LOCAL_PROFILE_FOLDER, LOCAL_PEST_FOLDER, LOCAL_KYC_FOLDER]:
+    os.makedirs(folder, exist_ok=True)
+
 def allowed_file(filename):
     """Check if file extension is allowed"""
     return '.' in filename and \
@@ -76,14 +87,14 @@ def optimize_image(file, max_size=MAX_IMAGE_SIZE, quality=85):
 
 def save_image(file, folder=CROP_FOLDER):
     """
-    Save an uploaded image file to Cloudinary
+    Save an uploaded image file to Cloudinary with local storage fallback
     
     Args:
         file: FileStorage object from Flask
         folder: Cloudinary folder path
         
     Returns:
-        str: Cloudinary URL or None if failed
+        str: Cloudinary URL or local path if Cloudinary fails
     """
     if not file:
         logging.warning("No file provided for upload")
@@ -93,49 +104,68 @@ def save_image(file, folder=CROP_FOLDER):
         logging.warning(f"Invalid file type for {file.filename}")
         return None
     
+    # Generate unique filename
+    filename = secure_filename(file.filename)
+    ext = filename.rsplit('.', 1)[1].lower()
+    unique_filename = f"{uuid.uuid4().hex}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{ext}"
+    
     try:
-        # Generate unique public_id
-        filename = secure_filename(file.filename)
-        ext = filename.rsplit('.', 1)[1].lower()
-        unique_id = f"{uuid.uuid4().hex}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        
         # Optimize image
         optimized_image = optimize_image(file, MAX_IMAGE_SIZE, quality=85)
         if not optimized_image:
             logging.error("Failed to optimize image")
             return None
         
-        # Upload to Cloudinary
-        result = cloudinary.uploader.upload(
-            optimized_image,
-            folder=folder,
-            public_id=unique_id,
-            resource_type='image',
-            format='jpg',
-            transformation=[
-                {'quality': 'auto:good'},
-                {'fetch_format': 'auto'}
-            ]
-        )
-        
-        # Return secure URL
-        image_url = result.get('secure_url')
-        logging.info(f"Successfully uploaded image to Cloudinary: {image_url}")
-        return image_url
+        # Try Cloudinary first
+        try:
+            result = cloudinary.uploader.upload(
+                optimized_image,
+                folder=folder,
+                public_id=unique_filename.rsplit('.', 1)[0],
+                resource_type='image',
+                format='jpg',
+                transformation=[
+                    {'quality': 'auto:good'},
+                    {'fetch_format': 'auto'}
+                ]
+            )
+            
+            # Return secure URL
+            image_url = result.get('secure_url')
+            logging.info(f"✅ Successfully uploaded image to Cloudinary: {image_url}")
+            return image_url
+            
+        except Exception as cloudinary_error:
+            logging.warning(f"⚠️ Cloudinary upload failed: {cloudinary_error}")
+            logging.info("📁 Falling back to local storage...")
+            
+            # Fallback to local storage
+            local_folder = _get_local_folder(folder)
+            local_path = os.path.join(local_folder, unique_filename)
+            
+            # Save optimized image locally
+            optimized_image.seek(0)
+            with open(local_path, 'wb') as f:
+                f.write(optimized_image.read())
+            
+            # Return relative path for database
+            relative_path = local_path.replace('\\', '/')
+            logging.info(f"✅ Successfully saved image locally: {relative_path}")
+            return relative_path
         
     except Exception as e:
-        logging.error(f"Error uploading to Cloudinary: {e}")
+        logging.error(f"❌ Error saving image: {e}")
         return None
 
 def save_profile_image(file):
     """
-    Save an uploaded profile image to Cloudinary
+    Save an uploaded profile image to Cloudinary with local storage fallback
     
     Args:
         file: FileStorage object from Flask
         
     Returns:
-        str: Cloudinary URL or None if failed
+        str: Cloudinary URL or local path if Cloudinary fails
     """
     if not file:
         logging.warning("No file provided for profile upload")
@@ -145,11 +175,12 @@ def save_profile_image(file):
         logging.warning(f"Invalid file type for {file.filename}")
         return None
     
+    # Generate unique filename
+    filename = secure_filename(file.filename)
+    ext = filename.rsplit('.', 1)[1].lower()
+    unique_filename = f"profile_{uuid.uuid4().hex}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{ext}"
+    
     try:
-        # Generate unique public_id
-        filename = secure_filename(file.filename)
-        unique_id = f"profile_{uuid.uuid4().hex}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        
         # Open and process image
         file.seek(0)
         with Image.open(file) as image:
@@ -187,35 +218,53 @@ def save_profile_image(file):
             image.save(output, format='JPEG', optimize=True, quality=90)
             output.seek(0)
             
-            # Upload to Cloudinary
-            result = cloudinary.uploader.upload(
-                output,
-                folder=PROFILE_FOLDER,
-                public_id=unique_id,
-                resource_type='image',
-                format='jpg',
-                transformation=[
-                    {'width': 400, 'height': 400, 'crop': 'fill', 'gravity': 'face'},
-                    {'quality': 'auto:good'},
-                    {'fetch_format': 'auto'}
-                ]
-            )
-            
-            # Return secure URL
-            image_url = result.get('secure_url')
-            logging.info(f"Successfully uploaded profile image to Cloudinary: {image_url}")
-            return image_url
+            # Try Cloudinary first
+            try:
+                result = cloudinary.uploader.upload(
+                    output,
+                    folder=PROFILE_FOLDER,
+                    public_id=unique_filename.rsplit('.', 1)[0],
+                    resource_type='image',
+                    format='jpg',
+                    transformation=[
+                        {'width': 400, 'height': 400, 'crop': 'fill', 'gravity': 'face'},
+                        {'quality': 'auto:good'},
+                        {'fetch_format': 'auto'}
+                    ]
+                )
+                
+                # Return secure URL
+                image_url = result.get('secure_url')
+                logging.info(f"✅ Successfully uploaded profile image to Cloudinary: {image_url}")
+                return image_url
+                
+            except Exception as cloudinary_error:
+                logging.warning(f"⚠️ Cloudinary upload failed: {cloudinary_error}")
+                logging.info("📁 Falling back to local storage...")
+                
+                # Fallback to local storage
+                local_path = os.path.join(LOCAL_PROFILE_FOLDER, unique_filename)
+                
+                # Save optimized image locally
+                output.seek(0)
+                with open(local_path, 'wb') as f:
+                    f.write(output.read())
+                
+                # Return relative path for database
+                relative_path = local_path.replace('\\', '/')
+                logging.info(f"✅ Successfully saved profile image locally: {relative_path}")
+                return relative_path
             
     except Exception as e:
-        logging.error(f"Error uploading profile image to Cloudinary: {e}")
+        logging.error(f"❌ Error saving profile image: {e}")
         return None
 
 def delete_image(image_url):
     """
-    Delete an image from Cloudinary
+    Delete an image from Cloudinary or local storage
     
     Args:
-        image_url: Cloudinary URL or public_id
+        image_url: Cloudinary URL or local path
         
     Returns:
         bool: True if deleted successfully
@@ -224,7 +273,7 @@ def delete_image(image_url):
         return False
     
     try:
-        # Extract public_id from URL
+        # Check if it's a Cloudinary URL
         if 'cloudinary.com' in image_url:
             # Extract public_id from URL
             # Format: https://res.cloudinary.com/cloud_name/image/upload/v123456/folder/public_id.jpg
@@ -234,29 +283,36 @@ def delete_image(image_url):
             # Get everything after version number
             public_id_parts = parts[upload_index + 2:]  # Skip version
             public_id = '/'.join(public_id_parts).rsplit('.', 1)[0]  # Remove extension
+            
+            # Delete from Cloudinary
+            result = cloudinary.uploader.destroy(public_id)
+            
+            if result.get('result') == 'ok':
+                logging.info(f"✅ Successfully deleted image from Cloudinary: {public_id}")
+                return True
+            else:
+                logging.warning(f"⚠️ Failed to delete image from Cloudinary: {result}")
+                return False
         else:
-            public_id = image_url
-        
-        # Delete from Cloudinary
-        result = cloudinary.uploader.destroy(public_id)
-        
-        if result.get('result') == 'ok':
-            logging.info(f"Successfully deleted image from Cloudinary: {public_id}")
-            return True
-        else:
-            logging.warning(f"Failed to delete image from Cloudinary: {result}")
-            return False
+            # It's a local file path
+            if os.path.exists(image_url):
+                os.remove(image_url)
+                logging.info(f"✅ Successfully deleted local image: {image_url}")
+                return True
+            else:
+                logging.warning(f"⚠️ Local image not found: {image_url}")
+                return False
             
     except Exception as e:
-        logging.error(f"Error deleting image from Cloudinary: {e}")
+        logging.error(f"❌ Error deleting image: {e}")
         return False
 
 def delete_profile_image(image_url):
     """
-    Delete a profile image from Cloudinary
+    Delete a profile image from Cloudinary or local storage
     
     Args:
-        image_url: Cloudinary URL
+        image_url: Cloudinary URL or local path
         
     Returns:
         bool: True if deleted successfully
@@ -266,6 +322,102 @@ def delete_profile_image(image_url):
         return False
     
     return delete_image(image_url)
+
+def _get_local_folder(cloudinary_folder):
+    """
+    Map Cloudinary folder to local folder path
+    
+    Args:
+        cloudinary_folder: Cloudinary folder path
+        
+    Returns:
+        str: Local folder path
+    """
+    folder_map = {
+        CROP_FOLDER: LOCAL_CROP_FOLDER,
+        PROFILE_FOLDER: LOCAL_PROFILE_FOLDER,
+        PEST_FOLDER: LOCAL_PEST_FOLDER,
+        KYC_FOLDER: LOCAL_KYC_FOLDER,
+    }
+    
+    return folder_map.get(cloudinary_folder, LOCAL_CROP_FOLDER)
+
+def is_cloudinary_url(image_url):
+    """
+    Check if image URL is from Cloudinary
+    
+    Args:
+        image_url: Image URL or path
+        
+    Returns:
+        bool: True if Cloudinary URL
+    """
+    return image_url and 'cloudinary.com' in image_url
+
+def is_local_path(image_url):
+    """
+    Check if image is stored locally
+    
+    Args:
+        image_url: Image URL or path
+        
+    Returns:
+        bool: True if local path
+    """
+    return image_url and not is_cloudinary_url(image_url) and (
+        image_url.startswith('static/') or 
+        image_url.startswith('uploads/')
+    )
+
+def migrate_local_to_cloudinary(local_path, folder=CROP_FOLDER):
+    """
+    Migrate a local image to Cloudinary
+    
+    Args:
+        local_path: Local file path
+        folder: Cloudinary folder to upload to
+        
+    Returns:
+        str: Cloudinary URL or None if failed
+    """
+    if not local_path or not os.path.exists(local_path):
+        logging.warning(f"Local file not found: {local_path}")
+        return None
+    
+    try:
+        # Generate unique public_id
+        filename = os.path.basename(local_path)
+        unique_id = filename.rsplit('.', 1)[0]
+        
+        # Upload to Cloudinary
+        result = cloudinary.uploader.upload(
+            local_path,
+            folder=folder,
+            public_id=unique_id,
+            resource_type='image',
+            format='jpg',
+            transformation=[
+                {'quality': 'auto:good'},
+                {'fetch_format': 'auto'}
+            ]
+        )
+        
+        cloudinary_url = result.get('secure_url')
+        
+        if cloudinary_url:
+            logging.info(f"✅ Migrated to Cloudinary: {local_path} -> {cloudinary_url}")
+            
+            # Optionally delete local file after successful migration
+            # os.remove(local_path)
+            
+            return cloudinary_url
+        else:
+            logging.error(f"❌ Failed to migrate: {local_path}")
+            return None
+            
+    except Exception as e:
+        logging.error(f"❌ Error migrating to Cloudinary: {e}")
+        return None
 
 def get_default_crop_image():
     """Get default crop image URL"""
@@ -288,5 +440,6 @@ try:
     cloudinary.api.ping()
     logging.info("✅ Cloudinary connection successful!")
 except Exception as e:
-    logging.error(f"❌ Cloudinary connection failed: {e}")
-    logging.error("Please check your CLOUDINARY credentials in .env file")
+    logging.warning(f"⚠️ Cloudinary connection failed: {e}")
+    logging.warning("📁 Images will be saved to local storage as fallback")
+    logging.info(f"Local storage folders created: {LOCAL_UPLOAD_BASE}")

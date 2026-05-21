@@ -590,6 +590,7 @@
                             <i class="fas fa-brain me-1"></i>AI Services
                         </a>
                         <ul class="dropdown-menu">
+                            {% if current_user.role in ['farmer', 'admin'] %}
                             <li><a class="dropdown-item" href="{{ url_for('crop_suggestions') }}">
                                     <i class="fas fa-seedling me-2"></i>Crop Suggestions
                                 </a></li>
@@ -597,6 +598,7 @@
                             <li><a class="dropdown-item" href="{{ url_for('pest_disease_analysis') }}">
                                     <i class="fas fa-bug me-2"></i>Pest Detection
                                 </a></li>
+                            {% endif %}
                             <li><a class="dropdown-item" href="{{ url_for('voice_interface') }}">
                                     <i class="fas fa-microphone me-2"></i>FarmLink Assistant
                                 </a></li>
@@ -770,9 +772,14 @@
                     <h6 class="rightbar-section-title">
                         <i class="fas fa-brain me-2"></i>AI Services
                     </h6>
+                    {% if current_user.role in ['farmer', 'admin'] %}
+                    <a class="rightbar-link ps-3" href="{{ url_for('crop_suggestions') }}">
+                        <i class="fas fa-seedling me-2"></i>Crop Suggestions
+                    </a>
                     <a class="rightbar-link ps-3" href="{{ url_for('pest_disease_analysis') }}">
                         <i class="fas fa-bug me-2"></i>Pest & Disease Analysis
                     </a>
+                    {% endif %}
                     <a class="rightbar-link ps-3" href="{{ url_for('voice_interface') }}">
                         <i class="fas fa-microphone me-2"></i>FarmLink Assistant
                     </a>
@@ -782,7 +789,9 @@
                     <a class="rightbar-link ps-3" href="{{ url_for('weather_dashboard') }}">
                         <i class="fas fa-cloud-sun me-2"></i>Weather Dashboard
                     </a>
+                </div>
 
+                <div class="rightbar-section">
                     <a class="rightbar-link" href="{{ url_for('dashboard') }}">
                         <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                     </a>
