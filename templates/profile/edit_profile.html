@@ -19,7 +19,7 @@
                             <div class="profile-image-container position-relative">
                                 {% if current_user.profile_image and current_user.profile_image != 'default.jpg' %}
                                 <img id="profileImagePreview"
-                                    src="{{ url_for('static', filename=current_user.profile_image) }}"
+                                    src="{{ get_image_url(current_user.profile_image) }}"
                                     class="rounded-circle border border-3 border-white" width="150" height="150"
                                     alt="Profile Picture" style="object-fit: cover; cursor: pointer;"
                                     data-bs-toggle="dropdown" aria-expanded="false">

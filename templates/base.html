@@ -655,7 +655,7 @@
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
                             data-bs-toggle="dropdown">
                             {% if current_user.profile_image and current_user.profile_image != 'default.jpg' %}
-                                <img src="{{ url_for('static', filename=current_user.profile_image) }}"
+                                <img src="{{ get_image_url(current_user.profile_image) }}"
                                     class="rounded-circle me-2" width="32" height="32" alt="Profile" style="object-fit: cover;">
                             {% else %}
                                 <img src="https://ui-avatars.com/api/?name={{ current_user.full_name }}&background=28a745&color=fff&size=32"

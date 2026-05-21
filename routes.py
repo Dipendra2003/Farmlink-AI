@@ -171,14 +171,10 @@ def login():
         ip_address = request.remote_addr
         user_agent = request.user_agent.string
         
-        # Debug logging
-        app.logger.warning(f"Login attempt - Identifier: {identifier}")
-        
         # Always apply rate limiting regardless of role
         from security_utils import rate_limit_login
         if not rate_limit_login(ip_address):
             flash('Too many login attempts. Please try again later.', 'danger')
-            app.logger.warning(f"Rate limit exceeded for IP: {ip_address}")
             return render_template('auth/login.html', form=form)
             
         # Try to find user by username, email, or phone
@@ -190,36 +186,25 @@ def login():
             )
         ).first()
         
-        # Debug logging
-        if user:
-            app.logger.warning(f"User found: {user.username}, Active: {user.is_active}, Email verified: {user.email_verified}, Role: {user.role}")
-        else:
-            app.logger.warning(f"No user found with identifier: {identifier}")
-        
         login_success = False
         
         if user and user.check_password(form.password.data):
-            app.logger.warning(f"Password check passed for user: {user.username}")
             if not user.is_active:
                 flash('Your account has been deactivated. Please contact support.', 'danger')
-                app.logger.warning(f"Account inactive: {user.username}")
                 login_success = False
             # Check email verification status (admins bypass this check)
             elif not user.email_verified and user.role != 'admin':
                 flash('Please verify your email address before logging in. A verification code has been sent to your email.', 'warning')
-                app.logger.warning(f"Email not verified: {user.username}")
                 return redirect(url_for('verify_email', user_id=user.id))
             # Temporarily allow admin login without HTTPS for development
             # Allow admin login in development
             # Allow admin login in development mode
             elif user.role == 'admin' and not request.is_secure and os.environ.get('FLASK_ENV') == 'production':
                 flash('Admin login requires a secure connection in production.', 'danger')
-                app.logger.warning(f"Admin login requires HTTPS in production: {user.username}")
                 login_success = False
             else:
                 login_success = True
                 login_user(user)
-                app.logger.warning(f"Login successful for user: {user.username}")
                 next_page = request.args.get('next')
                 if next_page and not next_page.startswith('/'):
                     next_page = None  # Prevent open redirect
@@ -304,104 +289,110 @@ def dashboard():
 @app.route('/farmer/dashboard')
 @farmer_required
 def farmer_dashboard():
-    
-    # Get farmer's crops
-    my_crops = Crop.query.filter_by(farmer_id=current_user.id).order_by(Crop.created_at.desc()).all()
-    
-    # Get recent orders for farmer's crops (as seller)
-    recent_orders = Order.query.filter_by(farmer_id=current_user.id).order_by(Order.created_at.desc()).limit(5).all()
-    
-    # Get recent purchases made by farmer (as buyer)
-    my_purchases = Order.query.filter_by(buyer_id=current_user.id).order_by(Order.created_at.desc()).limit(5).all()
-    
-    # Get unread messages
-    unread_messages = Message.query.filter_by(recipient_id=current_user.id, is_read=False).count()
-    
-    # Get weather data for farmer's location
-    weather_data = get_weather_data(current_user.location)
-    
-    # Calculate total earnings from delivered orders (as seller)
-    # Only count delivered orders with paid status
-    total_earnings = db.session.query(db.func.sum(Order.total_amount)).filter(
-        Order.farmer_id == current_user.id,
-        Order.status == 'delivered',
-        Order.payment_status == 'paid'
-    ).scalar() or 0
-    
-    # Calculate total spent on purchases (as buyer)
-    # Only count delivered orders with paid status
-    total_spent = db.session.query(db.func.sum(Order.total_amount)).filter(
-        Order.buyer_id == current_user.id,
-        Order.status == 'delivered',
-        Order.payment_status == 'paid'
-    ).scalar() or 0
-    
-    # Get pest detection statistics
-    from models import PestDiseaseAnalysis
-    from datetime import datetime, timedelta
-    
-    # Count recent analyses (last 30 days)
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    recent_analyses_count = PestDiseaseAnalysis.query.filter_by(
-        user_id=current_user.id
-    ).filter(
-        PestDiseaseAnalysis.created_at >= thirty_days_ago
-    ).count()
-    
-    # Check for critical severity analyses
-    critical_analyses = PestDiseaseAnalysis.query.filter_by(
-        user_id=current_user.id,
-        severity_level='critical'
-    ).filter(
-        PestDiseaseAnalysis.created_at >= thirty_days_ago
-    ).count()
-    
-    # Get seller reputation
-    from models import SellerReputation, ProductRating
-    seller_reputation = SellerReputation.query.filter_by(seller_id=current_user.id).first()
-    
-    # Get recent ratings received
-    recent_ratings_received = ProductRating.query.join(
-        Crop, ProductRating.product_id == Crop.id
-    ).filter(
-        Crop.farmer_id == current_user.id,
-        ProductRating.is_hidden == False
-    ).order_by(
-        ProductRating.created_at.desc()
-    ).limit(5).all()
-    
-    # Get shipment data for farmer
-    # Count active shipments (not delivered)
-    active_shipments_count = Order.query.filter_by(
-        farmer_id=current_user.id
-    ).filter(
-        Order.tracking_number.isnot(None),
-        Order.shipment_status.notin_(['delivered', 'failed', 'returned'])
-    ).count()
-    
-    # Get 5 most recent shipments
-    recent_shipments = Order.query.filter_by(
-        farmer_id=current_user.id
-    ).filter(
-        Order.tracking_number.isnot(None)
-    ).order_by(
-        Order.shipment_created_at.desc()
-    ).limit(5).all()
-    
-    return render_template('dashboard/farmer.html',
-                         my_crops=my_crops,
-                         recent_orders=recent_orders,
-                         my_purchases=my_purchases,
-                         unread_messages=unread_messages,
-                         weather_data=weather_data,
-                         total_earnings=total_earnings,
-                         total_spent=total_spent,
-                         recent_analyses_count=recent_analyses_count,
-                         critical_analyses=critical_analyses,
-                         seller_reputation=seller_reputation,
-                         recent_ratings_received=recent_ratings_received,
-                         active_shipments_count=active_shipments_count,
-                         recent_shipments=recent_shipments)
+    try:
+        # Get farmer's crops
+        my_crops = Crop.query.filter_by(farmer_id=current_user.id).order_by(Crop.created_at.desc()).all()
+        
+        # Get recent orders for farmer's crops (as seller)
+        recent_orders = Order.query.filter_by(farmer_id=current_user.id).order_by(Order.created_at.desc()).limit(5).all()
+        
+        # Get recent purchases made by farmer (as buyer)
+        my_purchases = Order.query.filter_by(buyer_id=current_user.id).order_by(Order.created_at.desc()).limit(5).all()
+        
+        # Get unread messages
+        unread_messages = Message.query.filter_by(recipient_id=current_user.id, is_read=False).count()
+        
+        # Get weather data for farmer's location
+        weather_data = get_weather_data(current_user.location)
+        
+        # Calculate total earnings from delivered orders (as seller)
+        # Only count delivered orders with paid status
+        total_earnings = db.session.query(db.func.sum(Order.total_amount)).filter(
+            Order.farmer_id == current_user.id,
+            Order.status == 'delivered',
+            Order.payment_status == 'paid'
+        ).scalar() or 0
+        
+        # Calculate total spent on purchases (as buyer)
+        # Only count delivered orders with paid status
+        total_spent = db.session.query(db.func.sum(Order.total_amount)).filter(
+            Order.buyer_id == current_user.id,
+            Order.status == 'delivered',
+            Order.payment_status == 'paid'
+        ).scalar() or 0
+        
+        # Get pest detection statistics
+        from models import PestDiseaseAnalysis
+        from datetime import datetime, timedelta
+        
+        # Count recent analyses (last 30 days)
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        recent_analyses_count = PestDiseaseAnalysis.query.filter_by(
+            user_id=current_user.id
+        ).filter(
+            PestDiseaseAnalysis.created_at >= thirty_days_ago
+        ).count()
+        
+        # Check for critical severity analyses
+        critical_analyses = PestDiseaseAnalysis.query.filter_by(
+            user_id=current_user.id,
+            severity_level='critical'
+        ).filter(
+            PestDiseaseAnalysis.created_at >= thirty_days_ago
+        ).count()
+        
+        # Get seller reputation
+        from models import SellerReputation, ProductRating
+        seller_reputation = SellerReputation.query.filter_by(seller_id=current_user.id).first()
+        
+        # Get recent ratings received
+        recent_ratings_received = ProductRating.query.join(
+            Crop, ProductRating.product_id == Crop.id
+        ).filter(
+            Crop.farmer_id == current_user.id,
+            ProductRating.is_hidden == False
+        ).order_by(
+            ProductRating.created_at.desc()
+        ).limit(5).all()
+        
+        # Get shipment data for farmer
+        # Count active shipments (not delivered)
+        active_shipments_count = Order.query.filter_by(
+            farmer_id=current_user.id
+        ).filter(
+            Order.tracking_number.isnot(None),
+            Order.shipment_status.notin_(['delivered', 'failed', 'returned'])
+        ).count()
+        
+        # Get 5 most recent shipments
+        recent_shipments = Order.query.filter_by(
+            farmer_id=current_user.id
+        ).filter(
+            Order.tracking_number.isnot(None)
+        ).order_by(
+            Order.shipment_created_at.desc()
+        ).limit(5).all()
+        
+        return render_template('dashboard/farmer.html',
+                             my_crops=my_crops,
+                             recent_orders=recent_orders,
+                             my_purchases=my_purchases,
+                             unread_messages=unread_messages,
+                             weather_data=weather_data,
+                             total_earnings=total_earnings,
+                             total_spent=total_spent,
+                             recent_analyses_count=recent_analyses_count,
+                             critical_analyses=critical_analyses,
+                             seller_reputation=seller_reputation,
+                             recent_ratings_received=recent_ratings_received,
+                             active_shipments_count=active_shipments_count,
+                             recent_shipments=recent_shipments)
+    except Exception as e:
+        app.logger.error(f"Error in farmer_dashboard: {str(e)}")
+        import traceback
+        app.logger.error(traceback.format_exc())
+        flash('An error occurred while loading the dashboard. Please try again.', 'error')
+        return redirect(url_for('index'))
 
 @app.route('/buyer/dashboard')
 @buyer_required

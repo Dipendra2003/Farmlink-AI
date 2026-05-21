@@ -32,7 +32,7 @@
             <div class="card shadow-sm border-0">
                 <div class="row g-0">
                     <div class="col-md-6">
-                        <img src="{{ url_for('static', filename='uploads/crops/' + crop.image_url.split('/')[-1]) if crop.image_url else 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' }}"
+                        <img src="{{ get_image_url(crop.image_url) if crop.image_url else 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80' }}"
                             class="img-fluid rounded-start w-100" alt="{{ crop.name }}"
                             style="height: 400px; object-fit: cover;">
                     </div>
@@ -48,7 +48,7 @@
                                     <a href="{{ url_for('view_seller_profile', seller_id=crop.farmer_id) }}"
                                         class="seller-link text-decoration-none d-flex align-items-center flex-grow-1"
                                         title="View {{ crop.farmer.full_name }}'s profile">
-                                        <img src="{% if crop.farmer.profile_image and crop.farmer.profile_image != 'default.jpg' %}{{ url_for('static', filename=crop.farmer.profile_image) }}{% else %}https://ui-avatars.com/api/?name={{ crop.farmer.full_name }}&background=28a745&color=fff&size=40{% endif %}"
+                                        <img src="{% if crop.farmer.profile_image and crop.farmer.profile_image != 'default.jpg' %}{{ get_image_url(crop.farmer.profile_image) }}{% else %}https://ui-avatars.com/api/?name={{ crop.farmer.full_name }}&background=28a745&color=fff&size=40{% endif %}"
                                             class="rounded-circle me-2" width="40" height="40" alt="Farmer"
                                             style="transition: transform 0.2s;"
                                             onerror="this.src='https://ui-avatars.com/api/?name={{ crop.farmer.full_name }}&background=28a745&color=fff&size=40'">
@@ -541,7 +541,7 @@
                 {% for other_crop in other_crops %}
                 <div class="col-lg-3 col-md-6">
                     <div class="card crop-card h-100 shadow-sm border-0">
-                        <img src="{{ url_for('static', filename=other_crop.image_url) if other_crop.image_url else url_for('static', filename='uploads/crops/default-crop.jpg') }}"
+                        <img src="{{ get_image_url(other_crop.image_url) if other_crop.image_url else url_for('static', filename='uploads/crops/default-crop.jpg') }}"
                             class="card-img-top" alt="{{ other_crop.name }}" style="height: 180px; object-fit: cover;">
                         <div class="card-body">
                             <h6 class="card-title fw-bold">{{ other_crop.name }}</h6>

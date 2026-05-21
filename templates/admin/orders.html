@@ -186,7 +186,7 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <img src="{{ url_for('static', filename=order.crop.image_url or 'uploads/crops/default-crop.jpg') }}"
+                                    <img src="{{ get_image_url(order.crop.image_url or 'uploads/crops/default-crop.jpg') }}"
                                         class="rounded me-2" width="40" height="40" alt="{{ order.crop.name }}"
                                         style="object-fit: cover;">
                                     <div>

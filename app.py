@@ -150,7 +150,7 @@ app.config['MAIL_DEFAULT_SENDER'] = ('FarmLink AI', os.environ.get('MAIL_DEFAULT
 app.config['MAIL_MAX_EMAILS'] = 10
 app.config['MAIL_ASCII_ATTACHMENTS'] = False
 app.config['MAIL_SUPPRESS_SEND'] = False  # Ensure emails are actually sent
-app.config['MAIL_DEBUG'] = os.environ.get('FLASK_DEBUG', '0') == '1'  # Enable debug in development
+app.config['MAIL_DEBUG'] = False  # Disable SMTP debug logs
 
 # Configure the database - PostgreSQL
 # Get DATABASE_URL from environment (supports both local and Render deployment)
@@ -225,7 +225,6 @@ with app.app_context():
     # Import models to ensure tables are created
     try:
         import models
-        app.logger.info("Models imported successfully")
     except Exception as e:
         app.logger.error(f"Failed to import models: {str(e)}")
         import traceback
@@ -236,9 +235,6 @@ with app.app_context():
     if os.environ.get('FLASK_ENV') != 'production':
         try:
             db.create_all()
-            # Only log in main process to avoid duplicate messages
-            if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-                app.logger.info("Database tables created successfully")
         except Exception as e:
             if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
                 app.logger.warning(f"Could not create tables (may already exist): {str(e)}")
@@ -246,7 +242,6 @@ with app.app_context():
         # In production, verify database connection
         try:
             db.engine.connect()
-            app.logger.info("Database connection verified successfully")
         except Exception as e:
             app.logger.error(f"Database connection failed: {str(e)}")
             import traceback
@@ -256,7 +251,6 @@ with app.app_context():
     # Import and register routes
     try:
         import advanced_routes  # Import first for helper functions
-        app.logger.info("Advanced routes imported")
     except Exception as e:
         app.logger.error(f"Failed to import advanced_routes: {str(e)}")
         import traceback
@@ -265,7 +259,6 @@ with app.app_context():
     
     try:
         import routes
-        app.logger.info("Main routes imported")
     except Exception as e:
         app.logger.error(f"Failed to import routes: {str(e)}")
         import traceback
@@ -274,7 +267,6 @@ with app.app_context():
     
     try:
         import expert_forum_routes  # Import consolidated Expert Forum routes
-        app.logger.info("Expert forum routes imported")
     except Exception as e:
         app.logger.error(f"Failed to import expert_forum_routes: {str(e)}")
         import traceback
@@ -283,7 +275,6 @@ with app.app_context():
     
     try:
         import admin_crop_routes  # Import admin crop management routes
-        app.logger.info("Admin crop routes imported")
     except Exception as e:
         app.logger.error(f"Failed to import admin_crop_routes: {str(e)}")
         import traceback
@@ -292,7 +283,6 @@ with app.app_context():
     
     try:
         import admin_order_routes  # Import admin order management routes
-        app.logger.info("Admin order routes imported")
     except Exception as e:
         app.logger.error(f"Failed to import admin_order_routes: {str(e)}")
         import traceback
@@ -301,7 +291,6 @@ with app.app_context():
     
     try:
         import admin_analytics_routes  # Import admin analytics routes
-        app.logger.info("Admin analytics routes imported")
     except Exception as e:
         app.logger.error(f"Failed to import admin_analytics_routes: {str(e)}")
         import traceback
@@ -310,7 +299,6 @@ with app.app_context():
     
     try:
         import admin_security_routes  # Import admin security routes
-        app.logger.info("Admin security routes imported")
     except Exception as e:
         app.logger.error(f"Failed to import admin_security_routes: {str(e)}")
         import traceback
@@ -320,7 +308,6 @@ with app.app_context():
     try:
         from payment_routes import payment_bp
         app.register_blueprint(payment_bp, url_prefix='/payment')
-        app.logger.info("Payment routes registered")
     except Exception as e:
         app.logger.error(f"Failed to register payment routes: {str(e)}")
         import traceback
@@ -331,7 +318,6 @@ with app.app_context():
     try:
         from rating_routes import rating_bp
         app.register_blueprint(rating_bp, url_prefix='/ratings')
-        app.logger.info("Rating routes registered")
     except Exception as e:
         app.logger.error(f"Failed to register rating routes: {str(e)}")
         import traceback
@@ -341,7 +327,6 @@ with app.app_context():
     # Import API routes
     try:
         import api_routes  # REST API endpoints for mobile/third-party integrations
-        app.logger.info("API routes imported")
     except Exception as e:
         app.logger.error(f"Failed to import api_routes: {str(e)}")
         import traceback
@@ -351,7 +336,6 @@ with app.app_context():
     # Import tracking routes
     try:
         import tracking_routes  # Shipment tracking routes
-        app.logger.info("Tracking routes imported")
     except Exception as e:
         app.logger.error(f"Failed to import tracking_routes: {str(e)}")
         import traceback
@@ -360,7 +344,6 @@ with app.app_context():
     
     try:
         import admin_shipment_routes  # Admin shipment management routes
-        app.logger.info("Admin shipment routes imported")
     except Exception as e:
         app.logger.error(f"Failed to import admin_shipment_routes: {str(e)}")
         import traceback
@@ -371,9 +354,6 @@ with app.app_context():
     try:
         from tracking_scheduler import init_tracking_scheduler
         init_tracking_scheduler(app)
-        # Only log in main process to avoid duplicate messages
-        if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-            app.logger.info("Tracking scheduler initialized successfully")
     except Exception as e:
         if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
             app.logger.error(f"Failed to initialize tracking scheduler: {str(e)}")
@@ -400,10 +380,9 @@ with app.app_context():
     def not_found_error(error):
         return render_template('errors/404.html'), 404
 
-# Application startup complete
-app.logger.info("=" * 80)
-app.logger.info("FarmLink AI Application Started Successfully!")
-app.logger.info(f"Environment: {os.environ.get('FLASK_ENV', 'development')}")
-app.logger.info(f"Debug Mode: {os.environ.get('FLASK_DEBUG', '0')}")
-app.logger.info(f"Database: Connected")
-app.logger.info("=" * 80)
+# Application startup complete - only log in main process
+if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    print("\n✅ FarmLink AI Application Started Successfully!")
+    print(f"   Environment: {os.environ.get('FLASK_ENV', 'development')}")
+    print(f"   Debug Mode: {'On' if os.environ.get('FLASK_DEBUG', '0') == '1' else 'Off'}")
+    print(f"   Database: Connected\n")

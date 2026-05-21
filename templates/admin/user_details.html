@@ -239,7 +239,7 @@
         <!-- User Profile Row -->
         <div class="row align-items-center">
             <div class="col-auto">
-                <img src="{{ url_for('static', filename=user.profile_image) if user.profile_image and user.profile_image != 'default.jpg' else 'https://ui-avatars.com/api/?name=' + (user.full_name or user.username or 'User') + '&background=28a745&color=fff&size=120' }}"
+                <img src="{{ get_image_url(user.profile_image) if user.profile_image and user.profile_image != 'default.jpg' else 'https://ui-avatars.com/api/?name=' + (user.full_name or user.username or 'User') + '&background=28a745&color=fff&size=120' }}"
                     class="user-profile-img" alt="{{ user.full_name or user.username }}">
             </div>
             <div class="col">
@@ -466,7 +466,7 @@
                         {% if user.role == 'farmer' and user.crops %}
                         {% for crop in user.crops[:5] %}
                         <div class="activity-item">
-                            <img src="{{ url_for('static', filename=crop.image_url) if crop.image_url else 'https://via.placeholder.com/60x60/28a745/ffffff?text=' + crop.name[0] }}" 
+                            <img src="{{ get_image_url(crop.image_url) if crop.image_url else 'https://via.placeholder.com/60x60/28a745/ffffff?text=' + crop.name[0] }}" 
                                  class="activity-crop-img" 
                                  alt="{{ crop.name }}"
                                  onerror="this.src='https://via.placeholder.com/60x60/28a745/ffffff?text={{ crop.name[0] }}'">
@@ -480,7 +480,7 @@
                         {% elif user.role == 'buyer' and user.orders_placed %}
                         {% for order in user.orders_placed[:5] %}
                         <div class="activity-item">
-                            <img src="{{ url_for('static', filename=order.crop.image_url) if order.crop.image_url else 'https://via.placeholder.com/60x60/667eea/ffffff?text=' + order.crop.name[0] }}" 
+                            <img src="{{ get_image_url(order.crop.image_url) if order.crop.image_url else 'https://via.placeholder.com/60x60/667eea/ffffff?text=' + order.crop.name[0] }}" 
                                  class="activity-crop-img" 
                                  alt="{{ order.crop.name }}"
                                  onerror="this.src='https://via.placeholder.com/60x60/667eea/ffffff?text={{ order.crop.name[0] }}'">

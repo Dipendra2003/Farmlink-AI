@@ -419,7 +419,7 @@
             <div class="col-md-3 text-center mb-4 mb-md-0">
                 <div class="profile-avatar mx-auto" style="overflow: hidden;">
                     {% if user.profile_image and user.profile_image != 'default.jpg' %}
-                        <img src="{{ url_for('static', filename=user.profile_image) }}" 
+                        <img src="{{ get_image_url(user.profile_image) }}" 
                              alt="{{ user.full_name or user.username }}" 
                              style="width: 100%; height: 100%; object-fit: cover;">
                     {% else %}

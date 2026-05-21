@@ -14,7 +14,7 @@
                     <div class="row mb-4">
                         <!-- Crop Details -->
                         <div class="col-md-4">
-                            <img src="{{ url_for('static', filename=crop.image_url) if crop.image_url else 'https://via.placeholder.com/150' }}" 
+                            <img src="{{ get_image_url(crop.image_url) if crop.image_url else 'https://via.placeholder.com/150' }}" 
                                  class="img-fluid rounded" alt="{{ crop.name }}">
                         </div>
                         <div class="col-md-8">

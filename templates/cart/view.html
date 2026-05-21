@@ -38,7 +38,7 @@
                                           <!-- Product Image -->
                                           <div class="col-md-2 col-3">
                                                 {% if item.crop and item.crop.image_url %}
-                                                <img src="{{ url_for('static', filename=item.crop.image_url) }}"
+                                                <img src="{{ get_image_url(item.crop.image_url) }}"
                                                       class="img-fluid rounded" alt="{{ item.crop.name }}"
                                                       style="max-height: 80px; object-fit: cover;">
                                                 {% else %}

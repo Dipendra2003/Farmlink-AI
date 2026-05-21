@@ -135,7 +135,7 @@
             <div class="col-lg-4 col-md-6">
                 <div class="card crop-card h-100 shadow-sm border-0 hover-card">
                     <div class="position-relative">
-                        <img src="{{ url_for('static', filename=crop.image_url) if crop.image_url else url_for('static', filename='uploads/crops/default-crop.jpg') }}" 
+                        <img src="{{ get_image_url(crop.image_url) if crop.image_url else url_for('static', filename='uploads/crops/default-crop.jpg') }}" 
                              class="card-img-top" alt="{{ crop.name }}" style="height: 200px; object-fit: cover; object-position: center;">
                         <div class="position-absolute top-0 end-0 m-2">
                             <span class="badge bg-success">{{ crop.category.title() }}</span>

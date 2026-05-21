@@ -438,7 +438,7 @@ def ensure_default_profile_image():
 # Test Cloudinary connection on import
 try:
     cloudinary.api.ping()
-    logging.info("✅ Cloudinary connection successful!")
+    # Cloudinary connected successfully (silent in development)
 except Exception as e:
     logging.warning(f"⚠️ Cloudinary connection failed: {e}")
     logging.warning("📁 Images will be saved to local storage as fallback")

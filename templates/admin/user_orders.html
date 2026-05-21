@@ -83,7 +83,7 @@
                             <td>#{{ order.id }}</td>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <img src="{{ url_for('static', filename=order.crop.image_url) if order.crop.image_url else 'https://via.placeholder.com/40' }}" 
+                                    <img src="{{ get_image_url(order.crop.image_url) if order.crop.image_url else 'https://via.placeholder.com/40' }}" 
                                          class="rounded me-2" width="40" height="40" alt="{{ order.crop.name }}"
                                          style="object-fit: cover;">
                                     <div>

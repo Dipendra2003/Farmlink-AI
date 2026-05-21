@@ -32,7 +32,7 @@
                         <div class="card-body">
                               <div class="row">
                                     <div class="col-md-4 text-center mb-3">
-                                          <img src="{{ url_for('static', filename=crop.image_url or 'uploads/crops/default-crop.jpg') }}"
+                                          <img src="{{ get_image_url(crop.image_url or 'uploads/crops/default-crop.jpg') }}"
                                                 alt="{{ crop.name }}" class="img-fluid rounded shadow-sm"
                                                 style="max-height: 300px; object-fit: cover;">
                                     </div>
@@ -201,7 +201,7 @@
                         </div>
                         <div class="card-body">
                               <div class="text-center mb-3">
-                                    <img src="{{ url_for('static', filename=crop.farmer.profile_image or 'images/default-avatar.png') }}"
+                                    <img src="{{ get_image_url(crop.farmer.profile_image or 'images/default-avatar.png') }}"
                                           alt="{{ crop.farmer.full_name }}" class="rounded-circle"
                                           style="width: 80px; height: 80px; object-fit: cover;">
                               </div>

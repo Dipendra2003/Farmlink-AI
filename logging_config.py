@@ -69,8 +69,12 @@ class RequestIDFilter(logging.Filter):
         else:
             record.request_id = None
         
-        # Suppress debugger messages
-        if 'Debugger is active' in record.getMessage() or 'Debugger PIN' in record.getMessage():
+        # Only suppress debugger PIN and startup messages
+        message = record.getMessage()
+        if any(phrase in message for phrase in [
+            'Debugger PIN',
+            'Debugger is active'
+        ]):
             return False
         
         return True
@@ -100,22 +104,33 @@ def setup_logging(app=None, use_json=False):
     if use_json:
         formatter = StructuredFormatter()
     else:
+        # Simple, clean format for development
         formatter = logging.Formatter(
-            '[%(asctime)s] %(levelname)s [%(name)s.%(funcName)s:%(lineno)d] '
-            '[request_id:%(request_id)s] %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+            '%(levelname)s: %(message)s'
         )
     
     console_handler.setFormatter(formatter)
     
-    # Add request ID filter
+    # Add request ID filter to suppress unwanted messages
     console_handler.addFilter(RequestIDFilter())
     
     # Add handler to root logger
     root_logger.addHandler(console_handler)
     
-    # Set specific logger levels - show HTTP requests
-    logging.getLogger('werkzeug').setLevel(logging.INFO)  # Show HTTP requests
+    # Create a separate handler for werkzeug to show HTTP requests
+    werkzeug_handler = logging.StreamHandler()
+    werkzeug_handler.setLevel(logging.INFO)
+    werkzeug_formatter = logging.Formatter('%(message)s')  # Clean format for HTTP requests
+    werkzeug_handler.setFormatter(werkzeug_formatter)
+    
+    # Configure werkzeug logger to show HTTP requests
+    werkzeug_logger = logging.getLogger('werkzeug')
+    werkzeug_logger.setLevel(logging.INFO)
+    werkzeug_logger.handlers = []  # Remove inherited handlers
+    werkzeug_logger.addHandler(werkzeug_handler)
+    werkzeug_logger.propagate = False  # Don't propagate to root logger
+    
+    # Set specific logger levels
     logging.getLogger('sqlalchemy.engine').setLevel(logging.WARNING)
     logging.getLogger('apscheduler').setLevel(logging.WARNING)
     logging.getLogger('app').setLevel(logging.INFO)

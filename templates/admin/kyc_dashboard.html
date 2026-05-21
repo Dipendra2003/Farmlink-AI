@@ -328,7 +328,7 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <img src="{{ url_for('static', filename=kyc.user.profile_image) if kyc.user.profile_image and kyc.user.profile_image != 'default.jpg' else 'https://ui-avatars.com/api/?name=' + (kyc.user.full_name or kyc.user.username) + '&background=28a745&color=fff&size=40' }}"
+                                    <img src="{{ get_image_url(kyc.user.profile_image) if kyc.user.profile_image and kyc.user.profile_image != 'default.jpg' else 'https://ui-avatars.com/api/?name=' + (kyc.user.full_name or kyc.user.username) + '&background=28a745&color=fff&size=40' }}"
                                         class="rounded-circle me-2" width="40" height="40" alt="Profile" style="object-fit: cover;">
                                     <div>
                                         <div class="fw-bold">{{ kyc.user.full_name }}</div>

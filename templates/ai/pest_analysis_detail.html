@@ -366,7 +366,7 @@
                             </h6>
                         </div>
                         <div class="card-body p-0 plant-image-container">
-                            <img src="{{ url_for('static', filename=analysis.image_path.replace('static/', '')) }}"
+                            <img src="{{ get_image_url(analysis.image_path.replace('static/', '')) }}"
                                 alt="Plant" class="img-fluid w-100" style="cursor: pointer;"
                                 data-bs-toggle="modal" data-bs-target="#imageModal">
                         </div>
@@ -726,7 +726,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center p-0">
-                <img src="{{ url_for('static', filename=analysis.image_path.replace('static/', '')) }}"
+                <img src="{{ get_image_url(analysis.image_path.replace('static/', '')) }}"
                     alt="Plant" class="img-fluid w-100">
             </div>
         </div>

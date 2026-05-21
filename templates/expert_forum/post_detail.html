@@ -52,7 +52,7 @@
                     <div class="d-flex justify-content-between align-items-center text-muted small mb-4">
                         <div>
                             {% if post.author.profile_image and post.author.profile_image != 'default.jpg' %}
-                                <img src="{{ url_for('static', filename=post.author.profile_image) }}" 
+                                <img src="{{ get_image_url(post.author.profile_image) }}" 
                                      alt="{{ post.author.full_name or post.author.username }}" 
                                      class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
                             {% else %}
@@ -211,7 +211,7 @@
                             <!-- Reply Author -->
                             <div class="d-flex align-items-center mb-3">
                                 {% if reply.author.profile_image and reply.author.profile_image != 'default.jpg' %}
-                                    <img src="{{ url_for('static', filename=reply.author.profile_image) }}" 
+                                    <img src="{{ get_image_url(reply.author.profile_image) }}" 
                                          alt="{{ reply.author.full_name or reply.author.username }}" 
                                          class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
                                 {% else %}

@@ -125,7 +125,7 @@
                             {{ form.image.label(class="form-label fw-semibold") }}
                             {% if crop.image_url %}
                                 <div class="mb-2">
-                                    <img src="{{ url_for('static', filename=crop.image_url) }}" alt="Current crop image" class="img-thumbnail" style="max-height: 200px;">
+                                    <img src="{{ get_image_url(crop.image_url) }}" alt="Current crop image" class="img-thumbnail" style="max-height: 200px;">
                                 </div>
                             {% endif %}
                             {{ form.image(class="form-control") }}

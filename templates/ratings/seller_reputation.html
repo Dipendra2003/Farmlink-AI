@@ -405,7 +405,7 @@
     <!-- Reputation Hero Section -->
     <div class="reputation-hero">
         <div class="seller-profile">
-            <img src="{% if seller.profile_image and seller.profile_image != 'default.jpg' %}{{ url_for('static', filename=seller.profile_image) }}{% else %}https://ui-avatars.com/api/?name={{ seller.full_name or seller.username }}&background=667eea&color=ffffff&size=100&bold=true{% endif %}"
+            <img src="{% if seller.profile_image and seller.profile_image != 'default.jpg' %}{{ get_image_url(seller.profile_image) }}{% else %}https://ui-avatars.com/api/?name={{ seller.full_name or seller.username }}&background=667eea&color=ffffff&size=100&bold=true{% endif %}"
                 class="seller-avatar" alt="{{ seller.full_name or seller.username }}"
                 onerror="this.src='https://ui-avatars.com/api/?name={{ seller.full_name or seller.username }}&background=667eea&color=ffffff&size=100&bold=true'">
             <div class="seller-info">

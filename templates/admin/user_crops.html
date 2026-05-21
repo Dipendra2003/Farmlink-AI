@@ -81,7 +81,7 @@
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <img src="{{ url_for('static', filename=crop.image_url) if crop.image_url else 'https://via.placeholder.com/50' }}" 
+                                    <img src="{{ get_image_url(crop.image_url) if crop.image_url else 'https://via.placeholder.com/50' }}" 
                                          class="rounded me-3" width="50" height="50" alt="{{ crop.name }}"
                                          style="object-fit: cover;">
                                     <div>

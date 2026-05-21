@@ -508,7 +508,7 @@
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center">
-                                                <img src="{{ url_for('static', filename=crop.image_url) if crop.image_url else 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=60' }}" 
+                                                <img src="{{ get_image_url(crop.image_url) if crop.image_url else 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=60' }}" 
                                                      class="rounded me-2" width="40" height="40" style="object-fit: cover;">
                                                 <div>
                                                     <div class="fw-bold">{{ crop.name }}</div>

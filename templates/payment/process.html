@@ -29,7 +29,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-4">
-                            <img src="{{ url_for('static', filename=order.crop.image_url) if order.crop.image_url else 'https://via.placeholder.com/150' }}" 
+                            <img src="{{ get_image_url(order.crop.image_url) if order.crop.image_url else 'https://via.placeholder.com/150' }}" 
                                  class="img-fluid rounded" alt="{{ order.crop.name }}">
                         </div>
                         <div class="col-md-8">
