@@ -38,9 +38,12 @@ LOCAL_PROFILE_FOLDER = os.path.join(LOCAL_UPLOAD_BASE, 'profiles')
 LOCAL_PEST_FOLDER = os.path.join(LOCAL_UPLOAD_BASE, 'pest_analysis')
 LOCAL_KYC_FOLDER = os.path.join(LOCAL_UPLOAD_BASE, 'kyc')
 
-# Ensure local directories exist
-for folder in [LOCAL_CROP_FOLDER, LOCAL_PROFILE_FOLDER, LOCAL_PEST_FOLDER, LOCAL_KYC_FOLDER]:
-    os.makedirs(folder, exist_ok=True)
+# Ensure local directories exist (will fail gracefully in Vercel's read-only environment)
+try:
+    for folder in [LOCAL_CROP_FOLDER, LOCAL_PROFILE_FOLDER, LOCAL_PEST_FOLDER, LOCAL_KYC_FOLDER]:
+        os.makedirs(folder, exist_ok=True)
+except OSError as e:
+    logging.warning(f"Could not create local upload directories (expected in serverless/Vercel): {e}")
 
 def allowed_file(filename):
     """Check if file extension is allowed"""
