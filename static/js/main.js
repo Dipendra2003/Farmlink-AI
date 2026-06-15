@@ -219,6 +219,47 @@ const FarmLink = {
         this.initMessageSystem();
         this.initDashboardEnhancements();
         this.initMobileOptimizations();
+        this.initPasswordToggle();
+    },
+
+    // Initialize password visibility toggle
+    initPasswordToggle: function() {
+        const passwordInputs = document.querySelectorAll('input[type="password"]');
+        passwordInputs.forEach(input => {
+            if (input.classList.contains('has-password-toggle')) return;
+            input.classList.add('has-password-toggle');
+
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-outline-secondary toggle-password';
+            btn.type = 'button';
+            if (input.classList.contains('form-control-lg')) {
+                btn.classList.add('btn-lg');
+            }
+            btn.innerHTML = '<i class="fas fa-eye"></i>';
+            
+            btn.addEventListener('click', function() {
+                const icon = this.querySelector('i');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            });
+
+            if (input.parentNode.classList.contains('input-group')) {
+                input.parentNode.appendChild(btn);
+            } else {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'input-group';
+                input.parentNode.insertBefore(wrapper, input);
+                wrapper.appendChild(input);
+                wrapper.appendChild(btn);
+            }
+        });
     },
 
     // Initialize all event listeners
@@ -762,8 +803,13 @@ HTMLInputElement.prototype.checkPasswordStrength = function() {
 HTMLInputElement.prototype.createPasswordMeter = function() {
     const meter = document.createElement('div');
     meter.id = 'passwordStrength';
-    meter.className = 'password-strength';
-    this.parentNode.appendChild(meter);
+    meter.className = 'password-strength w-100 mt-1';
+    
+    if (this.parentNode.classList.contains('input-group')) {
+        this.parentNode.parentNode.appendChild(meter);
+    } else {
+        this.parentNode.appendChild(meter);
+    }
     return meter;
 };
 
