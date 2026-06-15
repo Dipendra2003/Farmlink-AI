@@ -6,16 +6,16 @@
 <!-- Hero Section -->
 <section class="hero-section text-white">
     <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-8">
-                <h1 class="display-4 fw-bold mb-4">About FarmLink AI</h1>
-                <p class="lead mb-4">
+        <div class="row align-items-center text-center text-lg-start">
+            <div class="col-lg-8 mb-4 mb-lg-0">
+                <h1 class="display-5 fw-bold mb-3 mb-md-4">About FarmLink AI</h1>
+                <p class="lead mb-4 mb-lg-0">
                     Revolutionizing agriculture through artificial intelligence and connecting farmers 
                     with buyers in India's smartest agricultural marketplace.
                 </p>
             </div>
             <div class="col-lg-4 text-center">
-                <i class="fas fa-tractor fa-5x opacity-75"></i>
+                <i class="fas fa-tractor fa-4x opacity-75"></i>
             </div>
         </div>
     </div>
@@ -68,8 +68,8 @@
                 </div>
                 <h4>AI-Powered Insights</h4>
                 <p>Smart pest detection, disease prediction, and market analysis using advanced AI algorithms.</p>
-                <div class="mt-3">
-                    <a href="{{ url_for('crop_suggestions') }}" class="btn btn-outline-success btn-sm me-2">
+                <div class="mt-3 d-flex flex-column flex-sm-row justify-content-center gap-2">
+                    <a href="{{ url_for('crop_suggestions') }}" class="btn btn-outline-success btn-sm">
                         <i class="fas fa-seedling me-1"></i>Crop Suggestions
                     </a>
                     <a href="{{ url_for('pest_disease_analysis') }}" class="btn btn-outline-success btn-sm">
@@ -85,8 +85,8 @@
                 </div>
                 <h4>Direct Marketplace</h4>
                 <p>Connect directly with verified buyers, eliminating middlemen and ensuring fair prices.</p>
-                <div class="mt-3">
-                    <a href="{{ url_for('marketplace') }}" class="btn btn-outline-success btn-sm me-2">
+                <div class="mt-3 d-flex flex-column flex-sm-row justify-content-center gap-2">
+                    <a href="{{ url_for('marketplace') }}" class="btn btn-outline-success btn-sm">
                         <i class="fas fa-store me-1"></i>Browse Marketplace
                     </a>
                     <a href="{{ url_for('my_orders') }}" class="btn btn-outline-success btn-sm">
@@ -102,8 +102,8 @@
                 </div>
                 <h4>Expert Knowledge</h4>
                 <p>Access to agricultural experts, learning resources, and community-driven Q&A platform.</p>
-                <div class="mt-3">
-                    <a href="{{ url_for('learning_hub') }}" class="btn btn-outline-success btn-sm me-2">
+                <div class="mt-3 d-flex flex-column flex-sm-row justify-content-center gap-2">
+                    <a href="{{ url_for('learning_hub') }}" class="btn btn-outline-success btn-sm">
                         <i class="fas fa-book me-1"></i>Learning Hub
                     </a>
                     <a href="{{ url_for('expert_forum') }}" class="btn btn-outline-success btn-sm">
@@ -206,35 +206,35 @@
             <div class="card shadow-sm">
                 <div class="card-body p-4">
                     <div class="row text-center">
-                        <div class="col-md-3 mb-3">
+                        <div class="col-6 col-md-3 mb-4 mb-md-0">
                             <i class="fas fa-brain text-success fa-3x mb-2"></i>
-                            <h5>AI & ML</h5>
-                            <p class="small text-muted">FarmLink AI</p>
-                            <a href="{{ url_for('crop_suggestions') }}" class="btn btn-outline-success btn-sm">
-                                <i class="fas fa-robot me-1"></i>AI Crop Suggestions
+                            <h5 class="fs-6 fs-md-5">AI & ML</h5>
+                            <p class="small text-muted d-none d-md-block">FarmLink AI</p>
+                            <a href="{{ url_for('crop_suggestions') }}" class="btn btn-outline-success btn-sm w-100">
+                                <i class="fas fa-robot me-1"></i>AI Crop
                             </a>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-6 col-md-3 mb-4 mb-md-0">
                             <i class="fas fa-cloud text-info fa-3x mb-2"></i>
-                            <h5>Weather API</h5>
-                            <p class="small text-muted">Real-time Data</p>
-                            <a href="{{ url_for('weather_dashboard') }}" class="btn btn-outline-info btn-sm">
-                                <i class="fas fa-cloud-sun me-1"></i>Weather Dashboard
+                            <h5 class="fs-6 fs-md-5">Weather API</h5>
+                            <p class="small text-muted d-none d-md-block">Real-time Data</p>
+                            <a href="{{ url_for('weather_dashboard') }}" class="btn btn-outline-info btn-sm w-100">
+                                <i class="fas fa-cloud-sun me-1"></i>Weather
                             </a>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-6 col-md-3 mb-4 mb-md-0">
                             <i class="fas fa-database text-primary fa-3x mb-2"></i>
-                            <h5>Database</h5>
-                            <p class="small text-muted">Secure SQLite</p>
-                            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary btn-sm">
+                            <h5 class="fs-6 fs-md-5">Database</h5>
+                            <p class="small text-muted d-none d-md-block">Secure SQLite</p>
+                            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary btn-sm w-100">
                                 <i class="fas fa-chart-bar me-1"></i>Analytics
                             </a>
                         </div>
-                        <div class="col-md-3 mb-3">
+                        <div class="col-6 col-md-3 mb-4 mb-md-0">
                             <i class="fas fa-mobile-alt text-warning fa-3x mb-2"></i>
-                            <h5>Responsive</h5>
-                            <p class="small text-muted">Mobile-First Design</p>
-                            <a href="{{ url_for('help_center') }}" class="btn btn-outline-warning btn-sm">
+                            <h5 class="fs-6 fs-md-5">Responsive</h5>
+                            <p class="small text-muted d-none d-md-block">Mobile-First</p>
+                            <a href="{{ url_for('help_center') }}" class="btn btn-outline-warning btn-sm w-100">
                                 <i class="fas fa-question-circle me-1"></i>Help Guide
                             </a>
                         </div>
@@ -301,10 +301,10 @@
         </div>
         <div class="col-lg-8 mx-auto">
             <div class="card shadow-lg">
-                <div class="card-body p-5">
-                    <div class="row align-items-center">
+                <div class="card-body p-4 p-md-5">
+                    <div class="row align-items-center text-center text-md-start">
                         <div class="col-md-4 text-center mb-4 mb-md-0">
-                            <img src="{{ url_for('static', filename='uploads/profiles/Dipendra.jpg') }}" 
+                            <img src="https://res.cloudinary.com/dfsluawra/image/upload/v1781554425/farmlink_profiles/p6ac9xj6wxltjud9hyl9.jpg" 
                                  alt="Dipendra Kumar" 
                                  class="rounded-circle mx-auto mb-3 border border-success" 
                                  style="width: 150px; height: 150px; object-fit: cover;">
@@ -369,7 +369,7 @@
                     <p class="lead mb-4">
                         Join thousands of farmers who are already benefiting from our AI-powered platform.
                     </p>
-                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
                         {% if not current_user.is_authenticated %}
                         <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
                             <i class="fas fa-user-plus me-2"></i>Get Started Free
