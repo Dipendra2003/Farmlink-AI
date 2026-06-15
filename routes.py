@@ -160,30 +160,36 @@ def register():
     
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(
-            username=form.username.data,
-            email=form.email.data,
-            full_name=form.full_name.data,
-            phone=form.phone.data,
-            location=form.location.data,
-            role=form.role.data,
-            email_verified=False,  # Set to False by default
-            active=True  # Account is active but not verified
-        )
-        user.set_password(form.password.data)
-        
-        db.session.add(user)
-        db.session.commit()
-        
-        # Send verification OTP
         try:
-            otp_service.send_verification_otp(user)
-            flash('Registration successful! Please check your email for the verification code.', 'success')
-            return redirect(url_for('verify_email', user_id=user.id))
+            user = User(
+                username=form.username.data,
+                email=form.email.data,
+                full_name=form.full_name.data,
+                phone=form.phone.data,
+                location=form.location.data,
+                role=form.role.data,
+                email_verified=False,  # Set to False by default
+                active=True  # Account is active but not verified
+            )
+            user.set_password(form.password.data)
+            
+            db.session.add(user)
+            db.session.commit()
+            
+            # Send verification OTP
+            try:
+                otp_service.send_verification_otp(user)
+                flash('Registration successful! Please check your email for the verification code.', 'success')
+                return redirect(url_for('verify_email', user_id=user.id))
+            except Exception as e:
+                logging.error(f"Failed to send verification email: {str(e)}")
+                flash('Registration successful, but we could not send the verification email. Please contact support.', 'warning')
+                return redirect(url_for('login'))
         except Exception as e:
-            logging.error(f"Failed to send verification email: {str(e)}")
-            flash('Registration successful, but we could not send the verification email. Please contact support.', 'warning')
-            return redirect(url_for('login'))
+            db.session.rollback()
+            app.logger.error(f"Database error during registration: {str(e)}")
+            flash('Registration failed. Please check your details or try again later.', 'danger')
+            return render_template('auth/register.html', form=form)
     
     return render_template('auth/register.html', form=form)
 

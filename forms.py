@@ -72,6 +72,11 @@ class RegistrationForm(FlaskForm):
         if user:
             raise ValidationError('Email already registered. Please use a different email.')
 
+    def validate_phone(self, phone):
+        user = User.query.filter_by(phone=phone.data).first()
+        if user:
+            raise ValidationError('Phone number already registered. Please use a different one.')
+
 class LoginForm(FlaskForm):
     identifier = StringField('Username / Email / Phone', validators=[
         DataRequired(message='Please enter your username, email, or phone number')
