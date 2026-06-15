@@ -167,11 +167,9 @@ if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+from sqlalchemy.pool import NullPool
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-    "pool_size": 10,
-    "max_overflow": 20,
+    "poolclass": NullPool,
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False  # Disable modification tracking
 app.config["SQLALCHEMY_ECHO"] = False  # Disable SQL query logging for cleaner output
@@ -400,9 +398,17 @@ with app.app_context():
     @app.errorhandler(500)
     def internal_error(error):
         app.logger.error(f'Server Error: {error}')
-        db.session.rollback()  # Roll back the session in case of database errors
-        return render_template('errors/500.html'), 500
-    
+        try:
+            db.session.rollback()  # Roll back the session in case of database errors
+        except Exception as e:
+            app.logger.error(f'Error during rollback: {e}')
+        
+        try:
+            return render_template('errors/500.html'), 500
+        except Exception as e:
+            app.logger.error(f'Error rendering 500 template: {e}')
+            return "Internal Server Error", 500
+            
     @app.errorhandler(404)
     def not_found_error(error):
         return render_template('errors/404.html'), 404
