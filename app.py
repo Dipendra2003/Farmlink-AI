@@ -386,6 +386,14 @@ with app.app_context():
         # Enable microphone access for speech recognition
         # Only use Permissions-Policy (newer standard)
         response.headers['Permissions-Policy'] = 'microphone=*, camera=*, geolocation=*'
+        
+        # Prevent Vercel from caching dynamic responses and breaking CSRF/Sessions
+        if 'Cache-Control' not in response.headers:
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        
+        # Ensure session cookie changes are respected by proxies
+        response.vary.add('Cookie')
+        
         return response
     
     # Register error handlers
