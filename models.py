@@ -8,6 +8,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 logger = logging.getLogger(__name__)
 
 class User(UserMixin, db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -40,6 +43,9 @@ class User(UserMixin, db.Model):
     two_factor_secret = db.Column(db.String(32), nullable=True)
     backup_codes = db.Column(db.Text, nullable=True)  # JSON array of backup codes
     two_factor_verified_at = db.Column(db.DateTime, nullable=True)
+    
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
     
     @property
     def is_active(self):
@@ -142,6 +148,9 @@ class User(UserMixin, db.Model):
         return f'<User {self.username}>'
 
 class LoginAttempt(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Track login attempts for security monitoring"""
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
@@ -154,6 +163,9 @@ class LoginAttempt(db.Model):
         return f'<LoginAttempt {self.ip_address} {"Success" if self.success else "Failed"}>'
 
 class Crop(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     category = db.Column(db.String(50), nullable=False)
@@ -189,6 +201,9 @@ class Crop(db.Model):
         return f'<Crop {self.name}>'
 
 class Cart(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Shopping cart for buyers to add multiple crops before checkout"""
     id = db.Column(db.Integer, primary_key=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -211,6 +226,9 @@ class Cart(db.Model):
 
 
 class CartItem(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Individual items in a shopping cart"""
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Float, nullable=False)
@@ -253,6 +271,9 @@ class CartItem(db.Model):
 
 
 class Order(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     id = db.Column(db.Integer, primary_key=True)
     quantity_requested = db.Column(db.Float, nullable=False)
     price_per_unit = db.Column(db.Float, nullable=False)
@@ -321,6 +342,9 @@ class Order(db.Model):
 
 
 class OrderStatusHistory(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Track order status changes for audit trail and transparency"""
     __tablename__ = 'order_status_history'
     
@@ -349,6 +373,9 @@ class OrderStatusHistory(db.Model):
 
 
 class ShipmentStatusHistory(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Track all shipment status changes for tracking system"""
     __tablename__ = 'shipment_status_history'
     
@@ -383,6 +410,9 @@ class ShipmentStatusHistory(db.Model):
 
 
 class CourierAPILog(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Log all courier API interactions for debugging and audit"""
     __tablename__ = 'courier_api_log'
     
@@ -417,6 +447,9 @@ class CourierAPILog(db.Model):
 
 
 class Payment(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
     razorpay_order_id = db.Column(db.String(200), unique=True)
@@ -436,6 +469,9 @@ class Payment(db.Model):
         return f'<Payment {self.razorpay_order_id}>'
 
 class Message(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Message model for user-to-user communications"""
     id = db.Column(db.Integer, primary_key=True)
     subject = db.Column(db.String(200), nullable=False)
@@ -502,6 +538,9 @@ class Message(db.Model):
         return f'<Message {self.subject}>'
 
 class WeatherData(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     id = db.Column(db.Integer, primary_key=True)
     location = db.Column(db.String(100), nullable=False)
     temperature = db.Column(db.Float)
@@ -517,6 +556,9 @@ class WeatherData(db.Model):
         return f'<WeatherData {self.location}>'
 
 class ExpertPost(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Expert forum posts and Q&A"""
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -581,6 +623,9 @@ class ExpertPost(db.Model):
         return bool(active_lock)
 
 class ExpertReply(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Replies to expert forum posts"""
     __tablename__ = 'expert_reply'
     
@@ -626,6 +671,9 @@ class ExpertReply(db.Model):
         return ReplyVote.query.filter_by(reply_id=self.id, user_id=user_id).first()
 
 class LearningArticle(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Learning hub articles and tutorials"""
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -676,6 +724,9 @@ class LearningArticle(db.Model):
 
 
 class ArticleLike(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Track article likes"""
     id = db.Column(db.Integer, primary_key=True)
     article_id = db.Column(db.Integer, db.ForeignKey('learning_article.id'), nullable=False)
@@ -686,6 +737,9 @@ class ArticleLike(db.Model):
 
 
 class ArticleBookmark(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Track article bookmarks"""
     id = db.Column(db.Integer, primary_key=True)
     article_id = db.Column(db.Integer, db.ForeignKey('learning_article.id'), nullable=False)
@@ -696,6 +750,9 @@ class ArticleBookmark(db.Model):
 
 
 class AIConversation(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Store AI voice assistant conversations"""
     __tablename__ = 'ai_conversation'
     
@@ -725,6 +782,9 @@ class AIConversation(db.Model):
 
 
 class AIMessage(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Store individual messages in AI conversations"""
     __tablename__ = 'ai_message'
     
@@ -749,6 +809,9 @@ class AIMessage(db.Model):
 
 
 class ArticleComment(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Comments on learning articles"""
     id = db.Column(db.Integer, primary_key=True)
     article_id = db.Column(db.Integer, db.ForeignKey('learning_article.id'), nullable=False)
@@ -768,6 +831,9 @@ class ArticleComment(db.Model):
 
 
 class UserReadingProgress(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Track user reading progress and history"""
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -786,6 +852,9 @@ class UserReadingProgress(db.Model):
 
 
 class UserLearningPreference(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Track user learning preferences and interests"""
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, unique=True)
@@ -805,6 +874,9 @@ class UserLearningPreference(db.Model):
 
 
 class ArticleRecommendation(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Store personalized article recommendations for users"""
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -830,6 +902,9 @@ class ArticleRecommendation(db.Model):
 
 
 class UserAchievement(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Track user achievements and badges"""
     __tablename__ = 'user_achievement'
     
@@ -855,6 +930,9 @@ class UserAchievement(db.Model):
 
 
 class ContentFlag(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Track flagged content for moderation"""
     id = db.Column(db.Integer, primary_key=True)
     content_type = db.Column(db.String(20), nullable=False)  # 'comment' or 'article'
@@ -880,6 +958,9 @@ class ContentFlag(db.Model):
 
 
 class ArticleCategory(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Categories for learning hub articles"""
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
@@ -912,6 +993,9 @@ class ArticleCategory(db.Model):
 
 
 class UserRating(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """User ratings and feedback system"""
     id = db.Column(db.Integer, primary_key=True)
     rating = db.Column(db.Integer, nullable=False)  # 1-5 stars
@@ -933,6 +1017,9 @@ class UserRating(db.Model):
         return f'<UserRating {self.rating} stars>'
 
 class Analytics(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Analytics and reports data"""
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -949,6 +1036,9 @@ class Analytics(db.Model):
         return f'<Analytics {self.metric_type}: {self.metric_value}>'
 
 class PostVote(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Voting system for expert forum posts"""
     __tablename__ = 'post_vote'
     __mapper_args__ = {'confirm_deleted_rows': False}
@@ -974,6 +1064,9 @@ class PostVote(db.Model):
         return f'<PostVote {self.vote_type} on post {self.post_id}>'
 
 class ReplyVote(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Voting system for expert forum replies"""
     __tablename__ = 'reply_vote'
     __mapper_args__ = {'confirm_deleted_rows': False}
@@ -999,6 +1092,9 @@ class ReplyVote(db.Model):
         return f'<ReplyVote {self.vote_type} on reply {self.reply_id}>'
 
 class UserFollow(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """User following system"""
     __tablename__ = 'user_follow'
     __mapper_args__ = {'confirm_deleted_rows': False}
@@ -1029,6 +1125,9 @@ class UserFollow(db.Model):
         return f'<UserFollow {self.follower_id} -> {self.followed_id}>'
 
 class PostDraft(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Draft posts for expert forum"""
     __tablename__ = 'post_draft'
     id = db.Column(db.Integer, primary_key=True)
@@ -1052,6 +1151,9 @@ class PostDraft(db.Model):
         return f'<PostDraft {self.title or "Untitled"}>'
 
 class ContentReport(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Content reporting system"""
     __tablename__ = 'content_report'
     id = db.Column(db.Integer, primary_key=True)
@@ -1083,6 +1185,9 @@ class ContentReport(db.Model):
         return f'<ContentReport {self.content_type} {self.content_id}>'
 
 class EditHistory(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Track edit history for posts and replies"""
     __tablename__ = 'edit_history'
     id = db.Column(db.Integer, primary_key=True)
@@ -1104,6 +1209,9 @@ class EditHistory(db.Model):
         return f'<EditHistory {self.content_type} {self.content_id} - {self.field_name}>'
 
 class ForumNotification(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Notification system for expert forum"""
     __tablename__ = 'forum_notification'
     id = db.Column(db.Integer, primary_key=True)
@@ -1132,6 +1240,9 @@ class ForumNotification(db.Model):
         return f'<ForumNotification {self.notification_type} for user {self.user_id}>'
 
 class PostLock(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Post locking system"""
     __tablename__ = 'post_lock'
     id = db.Column(db.Integer, primary_key=True)
@@ -1167,6 +1278,9 @@ class PostLock(db.Model):
         return f'<PostLock post {self.post_id}>'
 
 class CropSuggestionHistory(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Store user's crop suggestion queries and results"""
     __tablename__ = 'crop_suggestion_history'
     id = db.Column(db.Integer, primary_key=True)
@@ -1194,6 +1308,9 @@ class CropSuggestionHistory(db.Model):
         return f'<CropSuggestionHistory {self.user_id} - {self.top_suggestion}>'
 
 class CropSuggestionComparison(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Store crop comparison data"""
     __tablename__ = 'crop_suggestion_comparison'
     id = db.Column(db.Integer, primary_key=True)
@@ -1212,6 +1329,9 @@ class CropSuggestionComparison(db.Model):
         return f'<CropSuggestionComparison {self.user_id}>'
 
 class CropComparisonHistory(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Store standalone crop comparison history"""
     __tablename__ = 'crop_comparison_history'
     id = db.Column(db.Integer, primary_key=True)
@@ -1259,6 +1379,9 @@ class CropComparisonHistory(db.Model):
         return f'<CropComparisonHistory {self.user_id} - {self.best_crop}>'
 
 class PestDiseaseAnalysis(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Store pest and disease analysis results"""
     __tablename__ = 'pest_disease_analysis'
     
@@ -1344,6 +1467,9 @@ class PestDiseaseAnalysis(db.Model):
 # ============================================================================
 
 class ProductRating(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Product ratings and reviews"""
     __tablename__ = 'product_rating'
     
@@ -1393,6 +1519,9 @@ class ProductRating(db.Model):
 
 
 class SellerResponse(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Seller responses to product ratings"""
     __tablename__ = 'seller_response'
     
@@ -1413,6 +1542,9 @@ class SellerResponse(db.Model):
 
 
 class RatingHelpfulVote(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Track helpful votes on ratings"""
     __tablename__ = 'rating_helpful_vote'
     
@@ -1436,6 +1568,9 @@ class RatingHelpfulVote(db.Model):
 
 
 class RatingFlag(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Track flagged ratings for moderation"""
     __tablename__ = 'rating_flag'
     
@@ -1465,6 +1600,9 @@ class RatingFlag(db.Model):
 
 
 class SellerReputation(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Aggregated seller reputation metrics"""
     __tablename__ = 'seller_reputation'
     
@@ -1498,6 +1636,9 @@ class SellerReputation(db.Model):
 
 
 class RatingAuditLog(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Audit trail for rating operations"""
     __tablename__ = 'rating_audit_log'
     
@@ -1527,6 +1668,9 @@ class RatingAuditLog(db.Model):
 
 
 class RatingNotificationPreference(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """
     User preferences for rating notifications
     Requirement 10.4: Allow users to configure notification preferences
@@ -1560,6 +1704,9 @@ class RatingNotificationPreference(db.Model):
 # ============================================================================
 
 class Feedback(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """User feedback and support requests"""
     __tablename__ = 'feedback'
     
@@ -1590,6 +1737,9 @@ class Feedback(db.Model):
 
 
 class AdminNotification(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Admin announcements and notifications to users"""
     __tablename__ = 'admin_notification'
     
@@ -1620,6 +1770,9 @@ class AdminNotification(db.Model):
 
 
 class SystemSettings(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """System configuration settings with encryption support"""
     __tablename__ = 'system_settings'
     
@@ -1725,6 +1878,9 @@ class SystemSettings(db.Model):
 
 
 class SettingsBackup(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Backup of system settings for rollback capability"""
     __tablename__ = 'settings_backup'
     
@@ -1749,6 +1905,9 @@ class SettingsBackup(db.Model):
 
 
 class AdminActionLog(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Audit trail for admin actions"""
     __tablename__ = 'admin_action_log'
     
@@ -1779,6 +1938,9 @@ class AdminActionLog(db.Model):
 
 
 class SellerKYC(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Model for storing seller KYC verification data"""
     __tablename__ = 'seller_kyc'
     
@@ -1828,6 +1990,9 @@ class SellerKYC(db.Model):
 
 
 class KYCAuditLog(db.Model):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
     """Model for auditing KYC actions"""
     __tablename__ = 'kyc_audit_log'
     

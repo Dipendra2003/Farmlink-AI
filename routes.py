@@ -98,6 +98,10 @@ def help_center():
 def faq():
     return render_template('pages/faq.html')
 
+@app.route('/testing-mode')
+def testing_mode():
+    return render_template('pages/testing_mode.html')
+
 # Home Page
 @app.route('/')
 def index():
@@ -925,7 +929,7 @@ def add_to_cart(crop_id):
     """Add item to cart with rate limiting and security checks - Only accessible by buyers and farmers"""
     from order_service import CartService
     from error_handlers import Validator, ErrorHandler
-    from flask_wtf.csrf import validate_csrf
+    from flask_wtf.csrf import validate_csrf  # type: ignore
     from werkzeug.exceptions import BadRequest
     from security_enhancements import RateLimiter
     from role_hierarchy import is_admin
@@ -1018,7 +1022,7 @@ def add_to_cart(crop_id):
                 'error': error_msg,
                 'error_code': 'CART_QUANTITY_INVALID'
             }), 400
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('product_detail', crop_id=crop_id))
     
     # Get or create cart
@@ -1033,7 +1037,7 @@ def add_to_cart(crop_id):
                 'error': error_msg,
                 'error_code': 'CART_NOT_FOUND'
             }), 500
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('product_detail', crop_id=crop_id))
     
     # Check if user is trying to add their own crop
@@ -1047,7 +1051,7 @@ def add_to_cart(crop_id):
                 'error': error_msg,
                 'error_code': 'CROP_NOT_FOUND'
             }), 404
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('product_detail', crop_id=crop_id))
     
     if crop.farmer_id == current_user.id:
@@ -1059,7 +1063,7 @@ def add_to_cart(crop_id):
                 'error': error_msg,
                 'error_code': 'CART_OWN_CROP'
             }), 400
-        flash(error_msg, 'warning')
+        flash(error_msg or 'Warning', 'warning')
         return redirect(url_for('product_detail', crop_id=crop_id))
     
     # Validate crop availability before adding
@@ -1072,7 +1076,7 @@ def add_to_cart(crop_id):
                 'error': error_msg,
                 'error_code': 'CROP_NOT_AVAILABLE'
             }), 400
-        flash(error_msg, 'warning')
+        flash(error_msg or 'Warning', 'warning')
         return redirect(url_for('product_detail', crop_id=crop_id))
     
     # Validate quantity against available stock
@@ -1085,7 +1089,7 @@ def add_to_cart(crop_id):
                 'error': error_msg,
                 'error_code': 'CART_QUANTITY_EXCEEDS_STOCK'
             }), 400
-        flash(error_msg, 'warning')
+        flash(error_msg or 'Warning', 'warning')
         return redirect(url_for('product_detail', crop_id=crop_id))
     
     # Add item to cart
@@ -1149,7 +1153,7 @@ def buy_now(crop_id):
     if is_admin(current_user):
         flash('Cart functionality is not available for admin users.', 'warning')
         return redirect(url_for('admin_dashboard'))
-    from flask_wtf.csrf import validate_csrf
+    from flask_wtf.csrf import validate_csrf  # type: ignore
     from werkzeug.exceptions import BadRequest
     
     # Check if this is an AJAX request
@@ -1213,7 +1217,7 @@ def buy_now(crop_id):
                 'error': error_msg,
                 'error_code': 'CART_QUANTITY_INVALID'
             }), 400
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('product_detail', crop_id=crop_id))
     
     # Get or create cart
@@ -1228,7 +1232,7 @@ def buy_now(crop_id):
                 'error': error_msg,
                 'error_code': 'CART_NOT_FOUND'
             }), 500
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('product_detail', crop_id=crop_id))
     
     # Check if user is trying to buy their own crop
@@ -1242,7 +1246,7 @@ def buy_now(crop_id):
                 'error': error_msg,
                 'error_code': 'CROP_NOT_FOUND'
             }), 404
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('product_detail', crop_id=crop_id))
     
     if crop.farmer_id == current_user.id:
@@ -1254,7 +1258,7 @@ def buy_now(crop_id):
                 'error': error_msg,
                 'error_code': 'CART_OWN_CROP'
             }), 400
-        flash(error_msg, 'warning')
+        flash(error_msg or 'Warning', 'warning')
         return redirect(url_for('product_detail', crop_id=crop_id))
     
     # Validate crop availability before adding
@@ -1267,7 +1271,7 @@ def buy_now(crop_id):
                 'error': error_msg,
                 'error_code': 'CROP_NOT_AVAILABLE'
             }), 400
-        flash(error_msg, 'warning')
+        flash(error_msg or 'Warning', 'warning')
         return redirect(url_for('product_detail', crop_id=crop_id))
     
     # Validate quantity against available stock
@@ -1280,7 +1284,7 @@ def buy_now(crop_id):
                 'error': error_msg,
                 'error_code': 'CART_QUANTITY_EXCEEDS_STOCK'
             }), 400
-        flash(error_msg, 'warning')
+        flash(error_msg or 'Warning', 'warning')
         return redirect(url_for('product_detail', crop_id=crop_id))
     
     # Add item to cart
@@ -1366,7 +1370,7 @@ def update_cart_item(item_id):
     if not is_valid:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({'success': False, 'error': error_msg}), 403
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('view_cart'))
     
     cart_item = CartItem.query.get(item_id)
@@ -1379,7 +1383,7 @@ def update_cart_item(item_id):
     if not is_valid:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({'success': False, 'error': error_msg}), 400
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('view_cart'))
     
     # Validate quantity against available stock
@@ -1388,7 +1392,7 @@ def update_cart_item(item_id):
         if not is_valid:
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({'success': False, 'error': error_msg}), 400
-            flash(error_msg, 'warning')
+            flash(error_msg or 'Warning', 'warning')
             return redirect(url_for('view_cart'))
     
     # Update quantity
@@ -1461,7 +1465,7 @@ def remove_cart_item(item_id):
     if not is_valid:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({'success': False, 'error': error_msg}), 403
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('view_cart'))
     
     # Remove item
@@ -1656,7 +1660,7 @@ def checkout():
     if not validation_result.get('success'):
         error_code = validation_result.get('error_code', 'VALIDATION_FAILED')
         error_msg = ErrorHandler.get_error_message(error_code)
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('view_cart'))
     
     # Display invalid items if validation fails (Requirement 11.7)
@@ -1718,7 +1722,7 @@ def checkout():
         # Validate delivery address length (Requirement 2.2, 2.7)
         is_valid, error_msg = Validator.validate_delivery_address(form.delivery_address.data)
         if not is_valid:
-            flash(error_msg, 'danger')
+            flash(error_msg or 'Validation error', 'danger')
             return render_template('checkout/review.html',
                                  form=form,
                                  cart=cart,
@@ -1754,7 +1758,7 @@ def checkout():
         if not result.get('success'):
             error_code = result.get('error_code', 'ORDER_CREATION_FAILED')
             error_msg = ErrorHandler.get_error_message(error_code)
-            flash(error_msg, 'danger')
+            flash(error_msg or 'Validation error', 'danger')
             return redirect(url_for('checkout'))
         
         # Get created orders
@@ -1809,7 +1813,7 @@ def place_order(crop_id):
     if not availability.get('available'):
         error_code = availability.get('error_code', 'CROP_NOT_AVAILABLE')
         error_msg = ErrorHandler.get_error_message(error_code, **availability.get('details', {}))
-        flash(error_msg, 'warning')
+        flash(error_msg or 'Warning', 'warning')
         return redirect(url_for('marketplace'))
         
     form = OrderForm()
@@ -1948,13 +1952,13 @@ def update_order_status(order_id, status):
     # Validate user permission
     is_valid, error_msg = Validator.validate_user_permission(current_user, order, 'update_status')
     if not is_valid:
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('my_orders'))
     
     # Validate status transition
     is_valid, error_msg = Validator.validate_order_status_transition(order.status, status)
     if not is_valid:
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('order_detail', order_id=order_id))
     
     # Use OrderService to update status with validation
@@ -1970,7 +1974,7 @@ def update_order_status(order_id, status):
     else:
         error_code = result.get('error_code', 'SYSTEM_ERROR')
         error_msg = ErrorHandler.get_error_message(error_code, **result.get('details', {}))
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
     
     return redirect(url_for('order_detail', order_id=order_id))
 
@@ -1987,7 +1991,7 @@ def ship_order(order_id):
     # Validate user permission
     is_valid, error_msg = Validator.validate_user_permission(current_user, order, 'update_status')
     if not is_valid:
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('my_orders'))
     
     # Get tracking number from form
@@ -2002,7 +2006,7 @@ def ship_order(order_id):
     # Validate status transition
     is_valid, error_msg = Validator.validate_order_status_transition(order.status, 'shipped')
     if not is_valid:
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('order_detail', order_id=order_id))
     
     # Use OrderService to update status to shipped
@@ -2019,7 +2023,7 @@ def ship_order(order_id):
     else:
         error_code = result.get('error_code', 'SYSTEM_ERROR')
         error_msg = ErrorHandler.get_error_message(error_code, **result.get('details', {}))
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
     
     return redirect(url_for('order_detail', order_id=order_id))
 
@@ -2036,13 +2040,13 @@ def deliver_order(order_id):
     # Validate user permission
     is_valid, error_msg = Validator.validate_user_permission(current_user, order, 'update_status')
     if not is_valid:
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('my_orders'))
     
     # Validate status transition
     is_valid, error_msg = Validator.validate_order_status_transition(order.status, 'delivered')
     if not is_valid:
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('order_detail', order_id=order_id))
     
     # Use OrderService to update status to delivered
@@ -2058,7 +2062,7 @@ def deliver_order(order_id):
     else:
         error_code = result.get('error_code', 'SYSTEM_ERROR')
         error_msg = ErrorHandler.get_error_message(error_code, **result.get('details', {}))
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
     
     return redirect(url_for('order_detail', order_id=order_id))
 
@@ -2086,7 +2090,7 @@ def cancel_order(order_id):
     is_valid, error_msg, role = OwnershipValidator.validate_order_ownership(order_id, allow_farmer=True)
     if not is_valid:
         app.logger.warning(f'Unauthorized order cancellation attempt: user {current_user.id}, order {order_id}')
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('my_orders'))
     
     # Check if user is authorized to cancel
@@ -2097,7 +2101,7 @@ def cancel_order(order_id):
     # Validate cancellation eligibility
     is_valid, error_msg = Validator.validate_cancellation_eligibility(order)
     if not is_valid:
-        flash(error_msg, 'danger')
+        flash(error_msg or 'Validation error', 'danger')
         return redirect(url_for('order_detail', order_id=order_id))
     
     # Get and sanitize cancellation reason
@@ -2114,7 +2118,7 @@ def cancel_order(order_id):
         # Validate status transition for rejection
         is_valid, error_msg = Validator.validate_order_status_transition(order.status, 'rejected')
         if not is_valid:
-            flash(error_msg, 'danger')
+            flash(error_msg or 'Validation error', 'danger')
             return redirect(url_for('order_detail', order_id=order_id))
         
         result = OrderService.update_order_status(
@@ -2138,7 +2142,7 @@ def cancel_order(order_id):
         else:
             error_code = result.get('error_code', 'SYSTEM_ERROR')
             error_msg = ErrorHandler.get_error_message(error_code, **result.get('details', {}))
-            flash(error_msg, 'danger')
+            flash(error_msg or 'Validation error', 'danger')
     else:
         # Use OrderService to cancel order
         result = OrderService.cancel_order(
@@ -2807,7 +2811,7 @@ def get_profile_ai_insights():
         # Get AI response
         response = client.generate_content(
             prompt,
-            generation_config=genai.types.GenerationConfig(
+            generation_config=genai.GenerationConfig(
                 temperature=0.7,
                 top_p=0.9,
                 max_output_tokens=2048,

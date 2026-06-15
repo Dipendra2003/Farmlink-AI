@@ -396,7 +396,7 @@ def delete_crop_suggestion_history(history_id):
     try:
         # Skip CSRF validation for AJAX requests
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            from flask_wtf.csrf import validate_csrf
+            from flask_wtf.csrf import validate_csrf  # type: ignore
             from werkzeug.exceptions import BadRequest
             try:
                 validate_csrf(request.headers.get('X-CSRFToken', ''))
@@ -1277,7 +1277,7 @@ def delete_crop_comparison(comparison_id):
     try:
         # Skip CSRF validation for AJAX requests
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            from flask_wtf.csrf import validate_csrf
+            from flask_wtf.csrf import validate_csrf  # type: ignore
             from werkzeug.exceptions import BadRequest
             try:
                 validate_csrf(request.headers.get('X-CSRFToken', ''))
