@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, abort, jsonify
+from flask import render_template, redirect, url_for, flash, request, abort, jsonify, make_response
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_mail import Message as FlaskMailMessage
 from app import app, db, mail
@@ -102,6 +102,26 @@ def faq():
 def testing_mode():
     return render_template('pages/testing_mode.html')
 
+@app.route('/robots.txt')
+def robots():
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        f"Sitemap: {url_for('sitemap', _external=True)}"
+    ]
+    response = make_response("\n".join(lines))
+    response.headers["Content-Type"] = "text/plain"
+    return response
+
+@app.route('/sitemap.xml')
+def sitemap():
+    # Only include available crops
+    crops = Crop.query.filter_by(status='available', approval_status='approved').order_by(Crop.updated_at.desc()).all()
+    template = render_template('sitemap.xml', crops=crops)
+    response = make_response(template)
+    response.headers["Content-Type"] = "application/xml"
+    return response
+
 # Home Page
 @app.route('/')
 def index():
@@ -127,7 +147,10 @@ def index():
                          recent_crops=recent_crops,
                          total_farmers=total_farmers,
                          total_buyers=total_buyers,
-                         total_crops=total_crops)
+                         total_crops=total_crops,
+                         meta_description="FarmLink AI - The leading AI-powered agricultural marketplace connecting farmers directly with buyers.",
+                         meta_keywords="agriculture, farming, direct marketplace, buy crops, AI farming, pest detection",
+                         og_title="FarmLink AI - Smart Agricultural Marketplace")
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -819,7 +842,10 @@ def marketplace():
             items = CartItem.query.filter_by(cart_id=cart.id).all()
             cart_items = {item.crop_id: item.quantity for item in items}
     
-    return render_template('marketplace/browse.html', crops=crops, form=form, cart_items=cart_items)
+    return render_template('marketplace/browse.html', crops=crops, form=form, cart_items=cart_items,
+                           meta_description="Browse available crops from verified farmers on the FarmLink AI marketplace.",
+                           meta_keywords="marketplace, buy crops, direct farming, fresh produce, agricultural products",
+                           og_title="FarmLink AI - Marketplace")
 
 @app.route('/marketplace/crop/<int:crop_id>')
 def product_detail(crop_id):
@@ -890,7 +916,11 @@ def product_detail(crop_id):
                          total_ratings=total_ratings,
                          rating_distribution=rating_distribution,
                          in_cart=in_cart,
-                         cart_quantity=cart_quantity)
+                         cart_quantity=cart_quantity,
+                         meta_description=f"Buy {crop.name} directly from the farmer on FarmLink AI.",
+                         meta_keywords=f"{crop.name}, buy {crop.name}, fresh produce, farm direct",
+                         og_title=f"{crop.name} - FarmLink AI",
+                         og_image=url_for('static', filename=crop.image_url, _external=True) if crop.image_url and crop.image_url != 'uploads/crops/default-crop.jpg' else None)
 
 # ============================================================================
 # CART ROUTES

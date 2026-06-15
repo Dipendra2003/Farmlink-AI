@@ -5,7 +5,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{% block title %}FarmLink AI - Connecting Agriculture{% endblock %}</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{{ meta_description | default('FarmLink AI bridges the gap between farmers, buyers, and agricultural experts. Experience the future of farming with AI-driven tools.') }}">
+    <meta name="keywords" content="{{ meta_keywords | default('farming, agriculture, marketplace, AI crop suggestions, pest detection, direct farming, crop marketplace') }}">
+    <meta name="author" content="FarmLink AI">
+    <link rel="canonical" href="{{ request.url }}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:title" content="{{ og_title | default('FarmLink AI - Connecting Agriculture') }}">
+    <meta property="og:description" content="{{ meta_description | default('FarmLink AI bridges the gap between farmers, buyers, and agricultural experts. Experience the future of farming with AI-driven tools.') }}">
+    <meta property="og:image" content="{{ og_image | default(url_for('static', filename='images/default-og.jpg', _external=True)) }}">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ request.url }}">
+    <meta property="twitter:title" content="{{ og_title | default('FarmLink AI - Connecting Agriculture') }}">
+    <meta property="twitter:description" content="{{ meta_description | default('FarmLink AI bridges the gap between farmers, buyers, and agricultural experts. Experience the future of farming with AI-driven tools.') }}">
+    <meta property="twitter:image" content="{{ og_image | default(url_for('static', filename='images/default-og.jpg', _external=True)) }}">
+    
+    <title>{% block title %}{{ og_title | default('FarmLink AI - Connecting Agriculture') }}{% endblock %}</title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
