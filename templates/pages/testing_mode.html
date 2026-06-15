@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Testing Mode - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border rounded-4 overflow-hidden">
+                <div class="card-body p-5 text-center position-relative">
+                    
+                    <!-- Decorative Background Element -->
+                    <div class="position-absolute top-0 start-50 translate-middle-x w-100 h-100" style="background: radial-gradient(circle at top, rgba(255,193,7,0.1) 0%, transparent 60%); z-index: 0; pointer-events: none;"></div>
+
+                    <div class="position-relative" style="z-index: 1;">
+                        <div class="mb-4">
+                            <span class="badge bg-warning bg-opacity-10 text-warning px-4 py-2 fs-6 rounded-pill border border-warning border-opacity-25">
+                                <i class="fas fa-flask me-2"></i>BETA TESTING MODE
+                            </span>
+                        </div>
+                        
+                        <div class="feature-icon bg-warning bg-opacity-10 rounded-circle p-4 d-inline-flex mb-4 shadow-sm border border-warning border-opacity-25">
+                            <i class="fas fa-laptop-code text-warning fa-3x"></i>
+                        </div>
+                        
+                        <h1 class="display-5 fw-bold mb-4">
+                            We're Refining <span class="text-success">FarmLink AI</span>
+                        </h1>
+                        
+                        <p class="lead text-muted mb-5 px-md-4">
+                            Welcome to our active beta phase! We're building the future of agricultural connectivity. Some features might still be sprouting, and you may encounter occasional bugs while we actively develop the platform.
+                        </p>
+                        
+                        <div class="row justify-content-center mb-5 g-4">
+                            <div class="col-md-6">
+                                <div class="p-4 bg-light rounded-4 border border-opacity-50 h-100 text-start hover-shadow transition-all">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="bg-danger bg-opacity-10 rounded-circle p-2 me-3">
+                                            <i class="fas fa-bug text-danger fa-lg"></i>
+                                        </div>
+                                        <h5 class="fw-bold mb-0">Report Issues</h5>
+                                    </div>
+                                    <p class="text-muted small mb-0">Found a glitch? Let us know so we can squash it immediately and improve the experience.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="p-4 bg-light rounded-4 border border-opacity-50 h-100 text-start hover-shadow transition-all">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="bg-success bg-opacity-10 rounded-circle p-2 me-3">
+                                            <i class="fas fa-lightbulb text-success fa-lg"></i>
+                                        </div>
+                                        <h5 class="fw-bold mb-0">Share Ideas</h5>
+                                    </div>
+                                    <p class="text-muted small mb-0">Have a feature request? We shape Farmlink AI based directly on your valuable feedback.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 mt-4">
+                            <a href="{{ url_for('contact') }}" class="btn btn-success btn-lg px-4 shadow-sm rounded-pill d-flex align-items-center justify-content-center">
+                                <i class="fas fa-paper-plane me-2"></i> Send Feedback
+                            </a>
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary btn-lg px-4 shadow-sm rounded-pill d-flex align-items-center justify-content-center">
+                                <i class="fas fa-arrow-left me-2"></i> Back to Home
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

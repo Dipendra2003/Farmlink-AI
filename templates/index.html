@@ -570,10 +570,10 @@
 <!-- Hero Section -->
 <section class="hero-section bg-success text-white py-5 position-relative">
     <!-- Testing Mode Badge -->
-    <div class="position-absolute top-0 end-0 m-3">
-        <span class="badge bg-warning text-dark fs-6 px-3 py-2 shadow-lg testing-mode-badge">
+    <div class="position-absolute top-0 end-0 m-3" style="z-index: 10;">
+        <a href="{{ url_for('testing_mode') }}" class="badge bg-warning text-dark fs-6 px-3 py-2 shadow-lg testing-mode-badge text-decoration-none">
             <i class="fas fa-flask me-2"></i>TESTING MODE
-        </span>
+        </a>
     </div>
     
     <div class="container">
