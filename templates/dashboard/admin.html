@@ -259,7 +259,7 @@
                     {% if recent_crops %}
                         {% for crop in recent_crops %}
                         <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
-                            <img src="{{ crop.image_url or 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&q=60' }}" 
+                            <img src="{{ get_image_url(crop.image_url) or 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&q=60' }}" 
                                  class="rounded me-3" width="40" height="40" style="object-fit: cover;" alt="{{ crop.name }}">
                             <div class="flex-grow-1">
                                 <div class="fw-bold">{{ crop.name }}</div>

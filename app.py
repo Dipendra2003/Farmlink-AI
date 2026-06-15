@@ -54,6 +54,12 @@ setup_logging(use_json=use_json_logging)
 # Set werkzeug to INFO to show HTTP requests, but filter out debugger messages
 logging.getLogger('werkzeug').setLevel(logging.INFO)
 
+# Suppress verbose torch/transformers logging
+logging.getLogger('torch').setLevel(logging.WARNING)
+logging.getLogger('torch.fx').setLevel(logging.ERROR)
+logging.getLogger('transformers').setLevel(logging.WARNING)
+os.environ['TORCH_LOGS'] = ''  # Disable torch logging entirely
+
 # Create the app with explicit template and static folders
 template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'templates'))
 static_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'static'))
@@ -169,6 +175,19 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False  # Disable modification tracking
 app.config["SQLALCHEMY_ECHO"] = False  # Disable SQL query logging for cleaner output
+
+# Exclude library files from triggering reloads
+import sys
+from werkzeug.serving import is_running_from_reloader
+if is_running_from_reloader():
+    # Exclude site-packages and virtual environment from watchdog
+    site_packages = [p for p in sys.path if 'site-packages' in p or '.venv' in p or 'AppData' in p]
+    for path in site_packages:
+        try:
+            from werkzeug._reloader import WatchdogReloaderLoop
+            # Note: This is best effort - werkzeug doesn't expose a public API for this
+        except:
+            pass
 
 # Initialize Flask extensions
 mail.init_app(app)

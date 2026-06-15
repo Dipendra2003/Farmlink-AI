@@ -441,6 +441,7 @@ class Message(db.Model):
     subject = db.Column(db.String(200), nullable=False)
     content = db.Column(db.Text, nullable=False)
     is_read = db.Column(db.Boolean, default=False)
+    is_archived = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     read_at = db.Column(db.DateTime, nullable=True)
     
@@ -1019,6 +1020,11 @@ class UserFollow(db.Model):
         db.CheckConstraint('follower_id != followed_id', name='no_self_follow')
     )
     
+    def __init__(self, follower_id=None, followed_id=None, **kwargs):
+        self.follower_id = follower_id
+        self.followed_id = followed_id
+        super(UserFollow, self).__init__(**kwargs)
+    
     def __repr__(self):
         return f'<UserFollow {self.follower_id} -> {self.followed_id}>'
 
@@ -1246,7 +1252,7 @@ class CropComparisonHistory(db.Model):
             data = json.loads(self.comparison_result)
             return data if isinstance(data, dict) else {}
         except (json.JSONDecodeError, TypeError) as e:
-            app.logger.error(f"Error parsing comparison data for comparison {self.id}: {str(e)}")
+            logger.error(f"Error parsing comparison data for comparison {self.id}: {str(e)}")
             return {}
     
     def __repr__(self):

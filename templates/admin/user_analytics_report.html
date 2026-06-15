@@ -3,82 +3,99 @@
 {% block title %}User Analytics - Admin{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin_analytics_dashboard') }}">Analytics</a></li>
+            <li class="breadcrumb-item active" aria-current="page">User Analytics</li>
+        </ol>
+    </nav>
+
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
-                    <li class="breadcrumb-item"><a href="{{ url_for('admin_analytics_dashboard') }}">Analytics</a></li>
-                    <li class="breadcrumb-item active">User Analytics</li>
-                </ol>
-            </nav>
-            <h2><i class="fas fa-users me-2"></i>User Analytics</h2>
+    <div class="row mb-4">
+        <div class="col-12 col-lg-8 mb-3 mb-lg-0">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-users me-2"></i>User Analytics
+            </h1>
+            <p class="lead text-muted mb-0">User behavior and performance insights</p>
         </div>
-        <div class="btn-group">
-            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-                <i class="fas fa-download me-1"></i>Export
-            </button>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="{{ url_for('export_user_analytics', format='csv') }}">
-                    <i class="fas fa-file-csv me-2"></i>CSV
-                </a></li>
-                <li><a class="dropdown-item" href="{{ url_for('export_user_analytics', format='json') }}">
-                    <i class="fas fa-file-code me-2"></i>JSON
-                </a></li>
-            </ul>
+        <div class="col-12 col-lg-4 text-start text-lg-end">
+            <div class="btn-group w-100 w-lg-auto shadow-sm">
+                <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-download me-2"></i>Export
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{{ url_for('export_user_analytics', format='csv') }}">
+                        <i class="fas fa-file-csv me-2"></i>CSV
+                    </a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('export_user_analytics', format='json') }}">
+                        <i class="fas fa-file-code me-2"></i>JSON
+                    </a></li>
+                </ul>
+            </div>
         </div>
     </div>
 
     <!-- Active Users Card -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body text-center">
-            <h6 class="text-muted mb-2">Active Users (Last 30 Days)</h6>
-            <h1 class="display-4 text-primary mb-0">{{ analytics.active_users }}</h1>
+    <div class="card bg-primary text-white border-0 shadow mb-5">
+        <div class="card-body text-center py-4">
+            <i class="fas fa-user-check fa-3x mb-3"></i>
+            <h6 class="text-white mb-2">Active Users (Last 30 Days)</h6>
+            <h1 class="display-3 fw-bold mb-0">{{ analytics.active_users }}</h1>
         </div>
     </div>
 
     <!-- User Growth Chart -->
     <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white">
-            <h5 class="mb-0">User Growth Trend</h5>
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fs-6 fs-md-5"><i class="fas fa-chart-line me-2"></i>User Growth Trend</h5>
         </div>
-        <div class="card-body">
-            <canvas id="userGrowthChart" height="80"></canvas>
+        <div class="card-body p-2 p-md-3">
+            <div style="position: relative; height: 300px;">
+                <canvas id="userGrowthChart"></canvas>
+            </div>
         </div>
     </div>
 
     <!-- Top Performers Row -->
-    <div class="row g-3 mb-4">
+    <div class="row g-3 g-md-4 mb-4 mb-md-5">
         <!-- Top Buyers -->
-        <div class="col-lg-6">
+        <div class="col-12 col-lg-6">
             <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">Top Buyers by Spending</h5>
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fs-6 fs-md-5"><i class="fas fa-shopping-bag me-2 text-primary"></i>Top Buyers by Spending</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Rank</th>
-                                    <th>Name</th>
-                                    <th>Orders</th>
-                                    <th>Total Spent</th>
+                                    <th class="py-3 ps-3">Rank</th>
+                                    <th class="py-3">Name</th>
+                                    <th class="py-3 text-center d-none d-md-table-cell">Orders</th>
+                                    <th class="py-3 text-end pe-3">Total Spent</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for buyer in analytics.top_buyers %}
                                 <tr>
-                                    <td><strong>#{{ loop.index }}</strong></td>
-                                    <td>
-                                        <a href="{{ url_for('admin_user_analytics', user_id=buyer.id) }}">
+                                    <td class="ps-3 py-3">
+                                        <strong class="text-primary">#{{ loop.index }}</strong>
+                                    </td>
+                                    <td class="py-3">
+                                        <a href="{{ url_for('admin_user_analytics', user_id=buyer.id) }}" class="text-decoration-none">
                                             {{ buyer.name }}
                                         </a>
+                                        <small class="text-muted d-md-none d-block">{{ buyer.orders }} orders</small>
                                     </td>
-                                    <td>{{ buyer.orders }}</td>
-                                    <td><strong>₹{{ "%.2f"|format(buyer.total_spent) }}</strong></td>
+                                    <td class="py-3 text-center d-none d-md-table-cell">
+                                        <span class="badge bg-info-subtle text-info">{{ buyer.orders }}</span>
+                                    </td>
+                                    <td class="py-3 text-end pe-3">
+                                        <strong class="text-success">₹{{ "%.2f"|format(buyer.total_spent) }}</strong>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -89,33 +106,40 @@
         </div>
 
         <!-- Top Farmers -->
-        <div class="col-lg-6">
+        <div class="col-12 col-lg-6">
             <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0">Top Farmers by Revenue</h5>
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fs-6 fs-md-5"><i class="fas fa-tractor me-2 text-success"></i>Top Farmers by Revenue</h5>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Rank</th>
-                                    <th>Name</th>
-                                    <th>Orders</th>
-                                    <th>Total Revenue</th>
+                                    <th class="py-3 ps-3">Rank</th>
+                                    <th class="py-3">Name</th>
+                                    <th class="py-3 text-center d-none d-md-table-cell">Orders</th>
+                                    <th class="py-3 text-end pe-3">Total Revenue</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for farmer in analytics.top_farmers %}
                                 <tr>
-                                    <td><strong>#{{ loop.index }}</strong></td>
-                                    <td>
-                                        <a href="{{ url_for('admin_user_analytics', user_id=farmer.id) }}">
+                                    <td class="ps-3 py-3">
+                                        <strong class="text-success">#{{ loop.index }}</strong>
+                                    </td>
+                                    <td class="py-3">
+                                        <a href="{{ url_for('admin_user_analytics', user_id=farmer.id) }}" class="text-decoration-none">
                                             {{ farmer.name }}
                                         </a>
+                                        <small class="text-muted d-md-none d-block">{{ farmer.orders }} orders</small>
                                     </td>
-                                    <td>{{ farmer.orders }}</td>
-                                    <td><strong>₹{{ "%.2f"|format(farmer.total_revenue) }}</strong></td>
+                                    <td class="py-3 text-center d-none d-md-table-cell">
+                                        <span class="badge bg-info-subtle text-info">{{ farmer.orders }}</span>
+                                    </td>
+                                    <td class="py-3 text-end pe-3">
+                                        <strong class="text-success">₹{{ "%.2f"|format(farmer.total_revenue) }}</strong>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -128,45 +152,53 @@
 
     <!-- Top Rated Users -->
     <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white">
-            <h5 class="mb-0">Top Rated Users</h5>
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fs-6 fs-md-5"><i class="fas fa-star me-2 text-warning"></i>Top Rated Users</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th>Rank</th>
-                            <th>Name</th>
-                            <th>Average Rating</th>
-                            <th>Total Ratings</th>
-                            <th>Action</th>
+                            <th class="py-3 ps-3">Rank</th>
+                            <th class="py-3">Name</th>
+                            <th class="py-3">Average Rating</th>
+                            <th class="py-3 text-center d-none d-md-table-cell">Total Ratings</th>
+                            <th class="py-3 text-end pe-3">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for user in analytics.top_rated_users %}
                         <tr>
-                            <td><strong>#{{ loop.index }}</strong></td>
-                            <td>{{ user.name }}</td>
-                            <td>
+                            <td class="ps-3 py-3">
+                                <strong class="text-warning">#{{ loop.index }}</strong>
+                            </td>
+                            <td class="py-3">
+                                <div class="fw-semibold">{{ user.name }}</div>
+                                <small class="text-muted d-md-none">{{ user.rating_count }} ratings</small>
+                            </td>
+                            <td class="py-3">
                                 <div class="d-flex align-items-center">
-                                    <span class="me-2">{{ "%.2f"|format(user.avg_rating) }}</span>
-                                    <div>
+                                    <span class="me-2 fw-semibold">{{ "%.2f"|format(user.avg_rating) }}</span>
+                                    <div class="d-none d-sm-block">
                                         {% for i in range(5) %}
                                             {% if i < user.avg_rating %}
-                                                <i class="fas fa-star text-warning"></i>
+                                                <i class="fas fa-star text-warning small"></i>
                                             {% else %}
-                                                <i class="far fa-star text-warning"></i>
+                                                <i class="far fa-star text-warning small"></i>
                                             {% endif %}
                                         {% endfor %}
                                     </div>
                                 </div>
                             </td>
-                            <td>{{ user.rating_count }}</td>
-                            <td>
+                            <td class="py-3 text-center d-none d-md-table-cell">
+                                <span class="badge bg-secondary-subtle text-secondary">{{ user.rating_count }}</span>
+                            </td>
+                            <td class="py-3 text-end pe-3">
                                 <a href="{{ url_for('admin_user_analytics', user_id=user.id) }}" 
                                    class="btn btn-sm btn-outline-primary">
-                                    View Profile
+                                    <i class="fas fa-eye d-md-none"></i>
+                                    <span class="d-none d-md-inline">View Profile</span>
                                 </a>
                             </td>
                         </tr>
@@ -194,26 +226,56 @@ new Chart(growthCtx, {
             borderColor: 'rgb(75, 192, 192)',
             backgroundColor: 'rgba(75, 192, 192, 0.1)',
             tension: 0.4,
-            fill: true
+            fill: true,
+            borderWidth: 2
         }]
     },
     options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 display: false
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 12
             }
         },
         scales: {
+            x: {
+                ticks: {
+                    font: {
+                        size: window.innerWidth > 768 ? 11 : 9
+                    },
+                    maxRotation: 45,
+                    minRotation: 45
+                }
+            },
             y: {
                 beginAtZero: true,
                 title: {
-                    display: true,
-                    text: 'New Users'
+                    display: window.innerWidth > 768,
+                    text: 'New Users',
+                    font: {
+                        size: 11
+                    }
+                },
+                ticks: {
+                    font: {
+                        size: window.innerWidth > 768 ? 11 : 9
+                    }
                 }
             }
         }
     }
+});
+
+// Responsive chart resize
+window.addEventListener('resize', function() {
+    Chart.instances.forEach(chart => {
+        chart.resize();
+    });
 });
 </script>
 {% endblock %}

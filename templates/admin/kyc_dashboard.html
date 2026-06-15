@@ -111,15 +111,15 @@
 <div class="container py-4">
     <!-- Header -->
     <div class="row mb-4">
-        <div class="col-md-8">
+        <div class="col-12 col-lg-8 mb-3 mb-lg-0">
             <h1 class="display-6 fw-bold text-success">
                 <i class="fas fa-id-card me-2"></i>KYC Verification Dashboard
             </h1>
-            <p class="lead text-muted">Manage and verify seller KYC applications</p>
+            <p class="lead text-muted mb-0">Manage and verify seller KYC applications</p>
         </div>
-        <div class="col-md-4 text-end">
-            <div class="btn-group" role="group">
-                <button type="button" class="btn btn-success btn-lg dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        <div class="col-12 col-lg-4 text-start text-lg-end">
+            <div class="btn-group w-100 w-lg-auto shadow-sm" role="group">
+                <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                     <i class="fas fa-download me-2"></i>Export Data
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
@@ -144,8 +144,8 @@
     </div>
 
     <!-- Statistics Cards -->
-    <div class="row g-4 mb-5">
-        <div class="col-md-3">
+    <div class="row g-3 g-md-4 mb-4 mb-md-5">
+        <div class="col-6 col-lg-3">
             <div class="stat-card bg-gradient-warning">
                 <div class="stat-icon">
                     <i class="fas fa-clock"></i>
@@ -154,7 +154,7 @@
                 <div class="stat-label">Pending Applications</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-lg-3">
             <div class="stat-card bg-gradient-success">
                 <div class="stat-icon">
                     <i class="fas fa-check-circle"></i>
@@ -163,7 +163,7 @@
                 <div class="stat-label">Verified Sellers</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-lg-3">
             <div class="stat-card bg-gradient-danger">
                 <div class="stat-icon">
                     <i class="fas fa-times-circle"></i>
@@ -172,7 +172,7 @@
                 <div class="stat-label">Rejected Applications</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-lg-3">
             <div class="stat-card bg-gradient-info">
                 <div class="stat-icon">
                     <i class="fas fa-file-alt"></i>
@@ -184,26 +184,26 @@
     </div>
 
     <!-- Performance Metrics -->
-    <div class="row g-4 mb-5">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">
+    <div class="row g-3 g-md-4 mb-4 mb-md-5">
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body p-3 p-md-4">
+                    <h5 class="card-title mb-3 fs-6 fs-md-5">
                         <i class="fas fa-tachometer-alt text-primary me-2"></i>Performance Metrics
                     </h5>
-                    <div class="row">
+                    <div class="row g-3">
                         <div class="col-6">
                             <div class="border rounded p-3 text-center">
-                                <h6 class="text-muted mb-2">Avg. Verification Time</h6>
-                                <h3 class="text-primary mb-0">
+                                <h6 class="text-muted mb-2 small">Avg. Verification Time</h6>
+                                <h3 class="text-primary mb-0 fs-4 fs-md-3">
                                     {{ "%.1f"|format(stats.avg_verification_time_hours) }} hrs
                                 </h3>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="border rounded p-3 text-center">
-                                <h6 class="text-muted mb-2">Oldest Pending</h6>
-                                <h3 class="text-warning mb-0">
+                                <h6 class="text-muted mb-2 small">Oldest Pending</h6>
+                                <h3 class="text-warning mb-0 fs-4 fs-md-3">
                                     {{ stats.oldest_pending_days }} days
                                 </h3>
                             </div>
@@ -213,27 +213,27 @@
             </div>
         </div>
         
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title mb-3">
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body p-3 p-md-4">
+                    <h5 class="card-title mb-3 fs-6 fs-md-5">
                         <i class="fas fa-exclamation-triangle text-warning me-2"></i>Oldest Pending Applications
                     </h5>
                     <div style="max-height: 250px; overflow-y: auto;">
                         {% if stats.oldest_pending_applications %}
                             {% for kyc in stats.oldest_pending_applications[:10] %}
                             <div class="oldest-pending-item">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong>{{ kyc.user.full_name }}</strong>
-                                        <br>
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <div class="flex-grow-1">
+                                        <strong class="d-block">{{ kyc.user.full_name }}</strong>
                                         <small class="text-muted">
                                             Submitted {{ kyc.created_at.strftime('%b %d, %Y') }}
                                             ({{ ((now() - kyc.created_at).days) }} days ago)
                                         </small>
                                     </div>
                                     <a href="{{ url_for('admin_kyc_detail', kyc_id=kyc.id) }}" class="btn btn-sm btn-warning">
-                                        <i class="fas fa-eye"></i> Review
+                                        <i class="fas fa-eye"></i>
+                                        <span class="d-none d-sm-inline ms-1">Review</span>
                                     </a>
                                 </div>
                             </div>
@@ -249,23 +249,42 @@
 
     <!-- Submissions Chart -->
     <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h5 class="card-title mb-3">
-                <i class="fas fa-chart-line text-success me-2"></i>KYC Submissions - Last 30 Days
+        <div class="card-body p-2 p-md-3">
+            <h5 class="card-title mb-3 fs-6 fs-md-5">
+                <i class="fas fa-chart-line text-success me-2"></i>
+                {% if date_from and date_to %}
+                KYC Submissions ({{ date_from }} to {{ date_to }})
+                {% else %}
+                KYC Submissions - Last 30 Days
+                {% endif %}
             </h5>
+            {% if chart_data and chart_data is iterable and chart_data|length > 0 and chart_data|sum > 0 %}
             <div class="chart-container">
                 <canvas id="submissionsChart" 
                         data-labels="{{ chart_labels|tojson|escape }}"
                         data-values="{{ chart_data|tojson|escape }}"></canvas>
             </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-chart-line fa-4x text-muted mb-3"></i>
+                <h5 class="text-muted mb-2">No Submission Data Available</h5>
+                <p class="text-muted mb-0">
+                    {% if date_from and date_to %}
+                    There have been no KYC submissions between {{ date_from }} and {{ date_to }}.
+                    {% else %}
+                    There have been no KYC submissions in the last 30 days.
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
         </div>
     </div>
 
     <!-- Filters -->
     <div class="filter-card">
         <form method="GET" class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">
+            <div class="col-12 col-md-6 col-lg-3">
+                <label class="form-label fw-semibold small">
                     <i class="fas fa-filter me-1"></i>Filter by Status
                 </label>
                 <select name="status" class="form-select">
@@ -276,32 +295,35 @@
                 </select>
             </div>
 
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">
+            <div class="col-12 col-md-6 col-lg-3">
+                <label class="form-label fw-semibold small">
                     <i class="fas fa-calendar me-1"></i>From Date
                 </label>
                 <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
             </div>
 
-            <div class="col-md-3">
-                <label class="form-label fw-semibold">
+            <div class="col-12 col-md-6 col-lg-3">
+                <label class="form-label fw-semibold small">
                     <i class="fas fa-calendar me-1"></i>To Date
                 </label>
                 <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
             </div>
 
-            <div class="col-md-3 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100">
+            <div class="col-12 col-md-6 col-lg-3 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1">
                     <i class="fas fa-search me-1"></i>Apply Filters
                 </button>
+                <a href="{{ url_for('admin_kyc_verification') }}" class="btn btn-outline-secondary" title="Clear Filters">
+                    <i class="fas fa-times"></i>
+                </a>
             </div>
         </form>
     </div>
 
     <!-- KYC Applications Table -->
     <div class="card shadow-sm">
-        <div class="card-header bg-white">
-            <h5 class="card-title mb-0">
+        <div class="card-header bg-white py-3">
+            <h5 class="card-title mb-0 fs-6 fs-md-5">
                 <i class="fas fa-list me-2"></i>KYC Applications
                 <span class="badge bg-secondary ms-2">{{ kyc_list|length }} records</span>
             </h5>
@@ -311,72 +333,76 @@
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>ID</th>
-                            <th>Seller</th>
-                            <th>Contact</th>
-                            <th>Submitted</th>
-                            <th>Status</th>
-                            <th>Verified By</th>
-                            <th>Actions</th>
+                            <th class="py-3 ps-3 d-none d-md-table-cell">ID</th>
+                            <th class="py-3 ps-3 ps-md-0">Seller</th>
+                            <th class="py-3 d-none d-lg-table-cell">Contact</th>
+                            <th class="py-3">Submitted</th>
+                            <th class="py-3">Status</th>
+                            <th class="py-3 d-none d-xl-table-cell">Verified By</th>
+                            <th class="py-3 pe-3">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for kyc in kyc_list %}
                         <tr class="kyc-table-row" id="kyc-{{ kyc.id }}">
-                            <td>
+                            <td class="ps-3 d-none d-md-table-cell">
                                 <span class="badge bg-light text-dark">#{{ kyc.id }}</span>
                             </td>
-                            <td>
+                            <td class="ps-3 ps-md-0">
                                 <div class="d-flex align-items-center">
                                     <img src="{{ get_image_url(kyc.user.profile_image) if kyc.user.profile_image and kyc.user.profile_image != 'default.jpg' else 'https://ui-avatars.com/api/?name=' + (kyc.user.full_name or kyc.user.username) + '&background=28a745&color=fff&size=40' }}"
                                         class="rounded-circle me-2" width="40" height="40" alt="Profile" style="object-fit: cover;">
                                     <div>
-                                        <div class="fw-bold">{{ kyc.user.full_name }}</div>
-                                        <small class="text-muted">@{{ kyc.user.username }}</small>
+                                        <div class="fw-bold small">{{ kyc.user.full_name }}</div>
+                                        <small class="text-muted d-none d-sm-block">@{{ kyc.user.username }}</small>
                                     </div>
                                 </div>
                             </td>
-                            <td>
-                                <div>{{ kyc.user.email }}</div>
+                            <td class="d-none d-lg-table-cell">
+                                <div class="small">{{ kyc.user.email }}</div>
                                 {% if kyc.user.phone %}
                                 <small class="text-muted">{{ kyc.user.phone }}</small>
                                 {% endif %}
                             </td>
                             <td>
-                                <div>{{ kyc.created_at.strftime('%b %d, %Y') }}</div>
-                                <small class="text-muted">{{ kyc.created_at.strftime('%I:%M %p') }}</small>
+                                <div class="small">{{ kyc.created_at.strftime('%b %d, %Y') }}</div>
+                                <small class="text-muted d-none d-md-block">{{ kyc.created_at.strftime('%I:%M %p') }}</small>
                                 {% if kyc.status == 'pending' %}
-                                <br><small class="text-warning">
-                                    <i class="fas fa-clock"></i> {{ ((now() - kyc.created_at).days) }} days ago
+                                <small class="text-warning d-block">
+                                    <i class="fas fa-clock"></i> {{ ((now() - kyc.created_at).days) }}d ago
                                 </small>
                                 {% endif %}
                             </td>
                             <td>
                                 {% if kyc.status == 'pending' %}
                                 <span class="status-badge bg-warning text-dark">
-                                    <i class="fas fa-clock"></i> Pending
+                                    <i class="fas fa-clock"></i>
+                                    <span class="d-none d-sm-inline ms-1">Pending</span>
                                 </span>
                                 {% elif kyc.status == 'verified' %}
                                 <span class="status-badge bg-success text-white">
-                                    <i class="fas fa-check-circle"></i> Verified
+                                    <i class="fas fa-check-circle"></i>
+                                    <span class="d-none d-sm-inline ms-1">Verified</span>
                                 </span>
                                 {% elif kyc.status == 'rejected' %}
                                 <span class="status-badge bg-danger text-white">
-                                    <i class="fas fa-times-circle"></i> Rejected
+                                    <i class="fas fa-times-circle"></i>
+                                    <span class="d-none d-sm-inline ms-1">Rejected</span>
                                 </span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="d-none d-xl-table-cell">
                                 {% if kyc.verifier %}
-                                <div>{{ kyc.verifier.full_name }}</div>
+                                <div class="small">{{ kyc.verifier.full_name }}</div>
                                 <small class="text-muted">{{ kyc.verified_at.strftime('%b %d, %Y') if kyc.verified_at }}</small>
                                 {% else %}
                                 <span class="text-muted">-</span>
                                 {% endif %}
                             </td>
-                            <td>
+                            <td class="pe-3">
                                 <a href="{{ url_for('admin_kyc_detail', kyc_id=kyc.id) }}" class="btn btn-sm btn-primary" title="View Details">
-                                    <i class="fas fa-eye"></i> View Details
+                                    <i class="fas fa-eye"></i>
+                                    <span class="d-none d-lg-inline ms-1">View Details</span>
                                 </a>
                             </td>
                         </tr>
@@ -404,8 +430,29 @@
     // KYC Submissions Chart
     document.addEventListener('DOMContentLoaded', function() {
         const canvas = document.getElementById('submissionsChart');
-        const chartLabels = JSON.parse(canvas.dataset.labels);
-        const chartData = JSON.parse(canvas.dataset.values);
+        
+        if (!canvas) {
+            console.error('Chart canvas not found');
+            return;
+        }
+        
+        let chartLabels, chartData;
+        
+        try {
+            chartLabels = JSON.parse(canvas.dataset.labels || '[]');
+            chartData = JSON.parse(canvas.dataset.values || '[]');
+        } catch (e) {
+            console.error('Error parsing chart data:', e);
+            chartLabels = [];
+            chartData = [];
+        }
+        
+        // If no data, show message
+        if (!chartLabels.length || !chartData.length) {
+            const chartContainer = canvas.parentElement;
+            chartContainer.innerHTML = '<div class="text-center py-5"><i class="fas fa-chart-line fa-3x text-muted mb-3"></i><p class="text-muted mb-0">No submission data available for the last 30 days</p></div>';
+            return;
+        }
         
         const ctx = canvas.getContext('2d');
         const submissionsChart = new Chart(ctx, {
@@ -457,7 +504,7 @@
                         ticks: {
                             stepSize: 1,
                             font: {
-                                size: 12
+                                size: window.innerWidth > 768 ? 12 : 10
                             }
                         },
                         grid: {
@@ -467,7 +514,7 @@
                     x: {
                         ticks: {
                             font: {
-                                size: 11
+                                size: window.innerWidth > 768 ? 11 : 9
                             },
                             maxRotation: 45,
                             minRotation: 45
@@ -478,6 +525,11 @@
                     }
                 }
             }
+        });
+        
+        // Responsive chart resize
+        window.addEventListener('resize', function() {
+            submissionsChart.resize();
         });
     });
 </script>

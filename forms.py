@@ -110,7 +110,7 @@ class CropForm(FlaskForm):
 
 class MessageForm(FlaskForm):
     """Form for sending messages between users"""
-    recipient_id = HiddenField('Recipient ID', validators=[DataRequired()])
+    recipient_id = HiddenField('Recipient ID')  # Removed DataRequired() validator
     subject = StringField('Subject', validators=[
         DataRequired(message='Subject is required'),
         Length(min=2, max=200, message='Subject must be between 2 and 200 characters')

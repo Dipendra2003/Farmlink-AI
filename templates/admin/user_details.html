@@ -523,7 +523,7 @@
                         {% endif %}
 
                         {% if current_user.id != user.id %}
-                        <a href="{{ url_for('send_message', user_id=user.id) }}" class="btn btn-primary action-btn">
+                        <a href="{{ url_for('send_message', recipient_identifier=user.id) }}" class="btn btn-primary action-btn">
                             <i class="fas fa-envelope me-2"></i>Send Message
                         </a>
                         {% endif %}

@@ -368,12 +368,12 @@
                                                 </span>
                                             {% endif %}
                                         {% endif %}
-                                        <a href="{{ url_for('send_message', user_id=order.farmer_user.id) }}" 
+                                        <a href="{{ url_for('send_message', recipient_identifier=order.farmer_user.id) }}" 
                                            class="btn btn-outline-primary btn-sm">
                                             <i class="fas fa-envelope me-1"></i>Contact Farmer
                                         </a>
                                     {% else %}
-                                        <a href="{{ url_for('send_message', user_id=order.buyer.id) }}" 
+                                        <a href="{{ url_for('send_message', recipient_identifier=order.buyer.id) }}" 
                                            class="btn btn-outline-primary btn-sm">
                                             <i class="fas fa-envelope me-1"></i>Contact Buyer
                                         </a>

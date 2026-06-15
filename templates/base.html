@@ -934,6 +934,10 @@
                 <li class="breadcrumb-item active" aria-current="page">
                     <i class="fas fa-cloud-sun me-1"></i>Weather
                 </li>
+                {% elif request.endpoint == 'inbox' %}
+                <li class="breadcrumb-item active" aria-current="page">
+                    <i class="fas fa-envelope me-1"></i>Messages
+                </li>
                 {% endif %}
 
                 <!-- Quick Action Links -->

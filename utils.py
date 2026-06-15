@@ -29,6 +29,10 @@ def extract_location(text):
     try:
         # Try using spaCy if available
         import spacy
+        # Disable spaCy's logging to avoid conflicts
+        import warnings
+        warnings.filterwarnings("ignore", category=UserWarning)
+        
         nlp = spacy.load('en_core_web_sm')
         doc = nlp(text)
         
@@ -39,8 +43,11 @@ def extract_location(text):
         
         # If no GPE/LOC found, return the original text
         return text.strip()
-    except (ImportError, OSError, Exception) as e:
-        logger.error(f"Location extraction error: {str(e)}")
+    except (ImportError, OSError, AttributeError, Exception) as e:
+        # Silently fallback for common errors like missing models or logging conflicts
+        if not isinstance(e, (ImportError, OSError)):
+            logger.debug(f"Location extraction using fallback: {type(e).__name__}")
+        
         # Fallback: Simple text cleaning for location
         location = text.strip()
         

@@ -3,69 +3,100 @@
 {% block title %}Sales Report - Admin{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container py-4">
+    <!-- Breadcrumb Navigation -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('admin_analytics_dashboard') }}">Analytics</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Sales Report</li>
+        </ol>
+    </nav>
+
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Admin</a></li>
-                    <li class="breadcrumb-item"><a href="{{ url_for('admin_analytics_dashboard') }}">Analytics</a></li>
-                    <li class="breadcrumb-item active">Sales Report</li>
-                </ol>
-            </nav>
-            <h2><i class="fas fa-chart-bar me-2"></i>Sales Report</h2>
-            <p class="text-muted mb-0">Period: {{ report.period.start }} to {{ report.period.end }}</p>
+    <div class="row mb-4">
+        <div class="col-12 col-lg-8 mb-3 mb-lg-0">
+            <h1 class="display-6 fw-bold text-success">
+                <i class="fas fa-chart-bar me-2"></i>Sales Report
+            </h1>
+            <p class="lead text-muted mb-0">Period: {{ report.period.start }} to {{ report.period.end }}</p>
         </div>
-        <div class="btn-group">
-            <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-                <i class="fas fa-download me-1"></i>Export
-            </button>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="{{ url_for('export_sales_report', format='csv', range=date_range) }}">
-                    <i class="fas fa-file-csv me-2"></i>CSV
-                </a></li>
-                <li><a class="dropdown-item" href="{{ url_for('export_sales_report', format='json', range=date_range) }}">
-                    <i class="fas fa-file-code me-2"></i>JSON
-                </a></li>
-                <li><a class="dropdown-item" href="{{ url_for('export_sales_report', format='pdf', range=date_range) }}">
-                    <i class="fas fa-file-pdf me-2"></i>PDF
-                </a></li>
-            </ul>
+        <div class="col-12 col-lg-4 text-start text-lg-end">
+            <div class="btn-group w-100 w-lg-auto shadow-sm">
+                <button type="button" class="btn btn-outline-success dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-download me-2"></i>Export
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="{{ url_for('export_sales_report', format='csv', range=date_range) }}">
+                        <i class="fas fa-file-csv me-2"></i>CSV
+                    </a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('export_sales_report', format='json', range=date_range) }}">
+                        <i class="fas fa-file-code me-2"></i>JSON
+                    </a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('export_sales_report', format='pdf', range=date_range) }}">
+                        <i class="fas fa-file-pdf me-2"></i>PDF
+                    </a></li>
+                </ul>
+            </div>
         </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <h6 class="text-muted mb-2">Total Orders</h6>
-                    <h2 class="mb-0">{{ report.summary.total_orders }}</h2>
+    <!-- Stats Cards -->
+    <div class="row g-3 g-md-4 mb-4 mb-md-5">
+        <!-- Total Orders Card -->
+        <div class="col-6 col-lg-3">
+            <div class="card bg-primary text-white h-100 shadow">
+                <div class="card-body text-center p-3 p-md-4">
+                    <i class="fas fa-shopping-cart fa-2x fa-md-3x mb-2 mb-md-3"></i>
+                    <h2 class="fw-bold mb-2 fs-4 fs-md-2">{{ report.summary.total_orders }}</h2>
+                    <p class="card-title mb-2 small">Total Orders</p>
+                    <hr class="my-2 bg-white opacity-25 d-none d-md-block">
+                    <small class="d-none d-md-block">All time orders</small>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <h6 class="text-muted mb-2">Completed Orders</h6>
-                    <h2 class="mb-0 text-success">{{ report.summary.completed_orders }}</h2>
+
+        <!-- Completed Orders Card -->
+        <div class="col-6 col-lg-3">
+            <div class="card bg-success text-white h-100 shadow">
+                <div class="card-body text-center p-3 p-md-4">
+                    <i class="fas fa-check-circle fa-2x fa-md-3x mb-2 mb-md-3"></i>
+                    <h2 class="fw-bold mb-2 fs-4 fs-md-2">{{ report.summary.completed_orders }}</h2>
+                    <p class="card-title mb-2 small">Completed Orders</p>
+                    <hr class="my-2 bg-white opacity-25 d-none d-md-block">
+                    <small class="d-none d-md-block">
+                        {% if report.summary.total_orders > 0 %}
+                        {{ "%.1f"|format((report.summary.completed_orders / report.summary.total_orders) * 100) }}% completion rate
+                        {% else %}
+                        0% completion rate
+                        {% endif %}
+                    </small>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <h6 class="text-muted mb-2">Total Revenue</h6>
-                    <h2 class="mb-0 text-primary">₹{{ "%.2f"|format(report.summary.total_revenue) }}</h2>
+
+        <!-- Total Revenue Card -->
+        <div class="col-6 col-lg-3">
+            <div class="card bg-info text-white h-100 shadow">
+                <div class="card-body text-center p-3 p-md-4">
+                    <i class="fas fa-rupee-sign fa-2x fa-md-3x mb-2 mb-md-3"></i>
+                    <h2 class="fw-bold mb-2 fs-5 fs-md-2">₹{{ "%.2f"|format(report.summary.total_revenue) }}</h2>
+                    <p class="card-title mb-2 small">Total Revenue</p>
+                    <hr class="my-2 bg-white opacity-25 d-none d-md-block">
+                    <small class="d-none d-md-block">Period revenue</small>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <h6 class="text-muted mb-2">Avg Order Value</h6>
-                    <h2 class="mb-0 text-info">₹{{ "%.2f"|format(report.summary.average_order_value) }}</h2>
+
+        <!-- Avg Order Value Card -->
+        <div class="col-6 col-lg-3">
+            <div class="card bg-warning text-white h-100 shadow">
+                <div class="card-body text-center p-3 p-md-4">
+                    <i class="fas fa-chart-line fa-2x fa-md-3x mb-2 mb-md-3"></i>
+                    <h2 class="fw-bold mb-2 fs-5 fs-md-2">₹{{ "%.2f"|format(report.summary.average_order_value) }}</h2>
+                    <p class="card-title mb-2 small">Avg Order Value</p>
+                    <hr class="my-2 bg-white opacity-25 d-none d-md-block">
+                    <small class="d-none d-md-block">Per order average</small>
                 </div>
             </div>
         </div>
@@ -73,39 +104,52 @@
 
     <!-- Daily Sales Chart -->
     <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white">
-            <h5 class="mb-0">Daily Sales Trend</h5>
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fs-6 fs-md-5"><i class="fas fa-chart-area me-2"></i>Daily Sales Trend</h5>
         </div>
-        <div class="card-body">
-            <canvas id="dailySalesChart" height="80"></canvas>
+        <div class="card-body p-2 p-md-3">
+            <div style="position: relative; height: 250px;">
+                <canvas id="dailySalesChart"></canvas>
+            </div>
         </div>
     </div>
 
     <!-- Top Selling Crops -->
     <div class="card border-0 shadow-sm mb-4">
-        <div class="card-header bg-white">
-            <h5 class="mb-0">Top Selling Crops</h5>
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fs-6 fs-md-5"><i class="fas fa-trophy me-2 text-warning"></i>Top Selling Crops</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
                         <tr>
-                            <th>Rank</th>
-                            <th>Crop Name</th>
-                            <th>Category</th>
-                            <th>Orders</th>
-                            <th>Revenue</th>
+                            <th class="py-3 ps-3">Rank</th>
+                            <th class="py-3">Crop Name</th>
+                            <th class="py-3 d-none d-md-table-cell">Category</th>
+                            <th class="py-3 text-end">Orders</th>
+                            <th class="py-3 text-end pe-3">Revenue</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for crop in report.top_crops %}
                         <tr>
-                            <td><strong>#{{ loop.index }}</strong></td>
-                            <td>{{ crop.name }}</td>
-                            <td><span class="badge bg-success">{{ crop.category }}</span></td>
-                            <td>{{ crop.orders }}</td>
-                            <td><strong>₹{{ "%.2f"|format(crop.revenue) }}</strong></td>
+                            <td class="ps-3 py-3">
+                                <strong class="text-primary">#{{ loop.index }}</strong>
+                            </td>
+                            <td class="py-3">
+                                <div class="fw-semibold">{{ crop.name }}</div>
+                                <small class="text-muted d-md-none">{{ crop.category }}</small>
+                            </td>
+                            <td class="py-3 d-none d-md-table-cell">
+                                <span class="badge bg-success">{{ crop.category }}</span>
+                            </td>
+                            <td class="py-3 text-end">
+                                <span class="badge bg-info-subtle text-info">{{ crop.orders }}</span>
+                            </td>
+                            <td class="py-3 text-end pe-3">
+                                <strong class="text-success">₹{{ "%.2f"|format(crop.revenue) }}</strong>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -117,30 +161,36 @@
     <!-- Payment Methods -->
     {% if report.payment_methods %}
     <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white">
-            <h5 class="mb-0">Payment Methods Distribution</h5>
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fs-6 fs-md-5"><i class="fas fa-credit-card me-2"></i>Payment Methods Distribution</h5>
         </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <canvas id="paymentMethodsChart"></canvas>
+        <div class="card-body p-2 p-md-3">
+            <div class="row g-3">
+                <div class="col-12 col-lg-6">
+                    <div style="position: relative; height: 250px; max-width: 300px; margin: 0 auto;">
+                        <canvas id="paymentMethodsChart"></canvas>
+                    </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-12 col-lg-6">
                     <div class="table-responsive">
-                        <table class="table">
-                            <thead>
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Method</th>
-                                    <th>Count</th>
-                                    <th>Total</th>
+                                    <th class="py-2">Method</th>
+                                    <th class="py-2 text-center">Count</th>
+                                    <th class="py-2 text-end">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for pm in report.payment_methods %}
                                 <tr>
-                                    <td>{{ pm.method }}</td>
-                                    <td>{{ pm.count }}</td>
-                                    <td>₹{{ "%.2f"|format(pm.total) }}</td>
+                                    <td class="py-2">{{ pm.method }}</td>
+                                    <td class="py-2 text-center">
+                                        <span class="badge bg-secondary-subtle text-secondary">{{ pm.count }}</span>
+                                    </td>
+                                    <td class="py-2 text-end">
+                                        <strong>₹{{ "%.2f"|format(pm.total) }}</strong>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -184,14 +234,59 @@ new Chart(dailyCtx, {
     },
     options: {
         responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            mode: 'index',
+            intersect: false,
+        },
+        plugins: {
+            legend: {
+                display: window.innerWidth > 768,
+                position: 'top',
+                labels: {
+                    boxWidth: 12,
+                    padding: 10,
+                    font: {
+                        size: window.innerWidth > 768 ? 12 : 10
+                    }
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 12,
+                titleFont: {
+                    size: 12
+                },
+                bodyFont: {
+                    size: 11
+                }
+            }
+        },
         scales: {
+            x: {
+                ticks: {
+                    font: {
+                        size: window.innerWidth > 768 ? 11 : 9
+                    },
+                    maxRotation: 45,
+                    minRotation: 45
+                }
+            },
             y: {
                 type: 'linear',
                 display: true,
                 position: 'left',
                 title: {
-                    display: true,
-                    text: 'Revenue (₹)'
+                    display: window.innerWidth > 768,
+                    text: 'Revenue (₹)',
+                    font: {
+                        size: 11
+                    }
+                },
+                ticks: {
+                    font: {
+                        size: window.innerWidth > 768 ? 11 : 9
+                    }
                 }
             },
             y1: {
@@ -199,8 +294,16 @@ new Chart(dailyCtx, {
                 display: true,
                 position: 'right',
                 title: {
-                    display: true,
-                    text: 'Orders'
+                    display: window.innerWidth > 768,
+                    text: 'Orders',
+                    font: {
+                        size: 11
+                    }
+                },
+                ticks: {
+                    font: {
+                        size: window.innerWidth > 768 ? 11 : 9
+                    }
                 },
                 grid: {
                     drawOnChartArea: false
@@ -222,23 +325,54 @@ new Chart(paymentCtx, {
         datasets: [{
             data: paymentReport.map(pm => pm.total),
             backgroundColor: [
-                'rgba(255, 99, 132, 0.6)',
-                'rgba(54, 162, 235, 0.6)',
-                'rgba(255, 206, 86, 0.6)',
-                'rgba(75, 192, 192, 0.6)',
-                'rgba(153, 102, 255, 0.6)'
-            ]
+                'rgba(255, 99, 132, 0.8)',
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(255, 206, 86, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(153, 102, 255, 0.8)'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
         }]
     },
     options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
-                position: 'bottom'
+                position: 'bottom',
+                labels: {
+                    boxWidth: 12,
+                    padding: 10,
+                    font: {
+                        size: window.innerWidth > 768 ? 12 : 10
+                    }
+                }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 12,
+                callbacks: {
+                    label: function(context) {
+                        let label = context.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        label += '₹' + context.parsed.toFixed(2);
+                        return label;
+                    }
+                }
             }
         }
     }
 });
 {% endif %}
+
+// Responsive chart resize
+window.addEventListener('resize', function() {
+    Chart.instances.forEach(chart => {
+        chart.resize();
+    });
+});
 </script>
 {% endblock %}

@@ -5,226 +5,280 @@
 {% block content %}
 <div class="container py-4">
     <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h1 class="display-6 fw-bold text-success">
-                <i class="fas fa-envelope me-2"></i>Messages
-                <span class="badge bg-danger message-badge d-none">0</span>
-            </h1>
-            <p class="lead text-muted">Communicate with farmers, buyers, and experts.</p>
-            <div class="alert alert-info mb-3" role="alert">
-                <i class="fas fa-info-circle me-2"></i>Quick Tips:
-                <ul class="mb-0 mt-2">
-                    <li>Use clear and concise communication</li>
-                    <li>Respond promptly to messages (within 24 hours)</li>
-                    <li>Include relevant details about crops or orders</li>
-                    <li>Be professional and courteous</li>
-                </ul>
-            </div>
-            <div class="typing-indicator text-muted d-none fst-italic">
-                <small><i class="fas fa-pen-alt me-2"></i><span></span></small>
-            </div>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-1">
+                <i class="fas fa-envelope text-success me-2"></i>Messages
+                {% if received_messages|selectattr('is_read', 'equalto', false)|list|length > 0 %}
+                    <span class="badge bg-danger rounded-pill">{{ received_messages|selectattr('is_read', 'equalto', false)|list|length }}</span>
+                {% endif %}
+            </h2>
+            <p class="text-muted small mb-0">Communicate with farmers, buyers, and experts.</p>
         </div>
-        <div class="col-md-4 text-md-end">
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#newMessageModal">
-                <i class="fas fa-plus-circle me-2"></i>New Message
-            </button>
+        <button type="button" class="btn btn-success btn-sm" onclick="openComposeModal()">
+            <i class="fas fa-pen me-1"></i>Compose
+        </button>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body py-2 px-3">
+            <div class="row g-2 align-items-center">
+                <div class="col-lg-6 col-md-6 col-12">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0" id="messageSearch" 
+                               placeholder="Search messages...">
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-3 col-6">
+                    <select class="form-select form-select-sm" id="filterType">
+                        <option value="all">All Messages</option>
+                        <option value="unread">Unread Only</option>
+                        <option value="read">Read Only</option>
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-3 col-6">
+                    <select class="form-select form-select-sm" id="sortBy">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="sender">By Sender</option>
+                    </select>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="row">
-        <!-- Received Messages -->
-        <div class="col-lg-6 mb-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-inbox me-2"></i>Received Messages
-                        {% if received_messages|selectattr('is_read', 'equalto', false)|list|length > 0 %}
-                            <span class="badge bg-warning">{{ received_messages|selectattr('is_read', 'equalto', false)|list|length }} unread</span>
-                        {% endif %}
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    {% if received_messages %}
-                        {% for message in received_messages %}
-                            <div class="message-item p-3 border-bottom {{ 'bg-light' if not message.is_read else '' }}" 
-                                 data-message-id="{{ message.id }}"
-                                 data-sender-id="{{ message.sender_id }}"
-                                 data-is-read="{{ 'true' if message.is_read else 'false' }}">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <img src="https://ui-avatars.com/api/?name={{ message.sender.full_name }}&background=28a745&color=fff&size=32" 
-                                                 class="rounded-circle me-2" width="32" height="32" alt="Sender">
-                                            <div>
-                                                <div class="fw-bold">{{ message.sender.full_name }}</div>
-                                                <small class="text-muted">{{ message.sender.role.title() }}</small>
-                                            </div>
+    <!-- Tabs -->
+    <ul class="nav nav-tabs nav-fill" id="messageTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" id="inbox-tab" data-bs-toggle="tab" data-bs-target="#inbox" type="button">
+                <i class="fas fa-inbox me-1"></i>Inbox
+                {% if received_messages|selectattr('is_read', 'equalto', false)|list|length > 0 %}
+                    <span class="badge bg-danger rounded-pill ms-1">{{ received_messages|selectattr('is_read', 'equalto', false)|list|length }}</span>
+                {% endif %}
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="sent-tab" data-bs-toggle="tab" data-bs-target="#sent" type="button">
+                <i class="fas fa-paper-plane me-1"></i>Sent
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content border border-top-0 rounded-bottom shadow-sm bg-white">
+        <!-- Inbox Tab -->
+        <div class="tab-pane fade show active p-0" id="inbox" role="tabpanel">
+            <div class="list-group list-group-flush" id="inboxList">
+                {% if received_messages %}
+                    {% for message in received_messages %}
+                        <div class="list-group-item list-group-item-action message-item {{ 'bg-light' if not message.is_read else '' }}" 
+                             data-message-id="{{ message.id }}"
+                             data-sender-id="{{ message.sender_id }}"
+                             data-sender-name="{{ message.sender.full_name }}"
+                             data-subject="{{ message.subject }}"
+                             data-is-read="{{ 'true' if message.is_read else 'false' }}"
+                             data-date="{{ message.created_at.isoformat() }}">
+                            <div class="d-flex align-items-start">
+                                <img src="https://ui-avatars.com/api/?name={{ message.sender.full_name }}&background=28a745&color=fff&size=48" 
+                                     class="rounded-circle me-3 flex-shrink-0" width="48" height="48" alt="Sender">
+                                <div class="flex-grow-1 min-width-0">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <div class="d-flex align-items-center flex-wrap">
+                                            <span class="{{ 'fw-bold' if not message.is_read else 'fw-semibold' }}">
+                                                {{ message.sender.full_name }}
+                                            </span>
+                                            <span class="badge bg-secondary text-uppercase ms-2" style="font-size: 0.65rem;">
+                                                {{ message.sender.role }}
+                                            </span>
                                             {% if not message.is_read %}
-                                                <span class="badge bg-warning ms-2 unread-badge">New</span>
+                                                <span class="badge bg-primary ms-2" style="font-size: 0.65rem;">NEW</span>
                                             {% endif %}
                                         </div>
-                                        <h6 class="fw-bold mb-1">{{ message.subject }}</h6>
-                                        <p class="text-muted mb-2 message-preview">{{ message.content[:100] }}{% if message.content|length > 100 %}...{% endif %}</p>
-                                        <div class="d-flex align-items-center">
-                                            <small class="text-muted message-time me-2">{{ format_datetime(message.created_at) }}</small>
-                                            {% if message.is_read %}
-                                                <small class="text-success message-status">
-                                                    <i class="fas fa-check-double"></i> Read {{ format_datetime(message.read_at, '%b %d, %I:%M %p') }}
-                                                </small>
-                                            {% endif %}
-                                        </div>
+                                        <small class="text-muted text-nowrap ms-2">
+                                            {{ format_datetime(message.created_at, '%b %d, %I:%M %p') }}
+                                        </small>
                                     </div>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                            <i class="fas fa-ellipsis-v"></i>
+                                    <div class="{{ 'fw-semibold' if not message.is_read else '' }} mb-1 text-truncate">
+                                        {{ message.subject }}
+                                    </div>
+                                    <p class="text-muted mb-2 d-none d-md-block text-truncate" style="white-space: pre-line;">
+                                        {{ message.content[:120] }}{% if message.content|length > 120 %}...{% endif %}
+                                    </p>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button class="btn btn-sm btn-outline-primary" 
+                                                data-action="view" 
+                                                data-message-id="{{ message.id }}"
+                                                data-sender-name="{{ message.sender.full_name }}"
+                                                data-sender-email="{{ message.sender.email }}"
+                                                data-sender-role="{{ message.sender.role }}"
+                                                data-subject="{{ message.subject }}"
+                                                data-created-at="{{ message.created_at.isoformat() }}"
+                                                data-content="{{ message.content }}">
+                                            <i class="fas fa-eye"></i> View
                                         </button>
-                                        <ul class="dropdown-menu">
-                                            {% if not message.is_read %}
-                                                <li>
-                                                    <button type="button" class="dropdown-item" onclick="markAsRead({{ message.id }})">
-                                                        <i class="fas fa-eye me-2"></i>Mark as Read
-                                                    </button>
-                                                </li>
-                                            {% endif %}
-                                            <li>
-                                                <button class="dropdown-item" onclick="replyToMessage('{{ message.sender.id }}', '{{ message.sender.full_name }}', 'Re: {{ message.subject }}', '{{ message.id }}')">
-                                                    <i class="fas fa-reply me-2"></i>Reply
-                                                </button>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                
-                                <!-- Expandable Message Content -->
-                                <div class="collapse" id="messageContent{{ message.id }}">
-                                    <div class="mt-3 p-3 bg-white rounded border">
-                                        <p class="mb-0">{{ message.content }}</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="mt-3">
-                                    <div class="d-flex gap-2">
-                                        <button class="btn btn-sm btn-outline-primary flex-grow-1" type="button" data-bs-toggle="collapse" data-bs-target="#messageContent{{ message.id }}">
-                                            <i class="fas fa-eye me-1"></i>View Full Message
+                                        <button class="btn btn-sm btn-outline-success" 
+                                                data-action="reply"
+                                                data-recipient-id="{{ message.sender_id }}"
+                                                data-recipient-name="{{ message.sender.full_name }}"
+                                                data-subject="Re: {{ message.subject }}"
+                                                data-message-id="{{ message.id }}">
+                                            <i class="fas fa-reply"></i> Reply
                                         </button>
-                                        <button class="btn btn-sm btn-outline-success flex-grow-1" onclick="replyToMessage('{{ message.sender.id }}', '{{ message.sender.full_name }}', 'Re: {{ message.subject }}', '{{ message.id }}')">
-                                            <i class="fas fa-reply me-1"></i>Reply
+                                        {% if not message.is_read %}
+                                        <button class="btn btn-sm btn-outline-info" data-action="mark-read" data-message-id="{{ message.id }}">
+                                            <i class="fas fa-check"></i> Mark Read
+                                        </button>
+                                        {% endif %}
+                                        <button class="btn btn-sm btn-outline-danger" 
+                                                data-action="delete"
+                                                data-message-id="{{ message.id }}"
+                                                data-message-type="inbox">
+                                            <i class="fas fa-trash"></i> Delete
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">No messages received</h5>
-                            <p class="text-muted">When others send you messages, they'll appear here.</p>
                         </div>
-                    {% endif %}
-                </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">No messages</h5>
+                        <p class="text-muted">When others send you messages, they'll appear here.</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
-
-        <!-- Sent Messages -->
-        <div class="col-lg-6 mb-4">
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-paper-plane me-2"></i>Sent Messages
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    {% if sent_messages %}
-                        {% for message in sent_messages %}
-                            <div class="message-item p-3 border-bottom">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <img src="https://ui-avatars.com/api/?name={{ message.recipient.full_name }}&background=dc3545&color=fff&size=32" 
-                                                 class="rounded-circle me-2" width="32" height="32" alt="Recipient">
-                                            <div>
-                                                <div class="fw-bold">{{ message.recipient.full_name }}</div>
-                                                <small class="text-muted">{{ message.recipient.role.title() }}</small>
-                                            </div>
+        
+        <!-- Sent Tab -->
+        <div class="tab-pane fade p-0" id="sent" role="tabpanel">
+            <div class="list-group list-group-flush" id="sentList">
+                {% if sent_messages %}
+                    {% for message in sent_messages %}
+                        <div class="list-group-item list-group-item-action message-item"
+                             data-message-id="{{ message.id }}"
+                             data-recipient-name="{{ message.recipient.full_name }}"
+                             data-subject="{{ message.subject }}"
+                             data-date="{{ message.created_at.isoformat() }}">
+                            <div class="d-flex align-items-start">
+                                <img src="https://ui-avatars.com/api/?name={{ message.recipient.full_name }}&background=dc3545&color=fff&size=48" 
+                                     class="rounded-circle me-3 flex-shrink-0" width="48" height="48">
+                                <div class="flex-grow-1 min-width-0">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <div>
+                                            <span class="text-muted me-1">To:</span>
+                                            <span class="fw-semibold">{{ message.recipient.full_name }}</span>
+                                            <span class="badge bg-secondary text-uppercase ms-1" style="font-size: 0.65rem;">{{ message.recipient.role }}</span>
                                         </div>
-                                        <h6 class="fw-bold mb-1">{{ message.subject }}</h6>
-                                        <p class="text-muted mb-2">{{ message.content[:100] }}{% if message.content|length > 100 %}...{% endif %}</p>
-                                        <small class="text-muted">{{ format_datetime(message.created_at) }}</small>
+                                        <small class="text-muted text-nowrap">{{ format_datetime(message.created_at, '%b %d, %I:%M %p') }}</small>
                                     </div>
-                                </div>
-                                
-                                <!-- Expandable Message Content -->
-                                <div class="collapse" id="sentMessageContent{{ message.id }}">
-                                    <div class="mt-3 p-3 bg-white rounded border">
-                                        <p class="mb-0">{{ message.content }}</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="mt-2">
-                                    <div class="d-flex">
-                                        <button class="btn btn-sm btn-outline-primary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#sentMessageContent{{ message.id }}">
-                                            <i class="fas fa-eye me-1"></i>View Full Message
+                                    <div class="fw-semibold mb-1">{{ message.subject }}</div>
+                                    <p class="text-muted mb-2 text-truncate" style="white-space: pre-line;">{{ message.content[:120] }}{% if message.content|length > 120 %}...{% endif %}</p>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button class="btn btn-sm btn-outline-primary" 
+                                                data-action="view-sent"
+                                                data-recipient-name="{{ message.recipient.full_name }}"
+                                                data-recipient-email="{{ message.recipient.email }}"
+                                                data-recipient-role="{{ message.recipient.role }}"
+                                                data-subject="{{ message.subject }}"
+                                                data-created-at="{{ message.created_at.isoformat() }}"
+                                                data-content="{{ message.content }}">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" 
+                                                data-action="delete"
+                                                data-message-id="{{ message.id }}"
+                                                data-message-type="sent">
+                                            <i class="fas fa-trash"></i> Delete
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-paper-plane fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">No messages sent</h5>
-                            <p class="text-muted">Your sent messages will appear here.</p>
                         </div>
-                    {% endif %}
-                </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-paper-plane fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">No sent messages</h5>
+                        <p class="text-muted">Messages you send will appear here.</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- New Message Modal -->
-<div class="modal fade" id="newMessageModal" tabindex="-1">
+<!-- Compose/Reply Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="messageModalTitle">
                     <i class="fas fa-envelope me-2"></i>Send New Message
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" action="{{ url_for('send_message', user_id=recipient.id if recipient else 0) }}" id="messageForm">
+            <form id="messageForm" method="POST">
                 <div class="modal-body">
                     {{ form.hidden_tag() }}
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">To:</label>
-                        <div class="recipient-info p-2 bg-light rounded">
-                            {% if recipient %}
+                    
+                    <!-- Recipient Selection (shown for compose, hidden for reply) -->
+                    <div id="recipientSelection" class="mb-3">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-user me-2"></i>To: <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="recipientSearch" 
+                                   placeholder="Search users..." autocomplete="off">
+                        </div>
+                        <div id="recipientDropdown" class="dropdown-menu w-100" style="max-height: 300px; overflow-y: auto;"></div>
+                        <input type="hidden" name="recipient_id" id="recipientIdInput">
+                    </div>
+                    
+                    <!-- Selected Recipient Display (for reply mode) -->
+                    <div id="recipientDisplay" class="mb-3 d-none">
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-user me-2"></i>To:
+                        </label>
+                        <div class="card border-success">
+                            <div class="card-body p-2">
                                 <div class="d-flex align-items-center">
-                                    <img src="https://ui-avatars.com/api/?name={{ recipient.full_name }}&background=28a745&color=fff&size=32" 
-                                         class="rounded-circle me-2" width="32" height="32" alt="Recipient">
+                                    <img id="recipientAvatar" src="" class="rounded-circle me-2" width="40" height="40">
                                     <div>
-                                        <div class="fw-bold">{{ recipient.full_name }}</div>
-                                        <small class="text-muted">{{ recipient.role.title() }}</small>
+                                        <div class="fw-bold" id="recipientName"></div>
+                                        <small class="text-muted" id="recipientRole"></small>
                                     </div>
                                 </div>
-                            {% endif %}
+                            </div>
                         </div>
                     </div>
-                    {{ form.recipient_id(class_="d-none") }}
                     
+                    <!-- Subject -->
                     <div class="mb-3">
-                        {{ form.subject.label(class="form-label fw-semibold") }}
-                        {{ form.subject(class="form-control") }}
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-heading me-2"></i>Subject <span class="text-danger">*</span>
+                        </label>
+                        {{ form.subject(class="form-control", placeholder="Enter subject") }}
                     </div>
                     
+                    <!-- Message Content -->
                     <div class="mb-3">
-                        {{ form.content.label(class="form-label fw-semibold") }}
-                        {{ form.content(class="form-control", rows="6") }}
+                        <label class="form-label fw-bold">
+                            <i class="fas fa-comment-dots me-2"></i>Message <span class="text-danger">*</span>
+                        </label>
+                        {{ form.content(class="form-control", rows="6", placeholder="Type your message here...") }}
                     </div>
+                </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-success" id="sendBtn">
                         <i class="fas fa-paper-plane me-2"></i>Send Message
                     </button>
                 </div>
@@ -232,203 +286,596 @@
         </div>
     </div>
 </div>
+
+<!-- View Message Modal -->
+<div class="modal fade" id="viewMessageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewMessageTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex mb-3 pb-3 border-bottom">
+                    <img id="viewSenderAvatar" src="" class="rounded-circle me-3" width="56" height="56">
+                    <div>
+                        <h6 class="mb-0" id="viewSenderName"></h6>
+                        <small class="text-muted" id="viewSenderRole"></small><br>
+                        <small class="text-muted"><i class="fas fa-clock"></i> <span id="viewMessageDate"></span></small>
+                    </div>
+                </div>
+                <div id="viewMessageContent" style="white-space: pre-wrap; word-wrap: break-word; line-height: 1.6;"></div>
+            </div>
+            <div class="modal-footer" id="viewMessageFooter">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Message
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="fas fa-trash fa-3x text-danger mb-3"></i>
+                <h5>Are you sure?</h5>
+                <p class="text-muted">This message will be permanently deleted and cannot be recovered.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i>Delete Message
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
+<style>
+.message-item {
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+    padding: 0.75rem 1rem !important;
+}
+.message-item:hover {
+    background-color: #f8f9fa !important;
+}
+.min-width-0 {
+    min-width: 0;
+}
+.dropdown-menu.show {
+    display: block;
+}
+</style>
+
 <script>
+// ============================================================================
+// GLOBAL STATE
+// ============================================================================
+let allUsers = [];
+let currentMessageId = null;
+let messageToDelete = null;
+let isReplyMode = false;
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize message UI elements
-    initializeMessageElements();
-    
-    // Add click handlers for message actions
-    initializeMessageActions();
+    setupMessageModal();
+    setupSearchAndFilter();
+    setupButtonHandlers();
+    loadUsers();
 });
 
-// Handle message read status updates
-function updateMessageStatus(messageId) {
+// ============================================================================
+// BUTTON EVENT HANDLERS
+// ============================================================================
+function setupButtonHandlers() {
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        
+        const action = btn.dataset.action;
+        
+        if (action === 'view') {
+            viewMessage(
+                btn.dataset.messageId,
+                btn.dataset.senderName,
+                btn.dataset.senderEmail,
+                btn.dataset.senderRole,
+                btn.dataset.subject,
+                btn.dataset.createdAt,
+                btn.dataset.content
+            );
+        } else if (action === 'view-sent') {
+            viewSentMessage(
+                btn.dataset.recipientName,
+                btn.dataset.recipientEmail,
+                btn.dataset.recipientRole,
+                btn.dataset.subject,
+                btn.dataset.createdAt,
+                btn.dataset.content
+            );
+        } else if (action === 'reply') {
+            openReplyModal(
+                btn.dataset.recipientId,
+                btn.dataset.recipientName,
+                btn.dataset.subject,
+                btn.dataset.messageId
+            );
+        } else if (action === 'mark-read') {
+            markAsRead(btn.dataset.messageId);
+        } else if (action === 'delete') {
+            confirmDeleteMessage(btn.dataset.messageId, btn.dataset.messageType);
+        }
+    });
+}
+
+// ============================================================================
+// COMPOSE NEW MESSAGE
+// ============================================================================
+function openComposeModal() {
+    isReplyMode = false;
+    const modal = document.getElementById('messageModal');
+    const form = document.getElementById('messageForm');
+    const title = document.getElementById('messageModalTitle');
+    
+    // Reset form
+    form.reset();
+    form.action = '#';
+    
+    // Update UI
+    title.innerHTML = '<i class="fas fa-envelope me-2"></i>Send New Message';
+    document.getElementById('recipientSelection').classList.remove('d-none');
+    document.getElementById('recipientDisplay').classList.add('d-none');
+    document.getElementById('recipientIdInput').value = '';
+    
+    // Show modal
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    // Focus on search
+    setTimeout(() => document.getElementById('recipientSearch').focus(), 300);
+}
+
+// ============================================================================
+// REPLY TO MESSAGE
+// ============================================================================
+function openReplyModal(recipientId, recipientName, subject, messageId) {
+    isReplyMode = true;
+    const modal = document.getElementById('messageModal');
+    const form = document.getElementById('messageForm');
+    const title = document.getElementById('messageModalTitle');
+    
+    // Reset form
+    form.reset();
+    form.action = `/messages/reply/${messageId}`;
+    
+    // Set values
+    form.querySelector('[name="subject"]').value = subject;
+    document.getElementById('recipientIdInput').value = recipientId;
+    
+    // Update UI
+    title.innerHTML = '<i class="fas fa-reply me-2"></i>Reply to Message';
+    document.getElementById('recipientSelection').classList.add('d-none');
+    document.getElementById('recipientDisplay').classList.remove('d-none');
+    document.getElementById('recipientName').textContent = recipientName;
+    document.getElementById('recipientRole').textContent = 'Recipient';
+    document.getElementById('recipientAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(recipientName)}&background=28a745&color=fff&size=40`;
+    
+    // Show modal
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    // Focus on content
+    setTimeout(() => form.querySelector('[name="content"]').focus(), 300);
+}
+
+// ============================================================================
+// VIEW MESSAGE
+// ============================================================================
+function viewMessage(id, senderName, senderEmail, senderRole, subject, createdAt, content) {
+    const modal = document.getElementById('viewMessageModal');
+    
+    document.getElementById('viewMessageTitle').textContent = subject;
+    document.getElementById('viewSenderName').textContent = senderName;
+    document.getElementById('viewSenderRole').textContent = `${senderRole} • ${senderEmail}`;
+    document.getElementById('viewMessageDate').textContent = new Date(createdAt).toLocaleString();
+    document.getElementById('viewMessageContent').textContent = content;
+    document.getElementById('viewSenderAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=28a745&color=fff&size=56`;
+    
+    // Add reply button to footer
+    const footer = document.getElementById('viewMessageFooter');
+    const existingReplyBtn = footer.querySelector('.btn-success');
+    if (existingReplyBtn) existingReplyBtn.remove();
+    
+    const replyBtn = document.createElement('button');
+    replyBtn.className = 'btn btn-success';
+    replyBtn.innerHTML = '<i class="fas fa-reply me-2"></i>Reply';
+    replyBtn.onclick = function() {
+        bootstrap.Modal.getInstance(modal).hide();
+        // Extract sender ID from the message item
+        const messageItem = document.querySelector(`[data-message-id="${id}"]`);
+        const senderId = messageItem ? messageItem.dataset.senderId : null;
+        if (senderId) {
+            openReplyModal(senderId, senderName, `Re: ${subject}`, id);
+        }
+    };
+    footer.appendChild(replyBtn);
+    
+    // Show modal
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    
+    // Mark as read
+    markAsRead(id);
+}
+
+function viewSentMessage(recipientName, recipientEmail, recipientRole, subject, createdAt, content) {
+    const modal = document.getElementById('viewMessageModal');
+    
+    document.getElementById('viewMessageTitle').textContent = subject;
+    document.getElementById('viewSenderName').textContent = `To: ${recipientName}`;
+    document.getElementById('viewSenderRole').textContent = `${recipientRole} • ${recipientEmail}`;
+    document.getElementById('viewMessageDate').textContent = new Date(createdAt).toLocaleString();
+    document.getElementById('viewMessageContent').textContent = content;
+    document.getElementById('viewSenderAvatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(recipientName)}&background=dc3545&color=fff&size=56`;
+    
+    // Remove reply button for sent messages
+    const footer = document.getElementById('viewMessageFooter');
+    const existingReplyBtn = footer.querySelector('.btn-success');
+    if (existingReplyBtn) existingReplyBtn.remove();
+    
+    // Show modal
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+// ============================================================================
+// USER SELECTION
+// ============================================================================
+function loadUsers() {
+    fetch('/api/users/list')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                allUsers = data.users;
+            }
+        })
+        .catch(error => console.error('Error loading users:', error));
+}
+
+function setupMessageModal() {
+    const searchInput = document.getElementById('recipientSearch');
+    const dropdown = document.getElementById('recipientDropdown');
+    
+    // Show all users on focus
+    searchInput.addEventListener('focus', function() {
+        if (allUsers.length > 0) {
+            displayUsers(allUsers);
+            dropdown.classList.add('show');
+        }
+    });
+    
+    // Filter as user types
+    searchInput.addEventListener('input', function() {
+        const query = this.value.toLowerCase().trim();
+        if (query === '') {
+            displayUsers(allUsers);
+        } else {
+            const filtered = allUsers.filter(user => 
+                user.full_name.toLowerCase().includes(query) ||
+                user.username.toLowerCase().includes(query) ||
+                user.role.toLowerCase().includes(query)
+            );
+            displayUsers(filtered);
+        }
+        dropdown.classList.add('show');
+    });
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.remove('show');
+        }
+    });
+}
+
+function displayUsers(users) {
+    const dropdown = document.getElementById('recipientDropdown');
+    
+    if (users.length === 0) {
+        dropdown.innerHTML = '<div class="dropdown-item-text text-center py-3 text-muted">No users found</div>';
+        return;
+    }
+    
+    dropdown.innerHTML = users.map(user => `
+        <a href="#" class="dropdown-item py-2" onclick="selectUser(${user.id}, '${escapeHtml(user.full_name)}', '${escapeHtml(user.role)}'); return false;">
+            <div class="d-flex align-items-center">
+                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name)}&background=28a745&color=fff&size=40" 
+                     class="rounded-circle me-2" width="40" height="40">
+                <div>
+                    <div class="fw-bold">${escapeHtml(user.full_name)}</div>
+                    <small class="text-muted">${escapeHtml(user.role)} • @${escapeHtml(user.username)}</small>
+                </div>
+            </div>
+        </a>
+    `).join('');
+}
+
+function selectUser(userId, userName, userRole) {
+    document.getElementById('recipientIdInput').value = userId;
+    document.getElementById('recipientSearch').value = userName;
+    document.getElementById('recipientDropdown').classList.remove('show');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ============================================================================
+// FORM SUBMISSION
+// ============================================================================
+document.getElementById('messageForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const recipientId = document.getElementById('recipientIdInput').value;
+    const subject = this.querySelector('[name="subject"]').value.trim();
+    const content = this.querySelector('[name="content"]').value.trim();
+    
+    // Validation
+    if (!isReplyMode && !recipientId) {
+        alert('Please select a recipient');
+        return;
+    }
+    if (!subject) {
+        alert('Please enter a subject');
+        return;
+    }
+    if (!content) {
+        alert('Please enter a message');
+        return;
+    }
+    
+    // Determine action URL
+    if (isReplyMode && this.action.includes('/messages/reply/')) {
+        // Reply mode - use existing action
+        this.submit();
+    } else {
+        // Compose mode - set action
+        this.action = `/messages/send/${recipientId}`;
+        this.submit();
+    }
+});
+
+// ============================================================================
+// MESSAGE ACTIONS
+// ============================================================================
+function getCSRFToken() {
+    // Try to get from meta tag first
+    const metaTag = document.querySelector('meta[name="csrf-token"]');
+    if (metaTag) {
+        return metaTag.getAttribute('content');
+    }
+    // Fallback to form field
+    const formField = document.querySelector('[name="csrf_token"]');
+    return formField ? formField.value : '';
+}
+
+function markAsRead(messageId) {
+    const csrfToken = getCSRFToken();
+    const formData = new FormData();
+    formData.append('csrf_token', csrfToken);
+    
     fetch(`/messages/read/${messageId}`, {
         method: 'POST',
         headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('meta[name=csrf-token]').getAttribute('content')
-        }
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
     })
-    .then(response => {
-        if (!response.ok) {
-            if (response.status === 400) {
-                throw new Error('CSRF token error. Please refresh the page and try again.');
-            }
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            updateMessageUI(messageId, data.message);
+            // Update UI
+            const messageItem = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (messageItem) {
+                messageItem.classList.remove('bg-light');
+                messageItem.dataset.isRead = 'true';
+                const badge = messageItem.querySelector('.badge.bg-primary');
+                if (badge) badge.remove();
+                const markReadBtn = messageItem.querySelector('.btn-outline-info');
+                if (markReadBtn) markReadBtn.remove();
+            }
+            // Update unread count
             updateUnreadCount();
+        }
+    })
+    .catch(error => console.error('Error marking as read:', error));
+}
+
+function updateUnreadCount() {
+    const unreadMessages = document.querySelectorAll('[data-is-read="false"]').length;
+    const badges = document.querySelectorAll('.badge.bg-danger.rounded-pill');
+    badges.forEach(badge => {
+        if (unreadMessages > 0) {
+            badge.textContent = unreadMessages;
+            badge.style.display = '';
         } else {
-            throw new Error(data.message || 'Failed to mark message as read');
+            badge.style.display = 'none';
+        }
+    });
+}
+
+function confirmDeleteMessage(messageId, type) {
+    messageToDelete = { id: messageId, type: type };
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    if (!messageToDelete) return;
+    
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Deleting...';
+    
+    const csrfToken = getCSRFToken();
+    const formData = new FormData();
+    formData.append('csrf_token', csrfToken);
+    
+    fetch(`/messages/delete/${messageToDelete.id}`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Close modal first
+        bootstrap.Modal.getInstance(document.getElementById('deleteModal')).hide();
+        
+        if (data.success) {
+            // Remove from UI
+            const messageItem = document.querySelector(`[data-message-id="${messageToDelete.id}"]`);
+            if (messageItem) {
+                messageItem.style.transition = 'opacity 0.3s';
+                messageItem.style.opacity = '0';
+                setTimeout(() => messageItem.remove(), 300);
+            }
+            
+            // Show success toast
+            showToast('Message deleted successfully!', 'success');
+            
+            messageToDelete = null;
+        } else {
+            showToast('Failed to delete message', 'danger');
         }
     })
     .catch(error => {
-        console.error('Error updating message status:', error);
-        
-        // For CSRF errors, offer alternative
-        if (error.message.includes('CSRF')) {
-            if (confirm('There was a security token error. Would you like to mark this message as read by redirecting to it?')) {
-                window.location.href = `/messages/read/${messageId}`;
-                return;
-            }
-        }
-        
-        // Show user-friendly error message
-        alert('Failed to mark message as read: ' + error.message);
+        console.error('Error deleting message:', error);
+        showToast('An error occurred while deleting the message', 'danger');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-trash me-2"></i>Delete Message';
     });
-}
+});
 
-// Update message UI elements when read
-function updateMessageUI(messageId, messageData) {
-    const messageElement = document.querySelector(`.message-item[data-message-id="${messageId}"]`);
-    if (!messageElement) return;
-    
-    // Update read status display
-    const statusElement = messageElement.querySelector('.message-status');
-    if (statusElement) {
-        // Convert UTC to local time
-        const utcDate = new Date(messageData.read_at);
-        const indianTime = new Date(utcDate.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-        const readTime = indianTime.toLocaleString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        });
-        statusElement.innerHTML = `<i class="fas fa-check-double"></i> Read ${readTime}`;
-        statusElement.classList.remove('d-none');
+// ============================================================================
+// TOAST NOTIFICATION
+// ============================================================================
+function showToast(message, type = 'success') {
+    // Create toast container if it doesn't exist
+    let toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.className = 'position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
     }
     
-    // Update message styling
-    messageElement.classList.remove('bg-light');
-    messageElement.dataset.isRead = 'true';
+    // Create toast element
+    const toastId = 'toast-' + Date.now();
+    const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
     
-    // Remove unread badge
-    const unreadBadge = messageElement.querySelector('.unread-badge');
-    if (unreadBadge) {
-        unreadBadge.remove();
-    }
-}
-
-// Mark a specific message as read
-function markAsRead(messageId) {
-    updateMessageStatus(messageId);
-}
-
-// Update the unread message count in the header
-function updateUnreadCount() {
-    const headerBadge = document.querySelector('.message-badge');
-    if (!headerBadge) return;
-    
-    const currentCount = parseInt(headerBadge.textContent || '0');
-    if (currentCount > 0) {
-        const newCount = currentCount - 1;
-        headerBadge.textContent = newCount;
-        
-        if (newCount === 0) {
-            headerBadge.classList.add('d-none');
-        }
-    }
-}
-
-// Initialize message UI elements
-function initializeMessageElements() {
-    // Show unread message count badge if there are unread messages
-    const headerBadge = document.querySelector('.message-badge');
-    const unreadCount = document.querySelectorAll('.message-item[data-is-read="false"]').length;
-    
-    if (headerBadge && unreadCount > 0) {
-        headerBadge.textContent = unreadCount;
-        headerBadge.classList.remove('d-none');
-    }
-}
-
-// Initialize message action handlers
-function initializeMessageActions() {
-    // Add click handlers to message expand buttons
-    document.querySelectorAll('[data-bs-toggle="collapse"]').forEach(button => {
-        button.addEventListener('click', function() {
-            const messageItem = this.closest('.message-item');
-            if (!messageItem) return;
-            
-            const messageId = messageItem.dataset.messageId;
-            const isRead = messageItem.dataset.isRead === 'true';
-            
-            if (!isRead) {
-                updateMessageStatus(messageId);
-            }
-        });
-    });
-}
-
-// Handle replying to messages
-function replyToMessage(recipientId, recipientName, subject, messageId) {
-    const modal = document.getElementById('newMessageModal');
-    if (!modal) return;
-    
-    const form = modal.querySelector('form');
-    if (!form) return;
-    
-    // Update form action and fields
-    form.action = `/messages/reply/${messageId}`;
-    
-    // Update recipient display
-    const recipientInfo = modal.querySelector('.recipient-info');
-    if (recipientInfo) {
-        recipientInfo.innerHTML = `
-            <div class="d-flex align-items-center p-2 bg-light rounded">
-                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(recipientName)}&background=28a745&color=fff&size=32" 
-                     class="rounded-circle me-2" width="32" height="32" alt="Recipient">
-                <div>
-                    <div class="fw-bold">${recipientName}</div>
+    const toastHTML = `
+        <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas ${icon} me-2"></i>${message}
                 </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
-        `;
-    }
+        </div>
+    `;
     
-    // Update form fields
-    const recipientField = form.querySelector('input[name="recipient_id"]');
-    const subjectField = form.querySelector('input[name="subject"]');
-    const contentField = form.querySelector('textarea[name="content"]');
+    toastContainer.insertAdjacentHTML('beforeend', toastHTML);
     
-    if (recipientField) {
-        recipientField.value = recipientId;
-    }
+    // Show toast
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, {
+        autohide: true,
+        delay: 3000
+    });
+    toast.show();
     
-    if (subjectField) {
-        subjectField.value = subject;
-    }
+    // Remove toast element after it's hidden
+    toastElement.addEventListener('hidden.bs.toast', function() {
+        toastElement.remove();
+    });
+}
+
+// ============================================================================
+// SEARCH AND FILTER
+// ============================================================================
+function setupSearchAndFilter() {
+    document.getElementById('messageSearch')?.addEventListener('input', filterMessages);
+    document.getElementById('filterType')?.addEventListener('change', filterMessages);
+    document.getElementById('sortBy')?.addEventListener('change', filterMessages);
+}
+
+function filterMessages() {
+    const searchTerm = document.getElementById('messageSearch')?.value.toLowerCase() || '';
+    const filterType = document.getElementById('filterType')?.value || 'all';
+    const sortBy = document.getElementById('sortBy')?.value || 'newest';
     
-    if (contentField) {
-        contentField.value = '';
-    }
+    const activeTab = document.querySelector('.tab-pane.active');
+    if (!activeTab) return;
     
-    // Update modal title
-    const modalTitle = modal.querySelector('.modal-title');
-    if (modalTitle) {
-        modalTitle.innerHTML = '<i class="fas fa-reply me-2"></i>Reply to Message';
-    }
+    const messages = Array.from(activeTab.querySelectorAll('.message-item'));
     
-    // Show modal
-    const modalInstance = new bootstrap.Modal(modal);
-    modalInstance.show();
-    
-    // Focus on content field
-    modal.addEventListener('shown.bs.modal', function () {
-        if (contentField) {
-            contentField.focus();
+    // Filter
+    messages.forEach(msg => {
+        const senderName = (msg.dataset.senderName || msg.dataset.recipientName || '').toLowerCase();
+        const subject = (msg.dataset.subject || '').toLowerCase();
+        const isRead = msg.dataset.isRead === 'true';
+        
+        let show = true;
+        
+        // Search filter
+        if (searchTerm && !senderName.includes(searchTerm) && !subject.includes(searchTerm)) {
+            show = false;
         }
-    }, { once: true });
+        
+        // Read/Unread filter
+        if (filterType === 'unread' && isRead) show = false;
+        if (filterType === 'read' && !isRead) show = false;
+        
+        msg.style.display = show ? '' : 'none';
+    });
+    
+    // Sort
+    const visibleMessages = messages.filter(msg => msg.style.display !== 'none');
+    const parent = visibleMessages[0]?.parentNode;
+    
+    if (parent) {
+        if (sortBy === 'oldest') {
+            visibleMessages.reverse().forEach(msg => parent.appendChild(msg));
+        } else if (sortBy === 'sender') {
+            visibleMessages.sort((a, b) => {
+                const nameA = a.dataset.senderName || a.dataset.recipientName || '';
+                const nameB = b.dataset.senderName || b.dataset.recipientName || '';
+                return nameA.localeCompare(nameB);
+            }).forEach(msg => parent.appendChild(msg));
+        }
+    }
 }
 </script>
 {% endblock %}

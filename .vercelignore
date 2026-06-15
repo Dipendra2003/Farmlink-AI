@@ -1,0 +1,28 @@
+# Local environments
+.env
+.env.*
+!.env.example
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Git and IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Uploads and temporary files
+uploads/
+tmp/
+*.log
+ai_cache/

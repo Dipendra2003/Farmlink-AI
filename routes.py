@@ -299,8 +299,8 @@ def farmer_dashboard():
         # Get recent purchases made by farmer (as buyer)
         my_purchases = Order.query.filter_by(buyer_id=current_user.id).order_by(Order.created_at.desc()).limit(5).all()
         
-        # Get unread messages
-        unread_messages = Message.query.filter_by(recipient_id=current_user.id, is_read=False).count()
+        # Get unread messages (excluding archived)
+        unread_messages = Message.query.filter_by(recipient_id=current_user.id, is_read=False, is_archived=False).count()
         
         # Get weather data for farmer's location
         weather_data = get_weather_data(current_user.location)
@@ -401,8 +401,8 @@ def buyer_dashboard():
     # Get buyer's recent orders
     my_orders = Order.query.filter_by(buyer_id=current_user.id).order_by(Order.created_at.desc()).limit(10).all()
     
-    # Get unread messages
-    unread_messages = Message.query.filter_by(recipient_id=current_user.id, is_read=False).count()
+    # Get unread messages (excluding archived)
+    unread_messages = Message.query.filter_by(recipient_id=current_user.id, is_read=False, is_archived=False).count()
     
     # Get available crops in buyer's area
     nearby_crops = Crop.query.filter_by(status='available', location=current_user.location).limit(6).all()
@@ -2313,22 +2313,25 @@ def view_seller_profile(seller_id):
 @login_required
 def inbox():
     """Show user's message inbox with received and sent messages"""
-    # Get all messages for current user, ordered by most recent first
+    # Get all messages for current user (excluding archived), ordered by most recent first
     received_messages = Message.query.filter_by(
-        recipient_id=current_user.id
+        recipient_id=current_user.id,
+        is_archived=False
     ).order_by(Message.created_at.desc()).all()
     
     sent_messages = Message.query.filter_by(
-        sender_id=current_user.id
+        sender_id=current_user.id,
+        is_archived=False
     ).order_by(Message.created_at.desc()).all()
     
     # Initialize message form for new messages/replies
     form = MessageForm()
     
-    # Get unread message count for UI badge
+    # Get unread message count for UI badge (excluding archived)
     unread_count = Message.query.filter_by(
         recipient_id=current_user.id, 
-        is_read=False
+        is_read=False,
+        is_archived=False
     ).count()
     
     return render_template('messages/inbox.html', 
@@ -2337,12 +2340,37 @@ def inbox():
                          unread_count=unread_count,
                          form=form)
 
-@app.route('/messages/send/<int:user_id>', methods=['GET', 'POST'])
+@app.route('/messages/send/<recipient_identifier>', methods=['GET', 'POST'])
 @login_required
-def send_message(user_id):
-    """Send a new message to a user"""
-    # Verify recipient exists
-    recipient = User.query.get_or_404(user_id)
+def send_message(recipient_identifier):
+    """Send a new message to a user (by ID, email, or username)"""
+    app.logger.info(f'Message send attempt to: {recipient_identifier}')
+    
+    # Try to find recipient by ID, email, or username
+    recipient = None
+    
+    # Check if it's a numeric ID
+    if recipient_identifier.isdigit():
+        recipient = User.query.get(int(recipient_identifier))
+        app.logger.info(f'Tried ID lookup: {"Found" if recipient else "Not found"}')
+    
+    # If not found, try email
+    if not recipient:
+        recipient = User.query.filter_by(email=recipient_identifier).first()
+        app.logger.info(f'Tried email lookup: {"Found" if recipient else "Not found"}')
+    
+    # If still not found, try username
+    if not recipient:
+        recipient = User.query.filter_by(username=recipient_identifier).first()
+        app.logger.info(f'Tried username lookup: {"Found" if recipient else "Not found"}')
+    
+    # If no recipient found, return to inbox with error
+    if not recipient:
+        app.logger.warning(f'❌ User not found: {recipient_identifier}')
+        flash(f'User not found: {recipient_identifier}', 'danger')
+        return redirect(url_for('inbox'))
+    
+    app.logger.info(f'Recipient found: {recipient.full_name} (ID: {recipient.id})')
     
     # Can't send messages to yourself
     if recipient.id == current_user.id:
@@ -2350,6 +2378,13 @@ def send_message(user_id):
         return redirect(url_for('inbox'))
     
     form = MessageForm()
+    
+    # Add detailed logging
+    app.logger.info(f'Form submitted: {request.method == "POST"}')
+    if request.method == 'POST':
+        app.logger.info(f'Form data: subject={bool(form.subject.data)}, content={bool(form.content.data)}, recipient_id={form.recipient_id.data}')
+        app.logger.info(f'Form errors: {form.errors}')
+    
     if form.validate_on_submit():
         try:
             # Create new message
@@ -2357,12 +2392,26 @@ def send_message(user_id):
                 subject=form.subject.data,
                 content=form.content.data,
                 sender_id=current_user.id,
-                recipient_id=user_id,
+                recipient_id=recipient.id,
                 created_at=datetime.utcnow(),
                 is_read=False
             )
             db.session.add(message)
             db.session.commit()
+            
+            app.logger.info(f'Message sent successfully: {current_user.full_name} → {recipient.full_name}')
+            
+            # Send email notification to recipient
+            try:
+                from email_service import email_service
+                email_result = email_service.send_new_message_notification(recipient, current_user, message)
+                if email_result.get('success'):
+                    app.logger.info(f'📧 Email notification sent to {recipient.email}')
+                else:
+                    app.logger.warning(f'⚠️ Email notification failed: {email_result.get("error")}')
+            except Exception as email_error:
+                app.logger.error(f'❌ Email notification error: {str(email_error)}')
+                # Don't fail the message send if email fails
             
             flash('Message sent successfully!', 'success')
             return redirect(url_for('inbox'))
@@ -2371,17 +2420,25 @@ def send_message(user_id):
             db.session.rollback()
             app.logger.error(f'Error sending message: {str(e)}')
             flash('An error occurred while sending the message. Please try again.', 'danger')
+    else:
+        if request.method == 'POST':
+            app.logger.error(f'❌ Form validation failed with errors: {form.errors}')
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(f'{field}: {error}', 'danger')
     
     # Set the recipient_id in the form
-    form.recipient_id.data = user_id
+    form.recipient_id.data = recipient.id
             
-    # Get messages for inbox display
+    # Get messages for inbox display (excluding archived)
     received_messages = Message.query.filter_by(
-        recipient_id=current_user.id
+        recipient_id=current_user.id,
+        is_archived=False
     ).order_by(Message.created_at.desc()).all()
     
     sent_messages = Message.query.filter_by(
-        sender_id=current_user.id
+        sender_id=current_user.id,
+        is_archived=False
     ).order_by(Message.created_at.desc()).all()
     
     return render_template('messages/inbox.html', 
@@ -2393,12 +2450,12 @@ def send_message(user_id):
 @app.route('/messages/read/<int:message_id>', methods=['GET', 'POST'])
 @login_required
 def read_message(message_id):
-    """Mark a message as read - handle both direct access (GET) and AJAX (POST)"""
+    """Mark a message as read - supports both GET (direct link) and POST (AJAX)"""
     message = Message.query.get_or_404(message_id)
     
     # Verify the current user is the recipient
     if message.recipient_id != current_user.id:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({'status': 'error', 'message': 'Access denied'}), 403
         flash('Access denied.', 'danger')
         return redirect(url_for('inbox'))
@@ -2412,7 +2469,7 @@ def read_message(message_id):
                 db.session.commit()
                 flash('Message marked as read.', 'success')
             else:
-                flash('Message was already read.', 'info')
+                flash('Message already read.', 'info')
             return redirect(url_for('inbox'))
         except Exception as e:
             db.session.rollback()
@@ -2453,7 +2510,7 @@ def read_message(message_id):
         flash('An error occurred. Please try again.', 'danger')
         return redirect(url_for('inbox'))
 
-@app.route('/messages/reply/<int:message_id>', methods=['POST'])
+@app.route('/messages/reply/<int:message_id>', methods=['GET', 'POST'])
 @login_required
 def reply_message(message_id):
     """Reply to an existing message"""
@@ -2465,6 +2522,12 @@ def reply_message(message_id):
         flash('Access denied.', 'danger')
         return redirect(url_for('inbox'))
     
+    # Handle GET request - redirect to inbox (direct URL access not allowed)
+    if request.method == 'GET':
+        flash('Please use the reply button to respond to messages.', 'info')
+        return redirect(url_for('inbox'))
+    
+    # Handle POST request - process the reply
     # Get reply content
     subject = request.form.get('subject', '').strip()
     content = request.form.get('content', '').strip()
@@ -2499,6 +2562,100 @@ def reply_message(message_id):
         app.logger.error(f'Error sending reply: {str(e)}')
         flash('An error occurred while sending your reply. Please try again.', 'danger')
         return redirect(url_for('inbox'))
+
+@app.route('/messages/delete/<int:message_id>', methods=['POST'])
+@login_required
+def delete_message(message_id):
+    """Delete a message"""
+    message = Message.query.get_or_404(message_id)
+    
+    # Verify the current user owns this message (either sender or recipient)
+    if message.sender_id != current_user.id and message.recipient_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+    
+    try:
+        db.session.delete(message)
+        db.session.commit()
+        
+        app.logger.info(f'🗑️ Message {message_id} deleted by user {current_user.id}')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'message': 'Message deleted successfully'})
+        else:
+            flash('Message deleted successfully!', 'success')
+            return redirect(url_for('inbox'))
+            
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Error deleting message: {str(e)}')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'error': str(e)}), 500
+        else:
+            flash('An error occurred while deleting the message.', 'danger')
+            return redirect(url_for('inbox'))
+
+@app.route('/messages/archive/<int:message_id>', methods=['POST'])
+@login_required
+def archive_message(message_id):
+    """Archive a message"""
+    message = Message.query.get_or_404(message_id)
+    
+    # Verify the current user owns this message (either sender or recipient)
+    if message.sender_id != current_user.id and message.recipient_id != current_user.id:
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+    
+    try:
+        message.is_archived = True
+        db.session.commit()
+        
+        app.logger.info(f'📦 Message {message_id} archived by user {current_user.id}')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'message': 'Message archived successfully'})
+        else:
+            flash('Message archived successfully!', 'info')
+            return redirect(url_for('inbox'))
+            
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f'Error archiving message: {str(e)}')
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'error': str(e)}), 500
+        else:
+            flash('An error occurred while archiving the message.', 'info')
+            return redirect(url_for('inbox'))
+
+@app.route('/api/users/list')
+@login_required
+def api_users_list():
+    """API endpoint to get list of users for messaging"""
+    try:
+        # Get all active users except the current user
+        users = User.query.filter(
+            User.id != current_user.id,
+            User.active == True,
+            User.email_verified == True
+        ).order_by(User.full_name).all()
+        
+        user_list = [{
+            'id': user.id,
+            'full_name': user.full_name,
+            'role': user.role.replace('_', ' ').title(),
+            'username': user.username
+        } for user in users]
+        
+        return jsonify({
+            'success': True,
+            'users': user_list
+        })
+    except Exception as e:
+        app.logger.error(f'Error fetching users list: {str(e)}')
+        return jsonify({
+            'success': False,
+            'message': 'Failed to load users'
+        }), 500
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -2994,6 +3151,9 @@ def admin_kyc_verification():
         kyc_list = KYCService.get_all_kyc_list(status=status_filter)
     
     # Apply date filters if provided
+    date_from_obj = None
+    date_to_obj = None
+    
     if date_from:
         try:
             date_from_obj = datetime.strptime(date_from, '%Y-%m-%d')
@@ -3008,23 +3168,83 @@ def admin_kyc_verification():
         except ValueError:
             flash('Invalid end date format', 'warning')
     
-    # Prepare chart data for last 30 days
+    # Prepare chart data based on filters or default to last 30 days
     chart_labels = []
     chart_data = []
     
-    # Create a complete 30-day range
-    today = datetime.utcnow().date()
-    for i in range(29, -1, -1):
-        date = today - timedelta(days=i)
-        chart_labels.append(date.strftime('%b %d'))
-        
-        # Find count for this date
-        count = 0
-        for submission in stats['submissions_last_30_days']:
-            if submission['date'] == str(date):
-                count = submission['count']
-                break
-        chart_data.append(count)
+    if date_from and date_to:
+        # Use filtered date range for chart
+        try:
+            start_date = datetime.strptime(date_from, '%Y-%m-%d').date()
+            end_date = datetime.strptime(date_to, '%Y-%m-%d').date()
+            
+            # Calculate date range
+            date_diff = (end_date - start_date).days
+            
+            # Query submissions in the filtered date range
+            from models import SellerKYC
+            from sqlalchemy import func
+            submissions_by_date = db.session.query(
+                func.date(SellerKYC.created_at).label('date'),
+                func.count(SellerKYC.id).label('count')
+            ).filter(
+                SellerKYC.created_at >= start_date,
+                SellerKYC.created_at < end_date + timedelta(days=1)
+            ).group_by(
+                func.date(SellerKYC.created_at)
+            ).all()
+            
+            # Create dict for quick lookup
+            submissions_dict = {str(row.date): row.count for row in submissions_by_date}
+            
+            # For large date ranges (>90 days), show only days with submissions
+            if date_diff > 90:
+                # Show only dates with actual submissions
+                for date_str, count in sorted(submissions_dict.items()):
+                    date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+                    chart_labels.append(date_obj.strftime('%b %d, %Y'))
+                    chart_data.append(count)
+                
+                if not chart_data:
+                    # If no submissions, show message
+                    chart_labels = []
+                    chart_data = []
+            else:
+                # For smaller ranges, show all days
+                current_date = start_date
+                while current_date <= end_date:
+                    chart_labels.append(current_date.strftime('%b %d'))
+                    chart_data.append(submissions_dict.get(str(current_date), 0))
+                    current_date += timedelta(days=1)
+                
+        except Exception as e:
+            flash(f'Error generating chart data: {str(e)}', 'danger')
+            # Fall back to last 30 days
+            date_from = ''
+            date_to = ''
+    
+    # Default to last 30 days if no filters or no data found in filtered range
+    if not chart_labels or not chart_data or (isinstance(chart_data, list) and len(chart_data) == 0):
+        # Only use last 30 days if no filters were applied
+        if not date_from and not date_to:
+            chart_labels = []
+            chart_data = []
+            today = datetime.utcnow().date()
+            for i in range(29, -1, -1):
+                date = today - timedelta(days=i)
+                chart_labels.append(date.strftime('%b %d'))
+                
+                # Find count for this date
+                count = 0
+                for submission in stats['submissions_last_30_days']:
+                    if submission['date'] == str(date):
+                        count = submission['count']
+                        break
+                chart_data.append(count)
+        # If filters were applied but no data, keep empty lists to show "no data" message
+        else:
+            chart_labels = []
+            chart_data = []
     
     return render_template('admin/kyc_dashboard.html',
                          stats=stats,
@@ -3145,7 +3365,81 @@ def admin_kyc_reject(kyc_id):
     return redirect(url_for('admin_kyc_detail', kyc_id=kyc_id))
 
 
-@app.route('/admin/kyc-verification/<int:kyc_id>/document/<doc_type>')
+@app.route('/admin/kyc-verification/<int:kyc_id>/document/<doc_type>/view')
+@login_required
+@admin_required
+def admin_kyc_document_view(kyc_id, doc_type):
+    """Secure document view for admin (opens in browser)"""
+    from kyc_service import KYCService
+    from kyc_file_service import KYCFileService
+    from kyc_security import validate_document_path, log_kyc_security_event
+    from flask import send_file
+    
+    # Log admin document access
+    log_kyc_security_event('admin_document_view', current_user.id, f'KYC ID: {kyc_id}, Doc Type: {doc_type}', severity='INFO')
+    
+    # Get KYC record
+    kyc_record = KYCService.get_kyc_by_id(kyc_id)
+    if not kyc_record:
+        log_kyc_security_event('invalid_kyc_access', current_user.id, f'KYC ID: {kyc_id} not found', severity='WARNING')
+        flash('KYC record not found', 'danger')
+        return redirect(url_for('admin_kyc_verification'))
+    
+    # Get document path from KYC record
+    document_paths = kyc_record.document_paths or {}
+    if not document_paths or doc_type not in document_paths:
+        log_kyc_security_event('invalid_document_type', current_user.id, f'KYC ID: {kyc_id}, Doc Type: {doc_type}', severity='WARNING')
+        flash('Document not found', 'danger')
+        return redirect(url_for('admin_kyc_detail', kyc_id=kyc_id))
+    
+    # Validate document path to prevent directory traversal
+    doc_path = document_paths[doc_type]
+    if not validate_document_path(doc_path):
+        log_kyc_security_event('path_traversal_attempt', current_user.id, f'KYC ID: {kyc_id}, Path: {doc_path}', severity='ERROR')
+        flash('Invalid document path', 'danger')
+        return redirect(url_for('admin_kyc_detail', kyc_id=kyc_id))
+    
+    # Get absolute file path
+    file_service = KYCFileService()
+    file_path = file_service.get_document_path(doc_path)
+    
+    # Debug logging
+    app.logger.info(f"Document path from DB: {doc_path}")
+    app.logger.info(f"Resolved file path: {file_path}")
+    
+    if not file_path:
+        log_kyc_security_event('document_not_found', current_user.id, f'KYC ID: {kyc_id}, Path: {doc_path}', severity='WARNING')
+        flash('Document file not found on server', 'danger')
+        return redirect(url_for('admin_kyc_detail', kyc_id=kyc_id))
+    
+    # Check if file actually exists and log file size
+    import os
+    if os.path.exists(file_path):
+        file_size = os.path.getsize(file_path)
+        app.logger.info(f"File exists. Size: {file_size} bytes")
+    else:
+        app.logger.error(f"File does not exist at path: {file_path}")
+    
+    # Send file for viewing in browser (not as attachment)
+    try:
+        # Detect MIME type for proper rendering
+        import mimetypes
+        mime_type, _ = mimetypes.guess_type(file_path)
+        app.logger.info(f"Detected MIME type: {mime_type}")
+        
+        return send_file(
+            file_path, 
+            as_attachment=False,
+            mimetype=mime_type
+        )
+    except Exception as e:
+        app.logger.error(f"Error viewing document file: {str(e)}")
+        log_kyc_security_event('document_view_error', current_user.id, f'KYC ID: {kyc_id}, Error: {str(e)}', severity='ERROR')
+        flash('Error viewing document', 'danger')
+        return redirect(url_for('admin_kyc_detail', kyc_id=kyc_id))
+
+
+@app.route('/admin/kyc-verification/<int:kyc_id>/document/<doc_type>/download')
 @login_required
 @admin_required
 def admin_kyc_document(kyc_id, doc_type):
@@ -3156,7 +3450,7 @@ def admin_kyc_document(kyc_id, doc_type):
     from flask import send_file
     
     # Log admin document access
-    log_kyc_security_event('admin_document_access', current_user.id, f'KYC ID: {kyc_id}, Doc Type: {doc_type}', severity='INFO')
+    log_kyc_security_event('admin_document_download', current_user.id, f'KYC ID: {kyc_id}, Doc Type: {doc_type}', severity='INFO')
     
     # Get KYC record
     kyc_record = KYCService.get_kyc_by_id(kyc_id)

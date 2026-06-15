@@ -461,6 +461,57 @@ class EmailService:
         
         return self.send_email(user.email, subject, html_content)
     
+    def send_new_message_notification(self, recipient, sender, message):
+        """Send email notification when user receives a new message"""
+        subject = f"New Message from {sender.full_name} - FarmLink AI"
+        
+        # Truncate message preview if too long
+        message_preview = message.content[:200] + '...' if len(message.content) > 200 else message.content
+        
+        html_content = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: #28a745; padding: 20px; text-align: center;">
+                <h1 style="color: white; margin: 0;">📬 New Message</h1>
+            </div>
+            
+            <div style="padding: 30px;">
+                <h2>Hello {recipient.full_name},</h2>
+                
+                <p>You have received a new message from <strong>{sender.full_name}</strong> ({sender.role.title()}).</p>
+                
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0; border-left: 4px solid #28a745;">
+                    <h3 style="color: #333; margin-top: 0; font-size: 18px;">
+                        <i>📧 {message.subject}</i>
+                    </h3>
+                    <p style="color: #555; line-height: 1.6; white-space: pre-wrap;">{message_preview}</p>
+                    <p style="color: #999; font-size: 12px; margin-top: 15px;">
+                        <i>Sent: {message.created_at.strftime('%B %d, %Y at %I:%M %p')}</i>
+                    </p>
+                </div>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="{os.environ.get('BASE_URL', 'http://localhost:5000')}/messages" 
+                       style="background: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+                        View Message & Reply
+                    </a>
+                </div>
+                
+                <div style="background: #e9ecef; padding: 15px; border-radius: 5px; margin-top: 20px;">
+                    <p style="margin: 0; font-size: 14px; color: #666;">
+                        <strong>💡 Quick Tip:</strong> Reply promptly to maintain good communication with buyers, farmers, and experts on the platform.
+                    </p>
+                </div>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #666;">
+                <p style="margin: 0;">This is an automated notification from FarmLink AI</p>
+                <p style="margin: 5px 0 0 0;">If you prefer not to receive message notifications, you can update your preferences in Settings</p>
+            </div>
+        </div>
+        """
+        
+        return self.send_email(recipient.email, subject, html_content)
+    
     def send_order_placed_notification(self, order):
         """Send notification when order is placed (to farmer)"""
         try:

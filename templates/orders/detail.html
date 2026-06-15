@@ -211,7 +211,7 @@
                             <p class="mb-1"><strong>Phone:</strong> {{ order.buyer.phone }}</p>
                             {% endif %}
                             {% if current_user.id == order.farmer_id %}
-                            <a href="{{ url_for('send_message', user_id=order.buyer.id) }}" 
+                            <a href="{{ url_for('send_message', recipient_identifier=order.buyer.id) }}" 
                                class="btn btn-sm btn-outline-primary mt-2">
                                 <i class="fas fa-envelope me-1"></i>Contact Buyer
                             </a>
@@ -237,7 +237,7 @@
                             </p>
                             {% endif %}
                             {% if current_user.id == order.buyer_id %}
-                            <a href="{{ url_for('send_message', user_id=order.farmer_user.id) }}" 
+                            <a href="{{ url_for('send_message', recipient_identifier=order.farmer_user.id) }}" 
                                class="btn btn-sm btn-outline-success mt-2">
                                 <i class="fas fa-envelope me-1"></i>Contact Farmer
                             </a>
