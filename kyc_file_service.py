@@ -8,6 +8,8 @@ import uuid
 import sys
 from werkzeug.utils import secure_filename
 from flask import current_app, url_for
+import cloudinary
+import cloudinary.uploader
 
 # Import magic with fallback for Windows
 try:
@@ -148,15 +150,35 @@ class KYCFileService:
         
         # Save file
         try:
+            # Try Cloudinary First
+            try:
+                # Seek to beginning in case it was read during validation
+                file.seek(0)
+                result = cloudinary.uploader.upload(
+                    file,
+                    folder='farmlink/kyc',
+                    public_id=unique_filename.rsplit('.', 1)[0],
+                    resource_type='auto'
+                )
+                image_url = result.get('secure_url')
+                current_app.logger.info(f"✅ Successfully uploaded KYC document to Cloudinary: {image_url}")
+                return image_url
+            except Exception as cloudinary_error:
+                current_app.logger.warning(f"⚠️ Cloudinary upload failed: {cloudinary_error}")
+                current_app.logger.info("📁 Falling back to local storage...")
+            
+            # Local fallback
+            file.seek(0)
             file.save(file_path)
-            current_app.logger.info(f"Saved KYC document: {file_path}")
+            current_app.logger.info(f"Saved KYC document locally: {file_path}")
             
             # Set file permissions to 640 (rw-r-----)
             os.chmod(file_path, 0o640)
             
             # Return relative path for database storage
             relative_path = os.path.join('static/uploads/kyc', str(user_id), unique_filename)
-            return relative_path
+            # Normalize path to use forward slashes
+            return relative_path.replace('\\', '/')
         except Exception as e:
             current_app.logger.error(f"Error saving file {file_path}: {str(e)}")
             return None

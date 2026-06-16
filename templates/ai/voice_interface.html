@@ -1817,10 +1817,7 @@
     </div>
 
     <div class="sidebar-footer">
-        <button class="sidebar-btn" id="themeBtn" data-action="theme">
-            <i class="fas fa-moon" id="themeIcon"></i>
-            <span id="themeText">FarmLink Theme</span>
-        </button>
+
         <button class="sidebar-btn" data-action="clear">
             <i class="fas fa-trash-alt"></i>
             <span>Clear conversations</span>
@@ -1836,7 +1833,7 @@
     </div>
 </aside>
 
-<div class="app-container">
+<div class="app-container farmlink-theme">
     <!-- Main Area -->
     <main class="main-area">
         <div class="chat-container" id="chatContainer">
@@ -2060,20 +2057,12 @@
         setupSidebarActions();
     });
 
-    // Load saved theme
+    // Load saved theme (forced light theme)
     function loadTheme() {
-        const savedTheme = localStorage.getItem('farmlink-theme');
         const appContainer = document.querySelector('.app-container');
         const body = document.body;
-        const themeIcon = document.getElementById('themeIcon');
-        const themeText = document.getElementById('themeText');
-
-        if (savedTheme === 'farmlink') {
-            appContainer.classList.add('farmlink-theme');
-            body.classList.add('farmlink-theme');
-            themeIcon.className = 'fas fa-sun';
-            themeText.textContent = 'Dark Theme';
-        }
+        if(appContainer) appContainer.classList.add('farmlink-theme');
+        if(body) body.classList.add('farmlink-theme');
     }
 
     // Setup sidebar button click handlers
@@ -2284,48 +2273,9 @@
         }
     }
 
-    // Handle sidebar button actions on mobile
-    function handleSidebarAction(callback) {
-        // Execute the callback function first
-        if (typeof callback === 'function') {
-            try {
-                callback();
-            } catch (error) {
-                console.error('Error executing callback:', error);
-            }
-        }
 
-        // Close sidebar only on mobile after action with delay
-        if (window.innerWidth <= 768) {
-            setTimeout(() => {
-                closeSidebar();
-            }, 300);
-        }
-    }
 
-    // Toggle Theme
-    function toggleTheme() {
-        const appContainer = document.querySelector('.app-container');
-        const body = document.body;
-        const themeIcon = document.getElementById('themeIcon');
-        const themeText = document.getElementById('themeText');
-
-        if (appContainer.classList.contains('farmlink-theme')) {
-            // Switch to dark theme
-            appContainer.classList.remove('farmlink-theme');
-            body.classList.remove('farmlink-theme');
-            themeIcon.className = 'fas fa-moon';
-            themeText.textContent = 'FarmLink Theme';
-            localStorage.setItem('farmlink-theme', 'dark');
-        } else {
-            // Switch to farmlink theme
-            appContainer.classList.add('farmlink-theme');
-            body.classList.add('farmlink-theme');
-            themeIcon.className = 'fas fa-sun';
-            themeText.textContent = 'Dark Theme';
-            localStorage.setItem('farmlink-theme', 'farmlink');
-        }
-    }
+    // Theme is forced to light theme
 
     function openSettings() {
         console.log('Opening settings...');
@@ -3028,6 +2978,45 @@
         });
     }
 
+    const EMPTY_STATE_HTML = `
+        <div class="empty-icon">🌱</div>
+        <h1 class="empty-title">FarmLink AI Assistant</h1>
+        <p class="empty-subtitle">Your intelligent farming companion. Ask me anything!</p>
+        <div class="quick-actions">
+            <div class="quick-action-card" onclick="sendQuick('What is the weather forecast for this week?')">
+                <div class="quick-action-icon">☀️</div>
+                <div class="quick-action-title">Weather Forecast</div>
+                <div class="quick-action-desc">Get weather updates for your crops</div>
+            </div>
+            <div class="quick-action-card" onclick="sendQuick('What are the current market prices for rice?')">
+                <div class="quick-action-icon">📈</div>
+                <div class="quick-action-title">Market Prices</div>
+                <div class="quick-action-desc">Check latest crop prices</div>
+            </div>
+            <div class="quick-action-card" onclick="sendQuick('How do I treat tomato blight disease?')">
+                <div class="quick-action-icon">🍅</div>
+                <div class="quick-action-title">Disease Help</div>
+                <div class="quick-action-desc">Identify and treat crop diseases</div>
+            </div>
+            <div class="quick-action-card" onclick="sendQuick('What fertilizer should I use for wheat?')">
+                <div class="quick-action-icon">🌾</div>
+                <div class="quick-action-title">Fertilizer Guide</div>
+                <div class="quick-action-desc">Get fertilizer recommendations</div>
+            </div>
+        </div>
+    `;
+
+    function getOrCreateEmptyState() {
+        let emptyState = document.getElementById('emptyState');
+        if (!emptyState) {
+            emptyState = document.createElement('div');
+            emptyState.id = 'emptyState';
+            emptyState.className = 'empty-state';
+            emptyState.innerHTML = EMPTY_STATE_HTML;
+        }
+        return emptyState;
+    }
+
     async function loadChat(id) {
         const chat = state.chats[id];
         if (!chat) return;
@@ -3078,44 +3067,10 @@
         // Show loading indicator
         wrapper.innerHTML = '<div class="loading-messages" style="text-align: center; padding: 20px; color: #666;"><i class="fas fa-spinner fa-spin"></i> Loading messages...</div>';
 
-        // Create empty state element if it doesn't exist
-        let emptyState = document.getElementById('emptyState');
-        if (!emptyState) {
-            emptyState = document.createElement('div');
-            emptyState.id = 'emptyState';
-            emptyState.className = 'empty-state';
-            emptyState.innerHTML = `
-                <div class="empty-icon">🌱</div>
-                <h1 class="empty-title">FarmLink AI Assistant</h1>
-                <p class="empty-subtitle">Your intelligent farming companion. Ask me anything!</p>
-                <div class="quick-actions">
-                    <div class="quick-action-card" onclick="sendQuick('What is the weather forecast for this week?')">
-                        <div class="quick-action-icon">☀️</div>
-                        <div class="quick-action-title">Weather Forecast</div>
-                        <div class="quick-action-desc">Get weather updates for your crops</div>
-                    </div>
-                    <div class="quick-action-card" onclick="sendQuick('What are the current market prices for rice?')">
-                        <div class="quick-action-icon">📈</div>
-                        <div class="quick-action-title">Market Prices</div>
-                        <div class="quick-action-desc">Check latest crop prices</div>
-                    </div>
-                    <div class="quick-action-card" onclick="sendQuick('How do I treat tomato blight disease?')">
-                        <div class="quick-action-icon">🍅</div>
-                        <div class="quick-action-title">Disease Help</div>
-                        <div class="quick-action-desc">Identify and treat crop diseases</div>
-                    </div>
-                    <div class="quick-action-card" onclick="sendQuick('What fertilizer should I use for wheat?')">
-                        <div class="quick-action-icon">🌾</div>
-                        <div class="quick-action-title">Fertilizer Guide</div>
-                        <div class="quick-action-desc">Get fertilizer recommendations</div>
-                    </div>
-                </div>
-            `;
-            wrapper.appendChild(emptyState);
-        }
-
         // Clear wrapper after loading
         wrapper.innerHTML = '';
+        const emptyState = getOrCreateEmptyState();
+        wrapper.appendChild(emptyState);
         emptyState.style.display = 'none';
 
         // Recreate all messages
@@ -3173,40 +3128,8 @@
         wrapper.innerHTML = '';
 
         // Recreate empty state if it doesn't exist
-        let emptyState = document.getElementById('emptyState');
-        if (!emptyState) {
-            emptyState = document.createElement('div');
-            emptyState.id = 'emptyState';
-            emptyState.className = 'empty-state';
-            emptyState.innerHTML = `
-                <div class="empty-icon">🌱</div>
-                <h1 class="empty-title">FarmLink AI Assistant</h1>
-                <p class="empty-subtitle">Your intelligent farming companion. Ask me anything!</p>
-                <div class="quick-actions">
-                    <div class="quick-action-card" onclick="sendQuick('What is the weather forecast for this week?')">
-                        <div class="quick-action-icon">☀️</div>
-                        <div class="quick-action-title">Weather Forecast</div>
-                        <div class="quick-action-desc">Get weather updates for your crops</div>
-                    </div>
-                    <div class="quick-action-card" onclick="sendQuick('What are the current market prices for rice?')">
-                        <div class="quick-action-icon">📈</div>
-                        <div class="quick-action-title">Market Prices</div>
-                        <div class="quick-action-desc">Check latest crop prices</div>
-                    </div>
-                    <div class="quick-action-card" onclick="sendQuick('How do I treat tomato blight disease?')">
-                        <div class="quick-action-icon">🍅</div>
-                        <div class="quick-action-title">Disease Help</div>
-                        <div class="quick-action-desc">Identify and treat crop diseases</div>
-                    </div>
-                    <div class="quick-action-card" onclick="sendQuick('What fertilizer should I use for wheat?')">
-                        <div class="quick-action-icon">🌾</div>
-                        <div class="quick-action-title">Fertilizer Guide</div>
-                        <div class="quick-action-desc">Get fertilizer recommendations</div>
-                    </div>
-                </div>
-            `;
-            wrapper.appendChild(emptyState);
-        }
+        const emptyState = getOrCreateEmptyState();
+        wrapper.appendChild(emptyState);
 
         emptyState.style.display = 'flex';
 
@@ -3324,37 +3247,8 @@
             wrapper.innerHTML = '';
 
             // Show empty state
-            const emptyState = document.createElement('div');
-            emptyState.id = 'emptyState';
-            emptyState.className = 'empty-state';
+            const emptyState = getOrCreateEmptyState();
             emptyState.style.display = 'flex';
-            emptyState.innerHTML = `
-                <div class="empty-icon">🌱</div>
-                <h1 class="empty-title">FarmLink AI Assistant</h1>
-                <p class="empty-subtitle">Your intelligent farming companion. Ask me anything!</p>
-                <div class="quick-actions">
-                    <div class="quick-action-card" onclick="sendQuick('What is the weather forecast for this week?')">
-                        <div class="quick-action-icon">☀️</div>
-                        <div class="quick-action-title">Weather Forecast</div>
-                        <div class="quick-action-desc">Get weather updates for your crops</div>
-                    </div>
-                    <div class="quick-action-card" onclick="sendQuick('What are the current market prices for rice?')">
-                        <div class="quick-action-icon">📈</div>
-                        <div class="quick-action-title">Market Prices</div>
-                        <div class="quick-action-desc">Check latest crop prices</div>
-                    </div>
-                    <div class="quick-action-card" onclick="sendQuick('How do I treat tomato blight disease?')">
-                        <div class="quick-action-icon">🍅</div>
-                        <div class="quick-action-title">Disease Help</div>
-                        <div class="quick-action-desc">Identify and treat crop diseases</div>
-                    </div>
-                    <div class="quick-action-card" onclick="sendQuick('What fertilizer should I use for wheat?')">
-                        <div class="quick-action-icon">🌾</div>
-                        <div class="quick-action-title">Fertilizer Guide</div>
-                        <div class="quick-action-desc">Get fertilizer recommendations</div>
-                    </div>
-                </div>
-            `;
             wrapper.appendChild(emptyState);
 
             console.log('Chat deleted and new chat started');
@@ -3368,53 +3262,11 @@
         }
     }
 
-    // Theme Toggle
-    function toggleTheme() {
-        const container = document.querySelector('.app-container');
-        const icon = document.getElementById('themeIcon');
-        const text = document.getElementById('themeText');
-
-        container.classList.toggle('farmlink-theme');
-
-        if (container.classList.contains('farmlink-theme')) {
-            icon.className = 'fas fa-sun';
-            text.textContent = 'Dark Theme';
-            localStorage.setItem('farmlink-theme', 'farmlink');
-        } else {
-            icon.className = 'fas fa-moon';
-            text.textContent = 'FarmLink Theme';
-            localStorage.setItem('farmlink-theme', 'dark');
-        }
-    }
-
-    // Load saved theme
-    function loadTheme() {
-        const savedTheme = localStorage.getItem('farmlink-theme');
-        if (savedTheme === 'farmlink') {
-            const container = document.querySelector('.app-container');
-            const icon = document.getElementById('themeIcon');
-            const text = document.getElementById('themeText');
-
-            container.classList.add('farmlink-theme');
-            icon.className = 'fas fa-sun';
-            text.textContent = 'Dark Theme';
-        }
-    }
-
-    // Load theme on page load
-    setTimeout(loadTheme, 100);
-
     // Keyboard Shortcuts
     document.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
             e.preventDefault();
             startNewChat();
-        }
-
-        // Ctrl/Cmd + Shift + T for theme toggle
-        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'T') {
-            e.preventDefault();
-            toggleTheme();
         }
         if (e.key === 'Escape') {
             closeSettings();

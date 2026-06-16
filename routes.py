@@ -3439,7 +3439,12 @@ def admin_kyc_document_view(kyc_id, doc_type):
         flash('Invalid document path', 'danger')
         return redirect(url_for('admin_kyc_detail', kyc_id=kyc_id))
     
-    # Get absolute file path
+    # Check if it's a Cloudinary URL
+    from storage_utils import is_cloudinary_url
+    if is_cloudinary_url(doc_path):
+        return redirect(doc_path)
+    
+    # Get absolute file path for local fallback
     file_service = KYCFileService()
     file_path = file_service.get_document_path(doc_path)
     
@@ -3513,7 +3518,17 @@ def admin_kyc_document(kyc_id, doc_type):
         flash('Invalid document path', 'danger')
         return redirect(url_for('admin_kyc_detail', kyc_id=kyc_id))
     
-    # Get absolute file path
+    # Check if it's a Cloudinary URL
+    from storage_utils import is_cloudinary_url
+    if is_cloudinary_url(doc_path):
+        # Redirect to Cloudinary URL (Cloudinary handles content-disposition for download if fl_attachment is added)
+        # We can append fl_attachment to force download, but simple redirect works too
+        if '/upload/' in doc_path:
+            download_url = doc_path.replace('/upload/', '/upload/fl_attachment/')
+            return redirect(download_url)
+        return redirect(doc_path)
+    
+    # Get absolute file path for local fallback
     file_service = KYCFileService()
     file_path = file_service.get_document_path(doc_path)
     

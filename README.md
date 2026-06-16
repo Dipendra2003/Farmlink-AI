@@ -197,7 +197,7 @@ git push origin main
 
 ### 5. Set Environment Variables
 Add all variables from `.env.example` in Render Dashboard:
-- `BASE_URL`: Your Render URL (e.g., https://farmlink-ai.onrender.com)
+- `BASE_URL`: Your Vercel URL (e.g., https://farmlinkai.vercel.app)
 - `DATABASE_URL`: From PostgreSQL database (auto-filled)
 - `SESSION_SECRET`: Generate random string
 - All API keys and credentials

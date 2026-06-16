@@ -715,18 +715,18 @@
 <!-- View Profile Picture Modal -->
 <div class="modal fade" id="viewProfilePicModal" tabindex="-1" aria-labelledby="viewProfilePicLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content bg-dark border-0">
+        <div class="modal-content bg-light border-0">
             <div class="modal-header border-0 bg-transparent">
-                <h5 class="modal-title text-white" id="viewProfilePicLabel">
+                <h5 class="modal-title text-dark" id="viewProfilePicLabel">
                     <i class="fas fa-user-circle me-2"></i>Profile Picture
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center p-0">
                 <img id="viewProfilePicImage" src="" alt="Profile Picture" class="img-fluid" style="max-height: 70vh; width: auto;">
             </div>
             <div class="modal-footer border-0 bg-transparent justify-content-center">
-                <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">
+                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Close
                 </button>
                 <button type="button" class="btn btn-primary" id="editFromView">
@@ -856,12 +856,12 @@
     
     /* View Profile Picture Modal */
     #viewProfilePicModal .modal-content {
-        background: rgba(0, 0, 0, 0.95);
+        background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(10px);
     }
     
     #viewProfilePicModal .modal-body {
-        background: #000;
+        background: #f8f9fa;
     }
     
     #viewProfilePicImage {
@@ -1357,24 +1357,7 @@
         }
     }
 
-    /* Dark Mode Support (Optional) */
-    @media (prefers-color-scheme: dark) {
-        .card {
-            background: #2d3748;
-            color: #e2e8f0;
-        }
-
-        .form-control,
-        .form-select {
-            background: #1a202c;
-            color: #e2e8f0;
-            border-color: #4a5568;
-        }
-
-        .text-muted {
-            color: #a0aec0 !important;
-        }
-    }
+    /* Dark mode intentionally removed per user request */
 </style>
 {% endblock %}
 

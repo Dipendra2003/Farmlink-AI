@@ -233,9 +233,11 @@ def validate_document_path(file_path):
             logger.warning(f"Directory traversal attempt detected: {file_path} from {request.remote_addr}")
             return False
     
-    # Ensure path starts with expected directory
+    # Ensure path starts with expected directory or is a Cloudinary URL
     expected_prefix = 'static/uploads/kyc/'
-    if not normalized_path.startswith(expected_prefix):
+    is_cloudinary = 'cloudinary.com' in normalized_path
+    
+    if not normalized_path.startswith(expected_prefix) and not is_cloudinary:
         logger.warning(f"Invalid file path prefix: {file_path}")
         return False
     
