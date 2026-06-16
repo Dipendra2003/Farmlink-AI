@@ -25,7 +25,6 @@ if __name__ == '__main__':
             port=port, 
             debug=debug_mode, 
             use_reloader=debug_mode,
-            reloader_type='stat',  # Use stat reloader instead of watchdog (more reliable)
             threaded=True
         )
     except Exception as e:

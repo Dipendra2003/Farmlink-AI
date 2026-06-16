@@ -658,11 +658,12 @@
                     <li class="nav-item">
                         <a class="nav-link position-relative" href="{{ url_for('inbox') }}">
                             <i class="fas fa-envelope me-1"></i>Messages
-                            {% if current_user.received_messages|selectattr('is_read', 'equalto', false)|list|length > 0
+                            {% set unread_count = current_user.get_unread_message_count() %}
+                            {% if unread_count > 0
                             %}
                             <span
                                 class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                {{ current_user.received_messages|selectattr('is_read', 'equalto', false)|list|length }}
+                                {{ unread_count }}
                             </span>
                             {% endif %}
                         </a>
@@ -838,9 +839,10 @@
 
                     <a class="rightbar-link position-relative" href="{{ url_for('inbox') }}">
                         <i class="fas fa-envelope me-2"></i>Messages
-                        {% if current_user.received_messages|selectattr('is_read', 'equalto', false)|list|length > 0 %}
+                        {% set unread_count_mobile = current_user.get_unread_message_count() %}
+                        {% if unread_count_mobile > 0 %}
                         <span class="position-absolute top-50 end-0 translate-middle-y badge rounded-pill bg-danger">
-                            {{ current_user.received_messages|selectattr('is_read', 'equalto', false)|list|length }}
+                            {{ unread_count_mobile }}
                         </span>
                         {% endif %}
                     </a>

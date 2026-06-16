@@ -461,12 +461,14 @@ def buyer_dashboard():
         Order.updated_at >= ninety_days_ago
     ).all()
     
-    # Filter out orders that already have ratings
+    # Filter out orders that already have ratings using a single batch query
     pending_ratings = []
-    for order in completed_orders:
-        existing_rating = ProductRating.query.filter_by(order_id=order.id).first()
-        if not existing_rating:
-            pending_ratings.append(order)
+    if completed_orders:
+        rated_order_ids_result = db.session.query(ProductRating.order_id).filter(
+            ProductRating.order_id.in_([o.id for o in completed_orders])
+        ).all()
+        rated_ids = {r[0] for r in rated_order_ids_result}
+        pending_ratings = [o for o in completed_orders if o.id not in rated_ids]
     
     return render_template('dashboard/buyer.html',
                          my_orders=my_orders,

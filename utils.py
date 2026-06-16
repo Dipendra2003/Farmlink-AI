@@ -9,6 +9,22 @@ from pytz import timezone
 
 logger = logging.getLogger(__name__)
 
+# Cache spaCy NLP model at module level to avoid reloading on every call (~500ms-1s per load)
+_nlp_model = None
+
+def _get_nlp_model():
+    """Lazily load and cache the spaCy NLP model"""
+    global _nlp_model
+    if _nlp_model is None:
+        try:
+            import spacy
+            import warnings
+            warnings.filterwarnings("ignore", category=UserWarning)
+            _nlp_model = spacy.load('en_core_web_sm')
+        except (ImportError, OSError):
+            _nlp_model = False  # Sentinel to avoid retrying failed imports
+    return _nlp_model if _nlp_model is not False else None
+
 def format_datetime(dt, format='%B %d, %Y at %I:%M %p'):
     """
     Convert UTC datetime to Indian timezone and format it
@@ -27,13 +43,11 @@ def extract_location(text):
         return None
         
     try:
-        # Try using spaCy if available
-        import spacy
-        # Disable spaCy's logging to avoid conflicts
-        import warnings
-        warnings.filterwarnings("ignore", category=UserWarning)
+        # Use cached spaCy model
+        nlp = _get_nlp_model()
+        if nlp is None:
+            raise ImportError("spaCy model not available")
         
-        nlp = spacy.load('en_core_web_sm')
         doc = nlp(text)
         
         # Look for GPE (geo-political entity) or LOC (location) entities

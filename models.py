@@ -144,6 +144,13 @@ class User(UserMixin, db.Model):
             return getattr(self, key)
         return default
     
+    def get_unread_message_count(self):
+        """Efficiently count unread messages using SQL COUNT instead of loading all messages"""
+        from models import Message
+        return Message.query.filter_by(
+            recipient_id=self.id, is_read=False, is_archived=False
+        ).count()
+    
     def __repr__(self):
         return f'<User {self.username}>'
 

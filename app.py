@@ -167,9 +167,12 @@ if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-from sqlalchemy.pool import NullPool
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "poolclass": NullPool,
+    "pool_size": 5,
+    "max_overflow": 10,
+    "pool_timeout": 30,
+    "pool_recycle": 1800,
+    "pool_pre_ping": True,
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False  # Disable modification tracking
 app.config["SQLALCHEMY_ECHO"] = False  # Disable SQL query logging for cleaner output
@@ -387,7 +390,10 @@ with app.app_context():
         
         # Prevent Vercel from caching dynamic responses and breaking CSRF/Sessions
         if 'Cache-Control' not in response.headers:
-            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+            if request.path.startswith('/static/'):
+                response.headers['Cache-Control'] = 'public, max-age=604800'  # 7 days for static assets
+            else:
+                response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
         
         # Ensure session cookie changes are respected by proxies
         response.vary.add('Cookie')
