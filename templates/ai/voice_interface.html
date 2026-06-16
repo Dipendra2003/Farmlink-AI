@@ -27,6 +27,7 @@
     .app-container {
         display: flex;
         height: 100vh;
+        height: 100dvh;
         width: 100vw;
         position: fixed;
         top: 0;
@@ -499,6 +500,9 @@
     @media (max-width: 768px) {
         .main-area {
             padding-top: 130px;
+            /* Ensure input stays visible by accounting for navbar + mobile toggle */
+            max-height: 100vh;
+            max-height: 100dvh;
         }
     }
 
@@ -1462,8 +1466,9 @@
         }
 
         .empty-state {
-            padding: 40px 16px 20px;
-            min-height: calc(100vh - 250px);
+            padding: 20px 16px 10px;
+            min-height: auto;
+            overflow-y: auto;
         }
 
         .empty-icon {
@@ -1540,6 +1545,7 @@
 
         .input-area {
             padding: 12px;
+            padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
         }
 
         .input-wrapper {
