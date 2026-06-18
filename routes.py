@@ -202,7 +202,26 @@ def login():
     if form.validate_on_submit():
         identifier = form.identifier.data
         ip_address = request.remote_addr
-        user_agent = request.user_agent.string
+        
+        # Parse raw user agent into a human-readable format
+        ua_raw = request.user_agent.string
+        ua_lower = ua_raw.lower()
+        
+        if 'android' in ua_lower: platform = 'Android'
+        elif 'iphone' in ua_lower or 'ipad' in ua_lower: platform = 'iOS'
+        elif 'windows' in ua_lower: platform = 'Windows'
+        elif 'mac os' in ua_lower or 'macintosh' in ua_lower: platform = 'macOS'
+        elif 'linux' in ua_lower: platform = 'Linux'
+        else: platform = 'Unknown OS'
+        
+        if 'edg/' in ua_lower or 'edge' in ua_lower: browser = 'Edge'
+        elif 'chrome' in ua_lower: browser = 'Chrome'
+        elif 'safari' in ua_lower and 'chrome' not in ua_lower: browser = 'Safari'
+        elif 'firefox' in ua_lower: browser = 'Firefox'
+        else: browser = 'Web Browser'
+        
+        device_type = 'Mobile' if platform in ['Android', 'iOS'] else 'Desktop'
+        user_agent = f"{browser} on {platform} ({device_type})"
         
         # Always apply rate limiting regardless of role
         from security_utils import rate_limit_login
@@ -254,8 +273,24 @@ def login():
                 # Send login alert
                 try:
                     from email_service import EmailService
+                    import requests
+                    
+                    # Try to fetch location from IP
+                    location = "Unknown Location"
+                    if ip_address and ip_address != '127.0.0.1' and not ip_address.startswith('192.168.'):
+                        try:
+                            response = requests.get(f"http://ip-api.com/json/{ip_address}?fields=city,country,status", timeout=2)
+                            if response.status_code == 200:
+                                data = response.json()
+                                if data.get('status') == 'success':
+                                    city = data.get('city', '')
+                                    country = data.get('country', '')
+                                    location = f"{city}, {country}".strip(', ')
+                        except Exception as req_err:
+                            logging.warning(f"Failed to fetch IP location: {str(req_err)}")
+                            
                     email_service = EmailService()
-                    email_service.send_login_alert(user, ip_address, user_agent)
+                    email_service.send_login_alert(user, ip_address, user_agent, location=location)
                 except Exception as e:
                     logging.error(f"Failed to send login alert: {str(e)}")
             

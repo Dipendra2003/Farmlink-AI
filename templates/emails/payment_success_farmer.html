@@ -1,42 +1,114 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .notification-icon { font-size: 48px; color: #28a745; }
-        .order-details { background: #f8f9fa; padding: 20px; border-radius: 5px; }
-        .amount { font-size: 24px; color: #28a745; font-weight: bold; }
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            color: #333; 
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 20px auto; 
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header { 
+            background: #28a745; 
+            color: white; 
+            padding: 30px 20px; 
+            text-align: center; 
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .content { 
+            padding: 30px; 
+        }
+        .order-details { 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin: 20px 0;
+        }
+        .order-details h3 {
+            color: #28a745;
+            margin-top: 0;
+        }
+        .order-details p {
+            margin: 10px 0;
+        }
+        .amount { 
+            font-size: 18px; 
+            color: #28a745; 
+            font-weight: bold; 
+        }
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .button {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .footer {
+            background: #343a40;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .footer p {
+            margin: 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div class="notification-icon">🔔</div>
-            <h1>New Paid Order!</h1>
+            <h1>🔔 New Paid Order!</h1>
         </div>
         
-        <p>Dear {{ user.full_name }},</p>
-        
-        <p>You have received a new paid order for your crop. Here are the order details:</p>
-        
-        <div class="order-details">
-            <p><strong>Order ID:</strong> #{{ order.id }}</p>
-            <p><strong>Crop:</strong> {{ order.crop.name }}</p>
-            <p><strong>Quantity:</strong> {{ order.quantity_requested }} {{ order.crop.unit }}</p>
-            <p><strong>Amount:</strong> <span class="amount">₹{{ "%.2f"|format(order.total_amount) }}</span></p>
-            <p><strong>Delivery Address:</strong> {{ order.delivery_address }}</p>
-            {% if order.notes %}
-            <p><strong>Notes:</strong> {{ order.notes }}</p>
-            {% endif %}
+        <div class="content">
+            <h2>Hello {{ user.full_name or user.username }},</h2>
+            
+            <p>You have received a new paid order for your crop. Here are the order details:</p>
+            
+            <div class="order-details">
+                <h3>Order Summary:</h3>
+                <p><strong>Order ID:</strong> #{{ order.id }}</p>
+                <p><strong>Crop:</strong> {{ order.crop.name }}</p>
+                <p><strong>Quantity:</strong> {{ order.quantity_requested }} {{ order.crop.unit }}</p>
+                <p><strong>Amount:</strong> <span class="amount">₹{{ "%.2f"|format(order.total_amount) }}</span></p>
+                <p><strong>Delivery Address:</strong> {{ order.delivery_address }}</p>
+                {% if order.notes %}
+                <p><strong>Notes:</strong> {{ order.notes }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="button-container">
+                <a href="{{ base_url }}/orders/my" class="button">Process Order</a>
+            </div>
+            
+            <p>Please process this order and arrange for delivery as soon as possible.</p>
+            
+            <p>Thank you for being a valued farmer on FarmLink AI!<br>The FarmLink AI Team</p>
         </div>
         
-        <p>Please process this order and arrange for delivery as soon as possible.</p>
-        
-        <p>Thank you for being a valued farmer on FarmLink AI!</p>
-        
-        <p>Best regards,<br>The FarmLink AI Team</p>
+        <div class="footer">
+            <p>© 2024 FarmLink AI. Connecting Agriculture, Powering Growth.</p>
+        </div>
     </div>
 </body>
 </html>

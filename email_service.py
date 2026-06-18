@@ -95,28 +95,40 @@ class EmailService:
         subject = "New Login Activity Detected - FarmLink AI"
         
         html_content = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 5px;">
-                <h2 style="color: #28a745;">New Login Activity</h2>
-                <p>Hello {user.full_name or user.username},</p>
-                <p>We detected a new login to your FarmLink AI account:</p>
-                
-                <div style="background: white; padding: 15px; border-radius: 5px; margin: 15px 0;">
-                    <p><strong>Time:</strong> {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC</p>
-                    <p><strong>IP Address:</strong> {ip_address}</p>
-                    <p><strong>Device:</strong> {user_agent}</p>
-                    {f'<p><strong>Location:</strong> {location}</p>' if location else ''}
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4;">
+            <div style="max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <div style="background: #f8f9fa; padding: 30px;">
+                    <h2 style="color: #28a745; margin-top: 0;">New Login Activity</h2>
+                    <p>Hello {user.full_name or user.username},</p>
+                    <p>We detected a new login to your FarmLink AI account:</p>
+                    
+                    <div style="background: white; padding: 20px; border-radius: 10px; border: 1px solid #e9ecef; margin: 20px 0;">
+                        <p style="margin: 5px 0;"><strong>Time:</strong> {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC</p>
+                        <p style="margin: 5px 0;"><strong>IP Address:</strong> {ip_address}</p>
+                        <p style="margin: 5px 0;"><strong>Device:</strong> {user_agent}</p>
+                        {f'<p style="margin: 5px 0;"><strong>Location:</strong> {location}</p>' if location else ''}
+                    </div>
+                    
+                    <p>If this wasn't you, please secure your account immediately:</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{os.environ.get('BASE_URL', 'http://localhost:5000')}/change-password" 
+                           style="background: #dc3545; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                            Change Password
+                        </a>
+                    </div>
                 </div>
-                
-                <p>If this wasn't you, please secure your account immediately:</p>
-                <div style="text-align: center; margin: 20px 0;">
-                    <a href="{os.environ.get('BASE_URL', 'http://localhost:5000')}/change-password" 
-                       style="background: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-                        Change Password
-                    </a>
+                <div style="background: #343a40; color: white; padding: 20px; text-align: center;">
+                    <p style="margin: 0;">© 2024 FarmLink AI. Connecting Agriculture, Powering Growth.</p>
                 </div>
             </div>
-        </div>
+        </body>
+        </html>
         """
         
         return self.send_email(user.email, subject, html_content)
@@ -126,48 +138,57 @@ class EmailService:
         subject = f"Welcome to FarmLink AI, {user.full_name or user.username}!"
         
         html_content = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 30px; text-align: center;">
-                <h1 style="color: white; margin: 0;">Welcome to FarmLink AI!</h1>
-            </div>
-            
-            <div style="padding: 30px; background-color: #f8f9fa;">
-                <h2 style="color: #28a745;">Hello {user.full_name or user.username},</h2>
-                
-                <p>Welcome to FarmLink AI - India's smartest agricultural marketplace! We're excited to have you join our community of farmers, buyers, and agricultural experts.</p>
-                
-                <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
-                    <h3 style="color: #28a745;">Your Account Details:</h3>
-                    <p><strong>Role:</strong> {user.role.title()}</p>
-                    <p><strong>Email:</strong> {user.email}</p>
-                    <p><strong>Username:</strong> {user.username}</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4;">
+            <div style="max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 30px; text-align: center;">
+                    <h1 style="color: white; margin: 0;">Welcome to FarmLink AI!</h1>
                 </div>
                 
-                <h3 style="color: #28a745;">Get Started:</h3>
-                <ul>
-                    <li>Complete your profile with location and contact details</li>
-                    <li>{"Explore our marketplace to find the best crops" if user.role == "buyer" else "List your crops and connect with buyers"}</li>
-                    <li>Use our AI-powered features for smart farming insights</li>
-                    <li>Join our expert community for tips and advice</li>
-                </ul>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="{os.environ.get('BASE_URL', 'http://localhost:5000')}/dashboard" 
-                       style="background: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                        Go to Dashboard
-                    </a>
+                <div style="padding: 30px;">
+                    <h2 style="color: #28a745; margin-top: 0;">Hello {user.full_name or user.username},</h2>
+                    
+                    <p>Welcome to FarmLink AI - India's smartest agricultural marketplace! We're excited to have you join our community of farmers, buyers, and agricultural experts.</p>
+                    
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <h3 style="color: #28a745; margin-top: 0;">Your Account Details:</h3>
+                        <p style="margin: 5px 0;"><strong>Role:</strong> {user.role.title()}</p>
+                        <p style="margin: 5px 0;"><strong>Email:</strong> {user.email}</p>
+                        <p style="margin: 5px 0;"><strong>Username:</strong> {user.username}</p>
+                    </div>
+                    
+                    <h3 style="color: #28a745;">Get Started:</h3>
+                    <ul>
+                        <li>Complete your profile with location and contact details</li>
+                        <li>{"Explore our marketplace to find the best crops" if user.role == "buyer" else "List your crops and connect with buyers"}</li>
+                        <li>Use our AI-powered features for smart farming insights</li>
+                        <li>Join our expert community for tips and advice</li>
+                    </ul>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{os.environ.get('BASE_URL', 'http://localhost:5000')}/dashboard" 
+                           style="background: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                            Go to Dashboard
+                        </a>
+                    </div>
+                    
+                    <p>If you have any questions, feel free to contact our support team.</p>
+                    
+                    <p>Happy farming!<br>
+                    The FarmLink AI Team</p>
                 </div>
                 
-                <p>If you have any questions, feel free to contact our support team.</p>
-                
-                <p>Happy farming!<br>
-                The FarmLink AI Team</p>
+                <div style="background: #343a40; color: white; padding: 20px; text-align: center;">
+                    <p style="margin: 0;">© 2024 FarmLink AI. Connecting Agriculture, Powering Growth.</p>
+                </div>
             </div>
-            
-            <div style="background: #343a40; color: white; padding: 20px; text-align: center;">
-                <p style="margin: 0;">© 2024 FarmLink AI. Connecting Agriculture, Powering Growth.</p>
-            </div>
-        </div>
+        </body>
+        </html>
         """
         
         return self.send_email(user.email, subject, html_content)
@@ -265,25 +286,37 @@ class EmailService:
         subject = "Password Reset Code - FarmLink AI"
         
         html_content = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: #28a745; padding: 20px; text-align: center;">
-                <h1 style="color: white; margin: 0;">Password Reset Code</h1>
-            </div>
-            
-            <div style="padding: 30px;">
-                <h2>Hello {user.full_name or user.username},</h2>
-                
-                <p>Here's your password reset verification code:</p>
-                
-                <div style="background: #f8f9fa; border: 2px dashed #28a745; padding: 30px; margin: 30px 0; text-align: center; border-radius: 10px;">
-                    <h1 style="color: #28a745; font-size: 3em; margin: 0; letter-spacing: 10px;">{otp}</h1>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4;">
+            <div style="max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <div style="background: #28a745; padding: 30px 20px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 28px;">Password Reset Code</h1>
                 </div>
                 
-                <p>This code will expire in 10 minutes.</p>
-                
-                <p style="color: #6c757d; margin-top: 20px;">If you didn't request this password reset, please ignore this email.</p>
+                <div style="padding: 30px;">
+                    <h2 style="margin-top: 0;">Hello {user.full_name or user.username},</h2>
+                    
+                    <p>Here's your password reset verification code:</p>
+                    
+                    <div style="background: #f8f9fa; border: 2px dashed #28a745; padding: 30px; margin: 30px 0; text-align: center; border-radius: 10px;">
+                        <h1 style="color: #28a745; font-size: 3em; margin: 0; letter-spacing: 10px;">{otp}</h1>
+                    </div>
+                    
+                    <p>This code will expire in 10 minutes.</p>
+                    
+                    <p style="color: #6c757d; margin-top: 20px; font-size: 14px;">If you didn't request this password reset, please ignore this email.</p>
+                </div>
+                <div style="background: #343a40; color: white; padding: 20px; text-align: center;">
+                    <p style="margin: 0;">© 2024 FarmLink AI. Connecting Agriculture, Powering Growth.</p>
+                </div>
             </div>
-        </div>
+        </body>
+        </html>
         """
         
         return self.send_email(user.email, subject, html_content)
@@ -293,35 +326,47 @@ class EmailService:
         subject = "Password Reset Request - FarmLink AI"
         
         html_content = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: #28a745; padding: 20px; text-align: center;">
-                <h1 style="color: white; margin: 0;">Password Reset Request</h1>
-            </div>
-            
-            <div style="padding: 30px;">
-                <h2>Hello {user.full_name or user.username},</h2>
-                
-                <p>We received a request to reset your password for your FarmLink AI account.</p>
-                
-                <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                    <p style="margin: 0;"><strong>Important:</strong> If you didn't request this password reset, please ignore this email. Your password will remain unchanged.</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4;">
+            <div style="max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <div style="background: #28a745; padding: 30px 20px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 28px;">Password Reset Request</h1>
                 </div>
                 
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="{os.environ.get('BASE_URL', 'http://localhost:5000')}/reset-password/{reset_token}" 
-                       style="background: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                        Reset Password
-                    </a>
+                <div style="padding: 30px;">
+                    <h2 style="margin-top: 0;">Hello {user.full_name or user.username},</h2>
+                    
+                    <p>We received a request to reset your password for your FarmLink AI account.</p>
+                    
+                    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                        <p style="margin: 0; color: #856404;"><strong>Important:</strong> If you didn't request this password reset, please ignore this email. Your password will remain unchanged.</p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{os.environ.get('BASE_URL', 'http://localhost:5000')}/reset-password/{reset_token}" 
+                           style="background: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                            Reset Password
+                        </a>
+                    </div>
+                    
+                    <p>This link will expire in 1 hour for security reasons.</p>
+                    
+                    <p style="font-size: 14px; color: #666;">If you're having trouble clicking the button, copy and paste this URL into your browser:</p>
+                    <p style="word-break: break-all; background: #f8f9fa; padding: 10px; border-radius: 5px; font-size: 13px; color: #555;">
+                        {os.environ.get('BASE_URL', 'http://localhost:5000')}/reset-password/{reset_token}
+                    </p>
                 </div>
-                
-                <p>This link will expire in 1 hour for security reasons.</p>
-                
-                <p>If you're having trouble clicking the button, copy and paste this URL into your browser:</p>
-                <p style="word-break: break-all; background: #f8f9fa; padding: 10px; border-radius: 5px;">
-                    {os.environ.get('BASE_URL', 'http://localhost:5000')}/reset-password/{reset_token}
-                </p>
+                <div style="background: #343a40; color: white; padding: 20px; text-align: center;">
+                    <p style="margin: 0;">© 2024 FarmLink AI. Connecting Agriculture, Powering Growth.</p>
+                </div>
             </div>
-        </div>
+        </body>
+        </html>
         """
         
         return self.send_email(user.email, subject, html_content)
@@ -339,36 +384,48 @@ class EmailService:
         subject = subject_map.get(event_type, "Security Notification")
         
         html_content = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: #dc3545; padding: 20px; text-align: center;">
-                <h1 style="color: white; margin: 0;">Security Alert</h1>
-            </div>
-            
-            <div style="padding: 30px;">
-                <h2>Hello {user.full_name or user.username},</h2>
-                
-                <div style="background: #fff3cd; padding: 20px; border-radius: 10px; margin: 20px 0;">
-                    <h3 style="color: #856404; margin-top: 0;">Security Event Detected</h3>
-                    <p><strong>Event Type:</strong> {event_type.replace('_', ' ').title()}</p>
-                    {f'<p><strong>Details:</strong> {details}</p>' if details else ''}
-                    <p><strong>Time:</strong> {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f4f4f4;">
+            <div style="max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <div style="background: #dc3545; padding: 30px 20px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 28px;">Security Alert</h1>
                 </div>
                 
-                <p>If you did not perform this action, please take immediate action:</p>
-                <ol>
-                    <li>Change your password immediately</li>
-                    <li>Review your recent account activity</li>
-                    <li>Contact our support team</li>
-                </ol>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="{os.environ.get('BASE_URL', 'http://localhost:5000')}/profile/security" 
-                       style="background: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                        Review Account Security
-                    </a>
+                <div style="padding: 30px;">
+                    <h2 style="margin-top: 0;">Hello {user.full_name or user.username},</h2>
+                    
+                    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                        <h3 style="color: #856404; margin-top: 0;">Security Event Detected</h3>
+                        <p style="margin: 5px 0; color: #856404;"><strong>Event Type:</strong> {event_type.replace('_', ' ').title()}</p>
+                        {f'<p style="margin: 5px 0; color: #856404;"><strong>Details:</strong> {details}</p>' if details else ''}
+                        <p style="margin: 5px 0; color: #856404;"><strong>Time:</strong> {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC</p>
+                    </div>
+                    
+                    <p>If you did not perform this action, please take immediate action:</p>
+                    <ol>
+                        <li>Change your password immediately</li>
+                        <li>Review your recent account activity</li>
+                        <li>Contact our support team</li>
+                    </ol>
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{os.environ.get('BASE_URL', 'http://localhost:5000')}/profile/security" 
+                           style="background: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+                            Review Account Security
+                        </a>
+                    </div>
+                </div>
+                <div style="background: #343a40; color: white; padding: 20px; text-align: center;">
+                    <p style="margin: 0;">© 2024 FarmLink AI. Connecting Agriculture, Powering Growth.</p>
                 </div>
             </div>
-        </div>
+        </body>
+        </html>
         """
         
         return self.send_email(user.email, subject, html_content)
