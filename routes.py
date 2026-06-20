@@ -2272,8 +2272,13 @@ def download_invoice(order_id):
         db.session.commit()
     
     try:
-        # Create invoices directory if it doesn't exist
-        invoice_dir = os.path.join('static', 'uploads', 'invoices')
+        import tempfile
+        # Create invoices directory in a writable location
+        if os.environ.get('VERCEL') == '1':
+            invoice_dir = os.path.join(tempfile.gettempdir(), 'farmlink_invoices')
+        else:
+            invoice_dir = os.path.join('static', 'uploads', 'invoices')
+            
         os.makedirs(invoice_dir, exist_ok=True)
         
         # Generate invoice PDF
