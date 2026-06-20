@@ -136,17 +136,8 @@ class KYCFileService:
             current_app.logger.error(f"Invalid file extension: {file_ext}")
             return None
         
-        # Create user-specific directory
-        user_dir = KYCFileService._get_upload_dir(user_id)
-        try:
-            os.makedirs(user_dir, mode=0o750, exist_ok=True)
-        except Exception as e:
-            current_app.logger.error(f"Error creating directory {user_dir}: {str(e)}")
-            return None
-        
         # Generate unique filename with UUID
         unique_filename = f"{doc_type}_{uuid.uuid4().hex}.{file_ext}"
-        file_path = os.path.join(user_dir, unique_filename)
         
         # Save file
         try:
@@ -168,6 +159,15 @@ class KYCFileService:
                 current_app.logger.info("📁 Falling back to local storage...")
             
             # Local fallback
+            user_dir = KYCFileService._get_upload_dir(user_id)
+            if os.environ.get('VERCEL') != '1':
+                try:
+                    os.makedirs(user_dir, mode=0o750, exist_ok=True)
+                except Exception as e:
+                    current_app.logger.error(f"Error creating directory {user_dir}: {str(e)}")
+                    return None
+                    
+            file_path = os.path.join(user_dir, unique_filename)
             file.seek(0)
             file.save(file_path)
             current_app.logger.info(f"Saved KYC document locally: {file_path}")
