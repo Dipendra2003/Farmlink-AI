@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     
     <!-- SEO Meta Tags -->
     <meta name="description" content="{{ meta_description | default('FarmLink AI bridges the gap between farmers, buyers, and agricultural experts. Experience the future of farming with AI-driven tools.') }}">

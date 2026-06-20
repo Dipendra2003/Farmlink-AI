@@ -122,6 +122,12 @@ def sitemap():
     response.headers["Content-Type"] = "application/xml"
     return response
 
+@app.route('/favicon.ico')
+def favicon():
+    import os
+    from flask import send_from_directory
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
 # Home Page
 @app.route('/')
 def index():

@@ -683,7 +683,8 @@ function markAsRead(messageId) {
     fetch(`/messages/read/${messageId}`, {
         method: 'POST',
         headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
         },
         body: formData
     })
@@ -740,7 +741,8 @@ document.getElementById('confirmDeleteBtn').addEventListener('click', function()
     fetch(`/messages/delete/${messageToDelete.id}`, {
         method: 'POST',
         headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
         },
         body: formData
     })
