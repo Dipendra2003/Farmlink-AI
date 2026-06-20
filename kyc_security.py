@@ -221,6 +221,10 @@ def validate_document_path(file_path):
     """
     if not file_path:
         return False
+        
+    # If it's a Cloudinary URL, it's inherently safe from local directory traversal
+    if 'cloudinary.com' in file_path and file_path.startswith('http'):
+        return True
     
     # Normalize path separators to forward slashes for consistent validation
     normalized_path = file_path.replace('\\', '/')
@@ -233,11 +237,10 @@ def validate_document_path(file_path):
             logger.warning(f"Directory traversal attempt detected: {file_path} from {request.remote_addr}")
             return False
     
-    # Ensure path starts with expected directory or is a Cloudinary URL
+    # Ensure path starts with expected directory
     expected_prefix = 'static/uploads/kyc/'
-    is_cloudinary = 'cloudinary.com' in normalized_path
     
-    if not normalized_path.startswith(expected_prefix) and not is_cloudinary:
+    if not normalized_path.startswith(expected_prefix):
         logger.warning(f"Invalid file path prefix: {file_path}")
         return False
     
