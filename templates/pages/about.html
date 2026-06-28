@@ -4,353 +4,276 @@
 
 {% block content %}
 <!-- Hero Section -->
-<section class="hero-section text-white">
-    <div class="container">
-        <div class="row align-items-center text-center text-lg-start">
-            <div class="col-lg-8 mb-4 mb-lg-0">
-                <h1 class="display-5 fw-bold mb-3 mb-md-4">About FarmLink AI</h1>
-                <p class="lead mb-4 mb-lg-0">
-                    Revolutionizing agriculture through artificial intelligence and connecting farmers 
-                    with buyers in India's smartest agricultural marketplace.
-                </p>
+<section class="hero-section text-white position-relative overflow-hidden" style="height: auto; padding: 80px 0 80px;">
+    <!-- Abstract background shapes (contained) -->
+    <div class="position-absolute w-100 h-100 top-0 start-0 overflow-hidden" style="z-index: 0; pointer-events: none;">
+        <div class="position-absolute" style="top: -10%; right: -5%; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); border-radius: 50%; animation: pulse 8s infinite;"></div>
+        <div class="position-absolute" style="bottom: -20%; left: -10%; width: 500px; height: 500px; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%); border-radius: 50%; animation: pulse 10s infinite reverse;"></div>
+    </div>
+    
+    <div class="container position-relative" style="z-index: 20;">
+        <div class="row align-items-center text-center text-lg-start g-5">
+            <div class="col-lg-7">
+                <div class="pe-lg-5" style="animation: fadeInUp 0.8s ease-out;">
+                    <span class="badge bg-white text-success px-4 py-2 rounded-pill mb-4 fw-bold shadow-lg" style="font-size: 0.95rem; letter-spacing: 1px;"><i class="fas fa-sparkles me-2 text-warning"></i>The Future of Farming</span>
+                    <h1 class="display-3 fw-bold mb-4" style="line-height: 1.15; text-shadow: 0 10px 20px rgba(0,0,0,0.1);">Cultivating <span class="text-warning position-relative">Success<svg class="position-absolute w-100" style="bottom: -10px; left: 0; height: 12px;" viewBox="0 0 200 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.00031 6.58155C41.7767 1.8385 137.917 -3.11187 197.808 6.58155" stroke="#ffc107" stroke-width="3" stroke-linecap="round"/></svg></span> with Artificial Intelligence</h1>
+                    <p class="lead mb-5 opacity-90" style="font-size: 1.35rem; font-weight: 300;">
+                        Step into the future of agriculture. FarmLink AI bridges the gap between traditional farming and advanced technology, empowering you to optimize yields, reduce losses, and connect directly with premium markets.
+                    </p>
+                    <div class="d-flex flex-column flex-sm-row gap-4 justify-content-center justify-content-lg-start">
+                        <a href="#mission" class="btn btn-warning btn-lg px-5 py-3 rounded-pill fw-bold shadow-lg" style="transition: all 0.3s ease; transform: translateY(0);">
+                            Discover Our Mission <i class="fas fa-arrow-down ms-2"></i>
+                        </a>
+                        <a href="{{ url_for('marketplace') }}" class="btn btn-outline-light btn-lg px-5 py-3 rounded-pill fw-bold shadow-sm" style="border-width: 2px;">
+                            Explore Marketplace
+                        </a>
+                    </div>
+                </div>
             </div>
-            <div class="col-lg-4 text-center">
-                <i class="fas fa-tractor fa-4x opacity-75"></i>
+            <div class="col-lg-5 d-none d-lg-block text-center">
+                <div class="position-relative d-inline-block">
+                    <!-- Glassmorphism circle -->
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 380px; height: 380px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 30px 60px rgba(0,0,0,0.15); animation: float 6s ease-in-out infinite;">
+                        <i class="fas fa-seedling text-white" style="font-size: 9rem; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.3)); background: -webkit-linear-gradient(45deg, #fff, #d4edda); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
+                    </div>
+                    <!-- Floating elements -->
+                    <div class="position-absolute bg-white rounded-pill shadow-lg px-4 py-3 d-flex align-items-center gap-3" style="top: 30px; right: -20px; animation: float 4s ease-in-out infinite 0.5s; z-index: 2; border-left: 4px solid var(--success-green);">
+                        <i class="fas fa-brain text-success fa-2x"></i>
+                        <div class="text-start">
+                            <h6 class="mb-0 text-dark fw-bold">AI Diagnostics</h6>
+                            <small class="text-muted fw-medium">99% Accuracy</small>
+                        </div>
+                    </div>
+                    <div class="position-absolute bg-white rounded-pill shadow-lg px-4 py-3 d-flex align-items-center gap-3" style="bottom: 50px; left: -30px; animation: float 5s ease-in-out infinite 1.5s; z-index: 2; border-left: 4px solid var(--warning-orange);">
+                        <i class="fas fa-chart-line text-warning fa-2x"></i>
+                        <div class="text-start">
+                            <h6 class="mb-0 text-dark fw-bold">Data Driven</h6>
+                            <small class="text-muted fw-medium">+40% High Yields</small>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-<div class="container py-5">
-    <!-- Mission & Vision -->
-    <div class="row mb-5">
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center p-4">
-                    <div class="feature-icon bg-success text-white rounded-circle mx-auto mb-3">
-                        <i class="fas fa-bullseye fa-2x"></i>
-                    </div>
-                    <h3 class="text-success">Our Mission</h3>
-                    <p class="card-text">
-                        To empower farmers with AI-driven insights and create a transparent, 
-                        efficient marketplace that bridges the gap between agricultural producers 
-                        and buyers across India.
-                    </p>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body text-center p-4">
-                    <div class="feature-icon bg-success text-white rounded-circle mx-auto mb-3">
-                        <i class="fas fa-eye fa-2x"></i>
-                    </div>
-                    <h3 class="text-success">Our Vision</h3>
-                    <p class="card-text">
-                        To transform Indian agriculture into a data-driven, sustainable, and 
-                        profitable sector where every farmer has access to modern technology 
-                        and fair market opportunities.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- Main Content -->
+<div class="bg-light pb-5 position-relative">
+    <!-- Decorative background element -->
+    <div class="position-absolute top-0 start-0 w-100 h-50" style="background: linear-gradient(180deg, #f8f9fa 0%, rgba(248, 249, 250, 0) 100%); z-index: 0;"></div>
 
-    <!-- Key Features -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <h2 class="text-center text-success mb-5">What Makes Us Different</h2>
-        </div>
-        <div class="col-lg-4 mb-4">
-            <div class="text-center">
-                <div class="feature-icon bg-light border border-success rounded-circle mx-auto mb-3">
-                    <i class="fas fa-robot text-success fa-2x"></i>
-                </div>
-                <h4>AI-Powered Insights</h4>
-                <p>Smart pest detection, disease prediction, and market analysis using advanced AI algorithms.</p>
-                <div class="mt-3 d-flex flex-column flex-sm-row justify-content-center gap-2">
-                    <a href="{{ url_for('crop_suggestions') }}" class="btn btn-outline-success btn-sm">
-                        <i class="fas fa-seedling me-1"></i>Crop Suggestions
-                    </a>
-                    <a href="{{ url_for('pest_disease_analysis') }}" class="btn btn-outline-success btn-sm">
-                        <i class="fas fa-bug me-1"></i>Pest Detection
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4 mb-4">
-            <div class="text-center">
-                <div class="feature-icon bg-light border border-success rounded-circle mx-auto mb-3">
-                    <i class="fas fa-handshake text-success fa-2x"></i>
-                </div>
-                <h4>Direct Marketplace</h4>
-                <p>Connect directly with verified buyers, eliminating middlemen and ensuring fair prices.</p>
-                <div class="mt-3 d-flex flex-column flex-sm-row justify-content-center gap-2">
-                    <a href="{{ url_for('marketplace') }}" class="btn btn-outline-success btn-sm">
-                        <i class="fas fa-store me-1"></i>Browse Marketplace
-                    </a>
-                    <a href="{{ url_for('my_orders') }}" class="btn btn-outline-success btn-sm">
-                        <i class="fas fa-shopping-cart me-1"></i>My Orders
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4 mb-4">
-            <div class="text-center">
-                <div class="feature-icon bg-light border border-success rounded-circle mx-auto mb-3">
-                    <i class="fas fa-graduation-cap text-success fa-2x"></i>
-                </div>
-                <h4>Expert Knowledge</h4>
-                <p>Access to agricultural experts, learning resources, and community-driven Q&A platform.</p>
-                <div class="mt-3 d-flex flex-column flex-sm-row justify-content-center gap-2">
-                    <a href="{{ url_for('learning_hub') }}" class="btn btn-outline-success btn-sm">
-                        <i class="fas fa-book me-1"></i>Learning Hub
-                    </a>
-                    <a href="{{ url_for('expert_forum') }}" class="btn btn-outline-success btn-sm">
-                        <i class="fas fa-users me-1"></i>Expert Forum
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Statistics -->
-    <div class="row mb-5 text-center">
-        <div class="col-12">
-            <h2 class="text-success mb-5">Our Impact</h2>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stats-card text-white p-4">
-                <h2 class="display-4 fw-bold">5000+</h2>
-                <p class="mb-0">Registered Farmers</p>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stats-card text-white p-4">
-                <h2 class="display-4 fw-bold">2000+</h2>
-                <p class="mb-0">Active Buyers</p>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stats-card text-white p-4">
-                <h2 class="display-4 fw-bold">₹50L+</h2>
-                <p class="mb-0">Transactions Facilitated</p>
-            </div>
-        </div>
-        <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stats-card text-white p-4">
-                <h2 class="display-4 fw-bold">25+</h2>
-                <p class="mb-0">States Covered</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pest Detection Feature Highlight -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <h2 class="text-center text-success mb-5">AI Pest & Disease Detection</h2>
-        </div>
-        <div class="col-lg-10 mx-auto">
-            <div class="card shadow-lg border-warning">
-                <div class="card-header bg-warning text-dark">
-                    <h4 class="mb-0">
-                        <i class="fas fa-bug me-2"></i>Protect Your Crops with AI-Powered Analysis
-                    </h4>
-                </div>
-                <div class="card-body p-4">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <h5 class="text-warning">
-                                <i class="fas fa-camera me-2"></i>Image-Based Detection
-                            </h5>
-                            <p>Upload photos of affected plants and get instant AI-powered identification of pests and diseases with confidence scores and severity levels.</p>
+    <!-- Mission & Vision Section -->
+    <div id="mission" class="container pt-5 pb-5" style="position: relative; z-index: 10;">
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-lg hover-card rounded-4 h-100 bg-white" style="transition: all 0.4s ease;">
+                    <div class="card-body p-4 p-md-5 position-relative overflow-hidden">
+                        <div class="position-absolute top-0 end-0 p-4" style="transform: rotate(15deg) scale(1.2); pointer-events: none; z-index: 0;">
+                            <i class="fas fa-bullseye fa-8x" style="color: rgba(25, 135, 84, 0.05) !important;"></i>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <h5 class="text-warning">
-                                <i class="fas fa-file-alt me-2"></i>Symptom-Based Diagnosis
-                            </h5>
-                            <p>Describe symptoms you observe and receive top 3 most likely diagnoses tailored to your crop type and regional conditions.</p>
+                        <div class="d-flex align-items-center mb-4 position-relative z-1">
+                            <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3 me-md-4 shadow-sm" style="width: 80px; height: 80px; flex-shrink: 0;">
+                                <i class="fas fa-bullseye fa-2x text-success" style="animation: iconPulse 2s infinite;"></i>
+                            </div>
+                            <h2 class="fw-bolder mb-0 text-dark" style="font-size: 2.2rem; letter-spacing: -0.5px;">Our Mission</h2>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <h5 class="text-warning">
-                                <i class="fas fa-prescription-bottle me-2"></i>Treatment Recommendations
-                            </h5>
-                            <p>Get detailed treatment plans with both organic and chemical options, including dosage, application methods, and cost estimates.</p>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <h5 class="text-warning">
-                                <i class="fas fa-history me-2"></i>Analysis History & Tracking
-                            </h5>
-                            <p>Track recurring issues, monitor treatment effectiveness, and identify patterns in pest occurrences over time.</p>
-                        </div>
+                        <p class="text-secondary fs-5 position-relative z-1" style="line-height: 1.8;">
+                            To democratize access to advanced agricultural technology. We empower farmers with real-time, AI-driven crop intelligence and foster a transparent, efficient marketplace that connects producers directly with buyers, driving sustainable growth across India.
+                        </p>
                     </div>
-                    <div class="text-center mt-4">
-                        <a href="{{ url_for('pest_disease_analysis') }}" class="btn btn-warning btn-lg me-2">
-                            <i class="fas fa-camera me-2"></i>Analyze Now
-                        </a>
-                        <a href="{{ url_for('pest_analysis_history') }}" class="btn btn-outline-warning btn-lg">
-                            <i class="fas fa-history me-2"></i>View History
-                        </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-lg hover-card rounded-4 h-100 bg-white" style="transition: all 0.4s ease;">
+                    <div class="card-body p-4 p-md-5 position-relative overflow-hidden">
+                        <div class="position-absolute top-0 end-0 p-4" style="transform: rotate(-15deg) scale(1.2); pointer-events: none; z-index: 0;">
+                            <i class="fas fa-globe-asia fa-8x" style="color: rgba(255, 193, 7, 0.05) !important;"></i>
+                        </div>
+                        <div class="d-flex align-items-center mb-4 position-relative z-1">
+                            <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3 me-md-4 shadow-sm" style="width: 80px; height: 80px; flex-shrink: 0;">
+                                <i class="fas fa-eye fa-2x text-warning" style="animation: iconPulse 2s infinite 1s;"></i>
+                            </div>
+                            <h2 class="fw-bolder mb-0 text-dark" style="font-size: 2.2rem; letter-spacing: -0.5px;">Our Vision</h2>
+                        </div>
+                        <p class="text-secondary fs-5 position-relative z-1" style="line-height: 1.8;">
+                            To transform agriculture into a data-driven, highly profitable, and globally competitive sector. We envision a future where every farmer has equitable market opportunities and the specialized knowledge required to achieve unprecedented success.
+                        </p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Technology Stack -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <h2 class="text-center text-success mb-5">Powered by Advanced Technology</h2>
+    <!-- Impact Stats -->
+    <div class="container py-5">
+        <div class="row g-4 text-center">
+            <div class="col-6 col-md-3">
+                <div class="p-4 rounded-4 bg-white shadow-sm hover-card border-bottom border-success border-4 h-100 d-flex flex-column justify-content-center position-relative overflow-hidden" style="transition: transform 0.3s;">
+                    <div class="position-absolute w-100 h-100 top-0 start-0 bg-success" style="clip-path: circle(30% at 100% 100%); opacity: 0.1;"></div>
+                    <h2 class="display-4 fw-bolder mb-2" style="background: linear-gradient(45deg, #198754, #20c997); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">5K+</h2>
+                    <p class="text-muted fw-bold mb-0 text-uppercase tracking-wide" style="letter-spacing: 1.5px;">Farmers</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-4 rounded-4 bg-white shadow-sm hover-card border-bottom border-warning border-4 h-100 d-flex flex-column justify-content-center position-relative overflow-hidden" style="transition: transform 0.3s; transition-delay: 0.1s;">
+                    <div class="position-absolute w-100 h-100 top-0 start-0 bg-warning" style="clip-path: circle(30% at 0% 100%); opacity: 0.1;"></div>
+                    <h2 class="display-4 fw-bolder mb-2" style="background: linear-gradient(45deg, #fd7e14, #ffc107); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">2K+</h2>
+                    <p class="text-muted fw-bold mb-0 text-uppercase tracking-wide" style="letter-spacing: 1.5px;">Buyers</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-4 rounded-4 bg-white shadow-sm hover-card border-bottom border-info border-4 h-100 d-flex flex-column justify-content-center position-relative overflow-hidden" style="transition: transform 0.3s; transition-delay: 0.2s;">
+                    <div class="position-absolute w-100 h-100 top-0 start-0 bg-info" style="clip-path: circle(30% at 100% 0%); opacity: 0.1;"></div>
+                    <h2 class="display-4 fw-bolder mb-2" style="background: linear-gradient(45deg, #0dcaf0, #0aa2c0); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">₹50L+</h2>
+                    <p class="text-muted fw-bold mb-0 text-uppercase tracking-wide" style="letter-spacing: 1.5px;">Transactions</p>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="p-4 rounded-4 bg-white shadow-sm hover-card border-bottom border-primary border-4 h-100 d-flex flex-column justify-content-center position-relative overflow-hidden" style="transition: transform 0.3s; transition-delay: 0.3s;">
+                    <div class="position-absolute w-100 h-100 top-0 start-0 bg-primary" style="clip-path: circle(30% at 0% 0%); opacity: 0.1;"></div>
+                    <h2 class="display-4 fw-bolder mb-2" style="background: linear-gradient(45deg, #0d6efd, #0b5ed7); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">25+</h2>
+                    <p class="text-muted fw-bold mb-0 text-uppercase tracking-wide" style="letter-spacing: 1.5px;">States</p>
+                </div>
+            </div>
         </div>
-        <div class="col-lg-8 mx-auto">
-            <div class="card shadow-sm">
-                <div class="card-body p-4">
-                    <div class="row text-center">
-                        <div class="col-6 col-md-3 mb-4 mb-md-0">
-                            <i class="fas fa-brain text-success fa-3x mb-2"></i>
-                            <h5 class="fs-6 fs-md-5">AI & ML</h5>
-                            <p class="small text-muted d-none d-md-block">FarmLink AI</p>
-                            <a href="{{ url_for('crop_suggestions') }}" class="btn btn-outline-success btn-sm w-100">
-                                <i class="fas fa-robot me-1"></i>AI Crop
+    </div>
+
+    <!-- Features Section -->
+    <div class="container py-5">
+        <div class="text-center mb-5 mx-auto" style="max-width: 750px;">
+            <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold text-uppercase mb-3" style="letter-spacing: 2px;">Why Choose Us</span>
+            <h2 class="display-5 fw-bolder mt-2 text-dark" style="letter-spacing: -1px;">The FarmLink Advantage</h2>
+            <p class="text-muted fs-5 mt-3 lh-lg">We combine state-of-the-art machine learning with deep agricultural expertise to deliver a comprehensive platform designed to maximize both your crop yield and profitability.</p>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Feature 1 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow hover-card rounded-4 p-3 position-relative overflow-hidden" style="background: linear-gradient(145deg, #ffffff, #f8f9fa);">
+                    <div class="position-absolute top-0 end-0 bg-success bg-opacity-10 w-50 h-50 rounded-circle" style="transform: translate(30%, -30%); filter: blur(40px);"></div>
+                    <div class="card-body text-center p-4 position-relative z-1">
+                        <div class="bg-success text-white shadow-lg rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.1) rotate(5deg)'" onmouseout="this.style.transform='none'">
+                            <i class="fas fa-brain fa-2x"></i>
+                        </div>
+                        <h4 class="fw-bolder mb-3 text-dark">AI-Powered Insights</h4>
+                        <p class="text-muted mb-4 fs-6">Embrace proactive farming with smart pest detection, accurate disease prediction, and data-driven market insights powered by advanced deep learning algorithms.</p>
+                        <div class="d-flex flex-wrap justify-content-center gap-2 mt-auto">
+                            <a href="{{ url_for('crop_suggestions') }}" class="btn btn-outline-success btn-sm rounded-pill px-4 fw-bold shadow-sm">
+                                <i class="fas fa-seedling me-1"></i> Crops
                             </a>
-                        </div>
-                        <div class="col-6 col-md-3 mb-4 mb-md-0">
-                            <i class="fas fa-cloud text-info fa-3x mb-2"></i>
-                            <h5 class="fs-6 fs-md-5">Weather API</h5>
-                            <p class="small text-muted d-none d-md-block">Real-time Data</p>
-                            <a href="{{ url_for('weather_dashboard') }}" class="btn btn-outline-info btn-sm w-100">
-                                <i class="fas fa-cloud-sun me-1"></i>Weather
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-3 mb-4 mb-md-0">
-                            <i class="fas fa-database text-primary fa-3x mb-2"></i>
-                            <h5 class="fs-6 fs-md-5">Database</h5>
-                            <p class="small text-muted d-none d-md-block">Secure SQLite</p>
-                            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary btn-sm w-100">
-                                <i class="fas fa-chart-bar me-1"></i>Analytics
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-3 mb-4 mb-md-0">
-                            <i class="fas fa-mobile-alt text-warning fa-3x mb-2"></i>
-                            <h5 class="fs-6 fs-md-5">Responsive</h5>
-                            <p class="small text-muted d-none d-md-block">Mobile-First</p>
-                            <a href="{{ url_for('help_center') }}" class="btn btn-outline-warning btn-sm w-100">
-                                <i class="fas fa-question-circle me-1"></i>Help Guide
+                            <a href="{{ url_for('pest_disease_analysis') }}" class="btn btn-outline-success btn-sm rounded-pill px-4 fw-bold shadow-sm">
+                                <i class="fas fa-bug me-1"></i> Pests
                             </a>
                         </div>
                     </div>
+                </div>
+            </div>
+            <!-- Feature 2 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow hover-card rounded-4 p-3 position-relative overflow-hidden" style="background: linear-gradient(145deg, #ffffff, #f8f9fa);">
+                    <div class="position-absolute top-0 end-0 bg-warning bg-opacity-10 w-50 h-50 rounded-circle" style="transform: translate(30%, -30%); filter: blur(40px);"></div>
+                    <div class="card-body text-center p-4 position-relative z-1">
+                        <div class="bg-warning text-white shadow-lg rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.1) rotate(-5deg)'" onmouseout="this.style.transform='none'">
+                            <i class="fas fa-store fa-2x"></i>
+                        </div>
+                        <h4 class="fw-bolder mb-3 text-dark">Direct Marketplace</h4>
+                        <p class="text-muted mb-4 fs-6">Bypass traditional intermediaries. Our platform connects you directly with verified, high-value buyers, ensuring transparent transactions and fair prices for your produce.</p>
+                        <div class="d-flex flex-wrap justify-content-center gap-2 mt-auto">
+                            <a href="{{ url_for('marketplace') }}" class="btn btn-outline-warning btn-sm rounded-pill px-4 fw-bold shadow-sm">
+                                <i class="fas fa-shopping-bag me-1"></i> Browse
+                            </a>
+                            <a href="{{ url_for('my_orders') }}" class="btn btn-outline-warning btn-sm rounded-pill px-4 fw-bold shadow-sm">
+                                <i class="fas fa-receipt me-1"></i> Orders
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Feature 3 -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 border-0 shadow hover-card rounded-4 p-3 position-relative overflow-hidden" style="background: linear-gradient(145deg, #ffffff, #f8f9fa);">
+                    <div class="position-absolute top-0 end-0 bg-info bg-opacity-10 w-50 h-50 rounded-circle" style="transform: translate(30%, -30%); filter: blur(40px);"></div>
+                    <div class="card-body text-center p-4 position-relative z-1">
+                        <div class="bg-info text-white shadow-lg rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px; transition: transform 0.3s;" onmouseover="this.style.transform='scale(1.1) rotate(5deg)'" onmouseout="this.style.transform='none'">
+                            <i class="fas fa-graduation-cap fa-2x"></i>
+                        </div>
+                        <h4 class="fw-bolder mb-3 text-dark">Expert Knowledge</h4>
+                        <p class="text-muted mb-4 fs-6">Tap into a comprehensive repository of agricultural expertise. Access curated learning resources, courses, and a thriving community-driven forum to solve your farming challenges.</p>
+                        <div class="d-flex flex-wrap justify-content-center gap-2 mt-auto">
+                            <a href="{{ url_for('learning_hub') }}" class="btn btn-outline-info btn-sm rounded-pill px-4 fw-bold shadow-sm">
+                                <i class="fas fa-book me-1"></i> Learn
+                            </a>
+                            <a href="{{ url_for('expert_forum') }}" class="btn btn-outline-info btn-sm rounded-pill px-4 fw-bold shadow-sm">
+                                <i class="fas fa-users me-1"></i> Forum
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Team Section -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <h2 class="text-center text-success mb-5">Our Values</h2>
-        </div>
-        <div class="col-lg-4 mb-4">
-            <div class="card h-100 text-center shadow-sm">
-                <div class="card-body p-4">
-                    <i class="fas fa-leaf text-success fa-3x mb-3"></i>
-                    <h4>Sustainability</h4>
-                    <p>Promoting eco-friendly farming practices and sustainable agriculture for future generations.</p>
-                    <div class="mt-3">
-                        <a href="{{ url_for('learning_hub') }}" class="btn btn-outline-success btn-sm">
-                            <i class="fas fa-leaf me-1"></i>Green Practices
-                        </a>
+    <!-- AI Pest Detection Highlight -->
+    <div class="container py-5">
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white hover-card" style="transition: box-shadow 0.4s ease;">
+            <div class="row g-0">
+                <div class="col-lg-5 p-5 text-white d-flex flex-column justify-content-center position-relative overflow-hidden" style="background: linear-gradient(135deg, var(--success-green) 0%, var(--dark-green) 100%);">
+                    <div class="position-absolute top-0 end-0 p-4 opacity-25" style="transform: scale(1.5) translate(10%, -10%);">
+                        <i class="fas fa-shield-virus fa-10x" style="animation: float 6s infinite;"></i>
+                    </div>
+                    <!-- Decorative glowing orbs -->
+                    <div class="position-absolute bg-white rounded-circle" style="width: 200px; height: 200px; bottom: -50px; left: -50px; filter: blur(20px); opacity: 0.1;"></div>
+                    <div class="position-relative z-1">
+                        <span class="badge bg-white text-success mb-3 px-3 py-2 rounded-pill fw-bold shadow-sm" style="font-size: 0.85rem;"><i class="fas fa-microchip me-1"></i> Advanced AI Technology</span>
+                        <h2 class="display-5 fw-bolder mb-4" style="line-height: 1.2;">Instant Crop Disease Diagnosis</h2>
+                        <p class="fs-5 mb-5 opacity-80 fw-light">Safeguard your harvest with real-time analysis. Simply upload a photo of an affected plant, and our neural networks will provide an accurate diagnosis alongside a step-by-step treatment plan.</p>
+                        <div class="d-flex flex-wrap gap-3 mt-2">
+                            <a href="{{ url_for('pest_disease_analysis') }}" class="btn btn-warning btn-lg rounded-pill fw-bold shadow-lg px-4" style="transition: transform 0.3s;">
+                                <i class="fas fa-camera me-2"></i>Analyze Now
+                            </a>
+                            <a href="{{ url_for('pest_analysis_history') }}" class="btn btn-outline-light btn-lg rounded-pill fw-bold px-4">
+                                <i class="fas fa-history me-2"></i>History
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-lg-4 mb-4">
-            <div class="card h-100 text-center shadow-sm">
-                <div class="card-body p-4">
-                    <i class="fas fa-balance-scale text-success fa-3x mb-3"></i>
-                    <h4>Transparency</h4>
-                    <p>Ensuring fair pricing, honest transactions, and transparent communication between all parties.</p>
-                    <div class="mt-3">
-                        <a href="{{ url_for('marketplace') }}" class="btn btn-outline-success btn-sm">
-                            <i class="fas fa-handshake me-1"></i>Fair Trading
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4 mb-4">
-            <div class="card h-100 text-center shadow-sm">
-                <div class="card-body p-4">
-                    <i class="fas fa-rocket text-success fa-3x mb-3"></i>
-                    <h4>Innovation</h4>
-                    <p>Continuously improving our platform with cutting-edge technology and user feedback.</p>
-                    <div class="mt-3">
-                        <a href="{{ url_for('crop_suggestions') }}" class="btn btn-outline-success btn-sm">
-                            <i class="fas fa-lightbulb me-1"></i>Latest Features
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Founder/Creator Section -->
-    <div class="row mb-5">
-        <div class="col-12">
-            <h2 class="text-center text-success mb-5">Meet Our Founder</h2>
-        </div>
-        <div class="col-lg-8 mx-auto">
-            <div class="card shadow-lg">
-                <div class="card-body p-4 p-md-5">
-                    <div class="row align-items-center text-center text-md-start">
-                        <div class="col-md-4 text-center mb-4 mb-md-0">
-                            <img src="https://res.cloudinary.com/dfsluawra/image/upload/v1781554425/farmlink_profiles/p6ac9xj6wxltjud9hyl9.jpg" 
-                                 alt="Dipendra Kumar" 
-                                 class="rounded-circle mx-auto mb-3 border border-success" 
-                                 style="width: 150px; height: 150px; object-fit: cover;">
-                            <h4 class="text-success mb-2">Dipendra Kumar</h4>
-                            <p class="text-muted mb-0">Founder & CEO</p>
-                            <div class="social-links mt-3">
-                                <a href="https://www.linkedin.com/in/dipendra-kumar-b077b9286/" target="_blank" class="btn btn-outline-success btn-sm me-2" title="Connect on LinkedIn">
-                                    <i class="fab fa-linkedin"></i>
-                                </a>
-                                <a href="https://github.com/Dipendra2003" target="_blank" class="btn btn-outline-success btn-sm me-2" title="View on GitHub">
-                                    <i class="fab fa-github"></i>
-                                </a>
-                                <a href="mailto:dipendrak299@gmail.com" class="btn btn-outline-success btn-sm" title="Send Email">
-                                    <i class="fas fa-envelope"></i>
-                                </a>
+                <div class="col-lg-7 p-4 p-md-5 bg-white position-relative">
+                    <div class="position-absolute top-0 end-0" style="background-image: radial-gradient(#198754 1px, transparent 1px); background-size: 20px 20px; width: 100px; height: 100px; border-bottom-left-radius: 100%; opacity: 0.1;"></div>
+                    <div class="row g-4 h-100 align-content-center">
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-start p-3 rounded-4 hover-card" style="background: #f8f9fa; border-left: 4px solid var(--success-green); transition: transform 0.3s;">
+                                <div class="text-success me-3 mt-1"><i class="fas fa-camera-retro fa-2x"></i></div>
+                                <div>
+                                    <h5 class="fw-bolder text-dark mb-1">Image Detection</h5>
+                                    <p class="text-muted mb-0 small">Instant identification of pests with high-accuracy confidence scores.</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-8">
-                            <div class="founder-story">
-                                <h5 class="text-success mb-3">
-                                    <i class="fas fa-quote-left me-2"></i>
-                                    Our Story
-                                </h5>
-                                <p class="mb-3">
-                                    Born and raised in rural Bihar, I witnessed firsthand the challenges faced by 
-                                    farmers in accessing modern technology, fair markets, and timely information. 
-                                    This personal experience inspired me to create FarmLink AI.
-                                </p>
-                                <p class="mb-3">
-                                    With a background in Computer Science and AI, I combined my technical expertise 
-                                    with deep understanding of agricultural challenges to build a platform that 
-                                    truly serves farmers' needs.
-                                </p>
-                                <p class="mb-4">
-                                    <strong>"Technology should bridge gaps, not create them. FarmLink AI ensures 
-                                    that every farmer, regardless of their location or resources, has access to 
-                                    the same cutting-edge tools used by large agricultural corporations."</strong>
-                                </p>
-                                <div class="founder-achievements">
-                                    <h6 class="text-success mb-2">Key Achievements:</h6>
-                                    <ul class="list-unstyled">
-                                        <li><i class="fas fa-check-circle text-success me-2"></i>AI & Machine Learning Specialist</li>
-                                        <li><i class="fas fa-check-circle text-success me-2"></i>Rural Development Advocate</li>
-                                        <li><i class="fas fa-check-circle text-success me-2"></i>Helped 5000+ Farmers Digitally</li>
-                                        <li><i class="fas fa-check-circle text-success me-2"></i>Agricultural Technology Pioneer</li>
-                                    </ul>
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-start p-3 rounded-4 hover-card" style="background: #f8f9fa; border-left: 4px solid var(--warning-orange); transition: transform 0.3s; transition-delay: 0.1s;">
+                                <div class="text-warning me-3 mt-1"><i class="fas fa-stethoscope fa-2x"></i></div>
+                                <div>
+                                    <h5 class="fw-bolder text-dark mb-1">Symptom Diagnosis</h5>
+                                    <p class="text-muted mb-0 small">Describe symptoms to receive the most likely data-backed diagnoses.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-start p-3 rounded-4 hover-card" style="background: #f8f9fa; border-left: 4px solid var(--sky-blue); transition: transform 0.3s; transition-delay: 0.2s;">
+                                <div class="text-info me-3 mt-1"><i class="fas fa-prescription-bottle-alt fa-2x"></i></div>
+                                <div>
+                                    <h5 class="fw-bolder text-dark mb-1">Treatment Plans</h5>
+                                    <p class="text-muted mb-0 small">Get comprehensive organic and chemical treatment options.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="d-flex align-items-start p-3 rounded-4 hover-card" style="background: #f8f9fa; border-left: 4px solid #6f42c1; transition: transform 0.3s; transition-delay: 0.3s;">
+                                <div class="me-3 mt-1" style="color: #6f42c1;"><i class="fas fa-chart-bar fa-2x"></i></div>
+                                <div>
+                                    <h5 class="fw-bolder text-dark mb-1">Analysis History</h5>
+                                    <p class="text-muted mb-0 small">Track recurring crop issues and continuously monitor treatment effectiveness.</p>
                                 </div>
                             </div>
                         </div>
@@ -360,25 +283,92 @@
         </div>
     </div>
 
-    <!-- Call to Action -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card bg-success text-white">
-                <div class="card-body text-center p-5">
-                    <h2 class="mb-4">Ready to Transform Your Farming Business?</h2>
-                    <p class="lead mb-4">
-                        Join thousands of farmers who are already benefiting from our AI-powered platform.
-                    </p>
-                    <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
-                        {% if not current_user.is_authenticated %}
-                        <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
-                            <i class="fas fa-user-plus me-2"></i>Get Started Free
+    <!-- Founder Section -->
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill fw-bold text-uppercase mb-3" style="letter-spacing: 2px;">Leadership</span>
+            <h2 class="display-5 fw-bolder text-dark" style="letter-spacing: -1px;">Meet Our Founder</h2>
+            <div class="mx-auto bg-success mt-3" style="width: 80px; height: 5px; border-radius: 5px;"></div>
+        </div>
+        
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white mx-auto hover-card" style="max-width: 950px; transition: all 0.4s ease;">
+            <div class="row g-0 align-items-center">
+                <div class="col-md-5 text-center p-5 position-relative overflow-hidden h-100 d-flex flex-column justify-content-center" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                    <div class="position-absolute bg-success rounded-circle" style="width: 300px; height: 300px; top: -100px; left: -100px; opacity: 0.1;"></div>
+                    <div class="position-relative d-inline-block mb-4 mx-auto z-1">
+                        <div class="p-2 rounded-circle bg-white shadow-lg d-inline-block">
+                            <img src="https://res.cloudinary.com/dfsluawra/image/upload/v1781554425/farmlink_profiles/p6ac9xj6wxltjud9hyl9.jpg" 
+                                 alt="Dipendra Kumar" 
+                                 class="rounded-circle shadow-inner object-fit-cover" 
+                                 style="width: 200px; height: 200px; border: 4px solid #fff; object-fit: cover;">
+                        </div>
+                        <div class="position-absolute bottom-0 end-0 bg-success text-white rounded-circle d-flex align-items-center justify-content-center shadow-lg" style="width: 45px; height: 45px; border: 3px solid white; transform: translate(-10px, -10px);">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <h4 class="fw-bolder mb-1 text-dark position-relative z-1">Dipendra Kumar</h4>
+                    <p class="text-success fw-bold mb-4 position-relative z-1" style="letter-spacing: 1px;">Founder & CEO</p>
+                    <div class="d-flex justify-content-center gap-3 position-relative z-1">
+                        <a href="https://www.linkedin.com/in/dipendra-kumar-b077b9286/" target="_blank" class="btn btn-white rounded-circle shadow hover-card d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: white;">
+                            <i class="fab fa-linkedin-in text-primary fs-4"></i>
                         </a>
-                        {% endif %}
-                        <a href="{{ url_for('contact') }}" class="btn btn-outline-light btn-lg">
-                            <i class="fas fa-phone me-2"></i>Contact Us
+                        <a href="https://github.com/Dipendra2003" target="_blank" class="btn btn-white rounded-circle shadow hover-card d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: white;">
+                            <i class="fab fa-github text-dark fs-4"></i>
+                        </a>
+                        <a href="mailto:dipendrak299@gmail.com" class="btn btn-white rounded-circle shadow hover-card d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background: white;">
+                            <i class="fas fa-envelope text-danger fs-4"></i>
                         </a>
                     </div>
+                </div>
+                <div class="col-md-7 p-4 p-md-5">
+                    <h3 class="fw-bolder mb-4 d-flex align-items-center text-success">
+                        <i class="fas fa-quote-left fs-3 me-3 opacity-25"></i>
+                        Our Story
+                    </h3>
+                    <p class="fs-5 text-secondary mb-4" style="line-height: 1.8;">
+                        Growing up in rural Bihar, I witnessed firsthand the immense challenges farmers face—from unpredictable 
+                        crop diseases to inequitable market access and a lack of timely information. 
+                        These profound experiences became the catalyst for creating FarmLink AI.
+                    </p>
+                    <blockquote class="border-start border-4 border-warning ps-4 py-3 my-4 bg-warning bg-opacity-10 rounded-end shadow-sm">
+                        <p class="fst-italic fw-medium text-dark mb-0 fs-5" style="line-height: 1.6;">
+                            "Technology should act as an equalizer, not a divider. At FarmLink AI, we are committed to 
+                            ensuring that every farmer, regardless of the size of their landholding, has access to the 
+                            cutting-edge tools needed to thrive."
+                        </p>
+                    </blockquote>
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        <span class="badge bg-white text-dark border border-success px-3 py-2 rounded-pill shadow-sm"><i class="fas fa-microchip text-success me-1"></i> AI & ML</span>
+                        <span class="badge bg-white text-dark border border-success px-3 py-2 rounded-pill shadow-sm"><i class="fas fa-seedling text-success me-1"></i> Rural Dev</span>
+                        <span class="badge bg-white text-dark border border-success px-3 py-2 rounded-pill shadow-sm"><i class="fas fa-tractor text-success me-1"></i> Agri-Tech</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="container py-5 mb-4">
+        <div class="card border-0 rounded-4 overflow-hidden position-relative shadow-lg hover-card" style="background: linear-gradient(135deg, var(--dark-green) 0%, var(--primary-green) 100%); transition: transform 0.4s ease;">
+            <!-- Background shapes -->
+            <div class="position-absolute" style="top: -50px; right: -50px; width: 250px; height: 250px; background: rgba(255,255,255,0.05); border-radius: 50%; animation: float 8s ease-in-out infinite;"></div>
+            <div class="position-absolute" style="bottom: -50px; left: -50px; width: 180px; height: 180px; background: rgba(255,255,255,0.08); border-radius: 50%; animation: float 6s ease-in-out infinite 1s;"></div>
+            
+            <div class="card-body p-5 text-center text-white position-relative z-1">
+                <span class="badge bg-white bg-opacity-25 text-white px-3 py-2 rounded-pill fw-bold text-uppercase mb-4 shadow-sm" style="letter-spacing: 2px;"><i class="fas fa-rocket me-2"></i>Take Action</span>
+                <h2 class="display-4 fw-bolder mb-3" style="text-shadow: 0 4px 10px rgba(0,0,0,0.2);">Ready to Revolutionize Your Farming Journey?</h2>
+                <p class="lead mb-5 opacity-90 mx-auto fs-4 fw-light" style="max-width: 750px;">
+                    Join a growing community of visionary farmers who are already unlocking unprecedented growth and profitability with our AI-driven ecosystem.
+                </p>
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                    {% if not current_user.is_authenticated %}
+                    <a href="{{ url_for('register') }}" class="btn btn-warning btn-lg rounded-pill fw-bolder shadow-lg px-5 py-3" style="transition: transform 0.3s; transform: scale(1);">
+                        <i class="fas fa-user-plus me-2"></i>Get Started Free
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('contact') }}" class="btn btn-outline-light btn-lg rounded-pill fw-bolder px-5 py-3" style="border-width: 2px;">
+                        <i class="fas fa-phone me-2"></i>Contact Us
+                    </a>
                 </div>
             </div>
         </div>

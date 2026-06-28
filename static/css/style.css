@@ -229,9 +229,7 @@ body.modal-open {
 /* ===== HERO SECTION ===== */
 .hero-section {
     background: linear-gradient(135deg, var(--primary-green) 0%, var(--dark-green) 100%);
-    min-height: 60vh;
-    display: flex;
-    align-items: center;
+    overflow: visible;
 }
 
 .hero-stats {
@@ -1364,7 +1362,6 @@ footer a:hover {
 /* Tablet & Mobile */
 @media (max-width: 768px) {
     .hero-section {
-        min-height: 50vh;
         text-align: center;
     }
     

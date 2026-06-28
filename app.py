@@ -167,12 +167,17 @@ if database_url and database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+from sqlalchemy.pool import NullPool
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_size": 5,
-    "max_overflow": 10,
-    "pool_timeout": 30,
-    "pool_recycle": 1800,
+    "poolclass": NullPool,
     "pool_pre_ping": True,
+    "connect_args": {
+        "connect_timeout": 60,
+        "keepalives": 1,
+        "keepalives_idle": 60,
+        "keepalives_interval": 10,
+        "keepalives_count": 5
+    }
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False  # Disable modification tracking
 app.config["SQLALCHEMY_ECHO"] = False  # Disable SQL query logging for cleaner output
