@@ -4,6 +4,8 @@
 
 FarmLink AI is a comprehensive agricultural marketplace platform that bridges the gap between farmers and buyers, powered by artificial intelligence and modern web technologies.
 
+🌐 **Live Demo:** [https://farmlinkai.vercel.app/](https://farmlinkai.vercel.app/)
+
 ---
 
 ## 🚀 Features
@@ -62,9 +64,9 @@ FarmLink AI is a comprehensive agricultural marketplace platform that bridges th
 - **Shipment Tracking**: Shiprocket, India Post APIs
 
 ### Deployment
-- **Web Server**: Gunicorn
-- **Platform**: Render (recommended)
-- **Database**: PostgreSQL (managed)
+- **Web Server**: Vercel Serverless Functions
+- **Platform**: Vercel (recommended)
+- **Database**: PostgreSQL (managed, e.g., Supabase)
 - **File Storage**: Local filesystem (upgradeable to S3)
 
 ---
@@ -168,7 +170,7 @@ gunicorn main:app --workers 4 --bind 0.0.0.0:5000
 
 ---
 
-## 🌐 Deployment to Render
+## 🌐 Deployment to Vercel
 
 ### 1. Push to GitHub
 ```bash
@@ -177,33 +179,28 @@ git commit -m "Ready for deployment"
 git push origin main
 ```
 
-### 2. Create Render Account
-- Sign up at [render.com](https://render.com)
+### 2. Create Vercel Account
+- Sign up at [vercel.com](https://vercel.com)
 - Connect your GitHub repository
 
 ### 3. Create PostgreSQL Database
-- Go to Render Dashboard → New → PostgreSQL
-- Name: `farmlink-db`
-- Copy the Internal Database URL
+- Set up a managed PostgreSQL database (e.g., Supabase, Neon)
+- Copy the Database connection URL
 
-### 4. Create Web Service
-- Go to Render Dashboard → New → Web Service
-- Connect your repository
-- Configure:
-  - **Name**: farmlink-ai
-  - **Environment**: Python 3
-  - **Build Command**: `pip install -r requirements.txt`
-  - **Start Command**: `gunicorn app:app --workers 4 --timeout 120`
+### 4. Create Vercel Project
+- Import your repository to Vercel
+- The framework preset should automatically detect Python/Flask
+- Vercel uses `vercel.json` for configuration which is already provided
 
 ### 5. Set Environment Variables
-Add all variables from `.env.example` in Render Dashboard:
+Add all variables from `.env.example` in the Vercel Dashboard Settings:
 - `BASE_URL`: Your Vercel URL (e.g., https://farmlinkai.vercel.app)
-- `DATABASE_URL`: From PostgreSQL database (auto-filled)
-- `SESSION_SECRET`: Generate random string
+- `DATABASE_URL`: Your PostgreSQL connection string
+- `SESSION_SECRET`: Generate a random string
 - All API keys and credentials
 
 ### 6. Deploy
-Click "Create Web Service" and wait for deployment to complete.
+Click "Deploy" and wait for the build to complete.
 
 ---
 
@@ -230,9 +227,8 @@ Farmlink-AI/
 ├── forms.py              # WTForms definitions
 ├── config.py             # Configuration
 ├── requirements.txt      # Python dependencies
-├── Procfile             # Deployment configuration
-├── render.yaml          # Render deployment config
-└── .env.example         # Environment variables template
+├── vercel.json           # Vercel deployment config
+└── .env.example          # Environment variables template
 ```
 
 ---
@@ -310,7 +306,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Google Gemini API for AI capabilities
 - Agmarknet (data.gov.in) for agricultural data
 - Razorpay for payment processing
-- Render for hosting platform
+- Vercel for hosting platform
 - Bootstrap team for UI framework
 - Flask community for excellent documentation
 
