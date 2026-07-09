@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Support & Feedback - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}" class="text-decoration-none">Admin Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Support & Feedback</li>
+        </ol>
+    </nav>
+
+    <!-- Header and Filter -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <h2 class="fw-bold mb-0">
+            <i class="fas fa-headset text-danger me-2"></i>Support & Feedback
+        </h2>
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('admin_support', status='all') }}" class="btn btn-outline-secondary {% if current_filter == 'all' %}active{% endif %}">All</a>
+            <a href="{{ url_for('admin_support', status='pending') }}" class="btn btn-outline-warning {% if current_filter == 'pending' %}active{% endif %}">Pending</a>
+            <a href="{{ url_for('admin_support', status='resolved') }}" class="btn btn-outline-success {% if current_filter == 'resolved' %}active{% endif %}">Resolved</a>
+        </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4 py-3">ID</th>
+                            <th class="py-3">Subject / Type</th>
+                            <th class="py-3">Message</th>
+                            <th class="py-3">Reported By</th>
+                            <th class="py-3">Date</th>
+                            <th class="py-3">Status</th>
+                            <th class="pe-4 py-3 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if feedbacks.items %}
+                            {% for fb in feedbacks.items %}
+                            <tr>
+                                <td class="ps-4 fw-bold">#{{ fb.id }}</td>
+                                <td class="fw-medium text-dark">{{ fb.subject }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 text-start text-truncate" style="max-width: 250px;" data-bs-toggle="modal" data-bs-target="#msgModal{{ fb.id }}">
+                                        {{ fb.message }}
+                                    </button>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="https://ui-avatars.com/api/?name={{ fb.user.full_name }}&background=e9ecef&color=495057&size=30" class="rounded-circle me-2" alt="Avatar">
+                                        <div class="small">
+                                            <div class="fw-bold">{{ fb.user.full_name }}</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">{{ fb.user.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ fb.created_at.strftime('%d %b %Y, %I:%M %p') }}</small>
+                                </td>
+                                <td>
+                                    {% if fb.status == 'pending' %}
+                                        <span class="badge bg-warning bg-opacity-10 text-warning px-2 py-1"><i class="fas fa-clock me-1"></i>Pending</span>
+                                    {% else %}
+                                        <span class="badge bg-success bg-opacity-10 text-success px-2 py-1"><i class="fas fa-check-circle me-1"></i>Resolved</span>
+                                    {% endif %}
+                                </td>
+                                <td class="pe-4 text-end">
+                                    {% if fb.status == 'pending' %}
+                                        <form method="POST" action="{{ url_for('admin_support_resolve', id=fb.id) }}" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-sm btn-success rounded-pill" onclick="return confirm('Mark this issue as resolved?')">
+                                                Resolve
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-light rounded-pill disabled">Resolved</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+
+                            <!-- Message Modal -->
+                            <div class="modal fade" id="msgModal{{ fb.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content rounded-4 border-0">
+                                        <div class="modal-header bg-light border-0">
+                                            <h5 class="modal-title fw-bold"><i class="fas fa-envelope-open-text me-2"></i>Report Details #{{ fb.id }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body p-4">
+                                            <div class="mb-3">
+                                                <small class="text-muted d-block mb-1">Subject</small>
+                                                <div class="fw-bold">{{ fb.subject }}</div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <small class="text-muted d-block mb-1">Reported By</small>
+                                                <div>{{ fb.user.full_name }} ({{ fb.user.email }})</div>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block mb-1">Full Message</small>
+                                                <div class="p-3 bg-light rounded-3" style="white-space: pre-wrap;">{{ fb.message }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-0">
+                                            <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="fas fa-check-circle fa-3x mb-3 text-success opacity-50"></i>
+                                        <h5 class="fw-bold">No Issues Reported</h5>
+                                        <p class="mb-0">Everything looks good! There are no pending reports or feedback.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if feedbacks.pages > 1 %}
+            <div class="card-footer bg-white border-top-0 p-4">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item {% if not feedbacks.has_prev %}disabled{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin_support', page=feedbacks.prev_num, status=current_filter) if feedbacks.has_prev else '#' }}">Previous</a>
+                        </li>
+                        
+                        {% for page_num in feedbacks.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                            {% if page_num %}
+                                <li class="page-item {% if page_num == feedbacks.page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('admin_support', page=page_num, status=current_filter) }}">{{ page_num }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <li class="page-item {% if not feedbacks.has_next %}disabled{% endif %}">
+                            <a class="page-link" href="{{ url_for('admin_support', page=feedbacks.next_num, status=current_filter) if feedbacks.has_next else '#' }}">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

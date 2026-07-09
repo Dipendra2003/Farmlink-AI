@@ -7,22 +7,27 @@
     <div class="row justify-content-center">
         <div class="col-lg-7">
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
-                <div class="card-header bg-danger text-white p-4 border-0">
-                    <h3 class="mb-0 fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>Report an Issue</h3>
-                    <p class="mb-0 text-white-50 mt-1">If you have encountered any fraud, fake profile, or problem with your order, let us know.</p>
+                <div class="card-header bg-primary bg-gradient text-white p-4 border-0">
+                    <h3 class="mb-0 fw-bold"><i class="fas fa-headset me-2"></i>Support & Feedback</h3>
+                    <p class="mb-0 text-white-50 mt-1">Report an issue, fraud, technical bug, or share your valuable suggestions with us.</p>
                 </div>
                 <div class="card-body p-4 p-md-5">
                     <form method="POST" action="{{ url_for('report_issue') }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         
                         <div class="mb-4">
-                            <label class="form-label fw-bold">Type of Issue</label>
+                            <label class="form-label fw-bold">Type of Request</label>
                             <select class="form-select" name="issue_type" required>
-                                <option value="" selected disabled>Select the issue type...</option>
-                                <option value="fraud">Fraud / Fake Seller</option>
-                                <option value="quality">Bad Quality Produce</option>
-                                <option value="payment">Payment Problem</option>
-                                <option value="delivery">Delivery Delay / Not Received</option>
+                                <optgroup label="Feedback & Ideas">
+                                    <option value="suggestion">Feature Suggestion / Idea</option>
+                                    <option value="bug">Technical Bug / Website Error</option>
+                                </optgroup>
+                                <optgroup label="Order & Seller Issues">
+                                    <option value="fraud">Fraud / Fake Seller</option>
+                                    <option value="quality">Bad Quality Produce</option>
+                                    <option value="payment">Payment Problem</option>
+                                    <option value="delivery">Delivery Delay / Not Received</option>
+                                </optgroup>
                                 <option value="other">Other</option>
                             </select>
                         </div>
@@ -38,12 +43,12 @@
                         </div>
 
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-danger btn-lg rounded-pill fw-bold">
-                                <i class="fas fa-paper-plane me-2"></i>Submit Report
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Request
                             </button>
                         </div>
                         <p class="text-muted text-center small mt-3">
-                            Our grievance cell reviews all reports within 24 hours.
+                            Our team reviews all reports and feedback within 24 hours.
                         </p>
                     </form>
                 </div>

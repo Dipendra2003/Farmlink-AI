@@ -49,6 +49,26 @@ Sent at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
             # Send admin notification
             mail.send(admin_msg)
             
+            # Save to Database as well
+            from models import Feedback, User
+            user_id = current_user.id if current_user.is_authenticated else None
+            
+            if not user_id:
+                admin_user = User.query.filter_by(role='admin').first()
+                if admin_user:
+                    user_id = admin_user.id
+                    
+            if user_id:
+                db_message = f"Sender Name: {form.name.data}\nSender Email: {form.email.data}\n\n{form.message.data}"
+                feedback = Feedback(
+                    subject=f"Contact Us: {form.subject.data}",
+                    message=db_message,
+                    user_id=user_id
+                )
+                db.session.add(feedback)
+                db.session.commit()
+            
+            flash('Your message has been sent successfully. We will get back to you soon!', 'success')
             # Send confirmation to user
             user_msg = FlaskMailMessage(
                 subject="Thank you for contacting FarmLink AI",
@@ -108,9 +128,27 @@ def return_policy():
     return render_template('pages/return_policy.html')
 
 @app.route('/report-issue', methods=['GET', 'POST'])
+@login_required
 def report_issue():
     if request.method == 'POST':
-        flash('Your issue has been reported successfully. Our team will look into it.', 'success')
+        issue_type = request.form.get('issue_type', 'Other')
+        order_id = request.form.get('order_id', '').strip()
+        description = request.form.get('description', '')
+        
+        subject = f"Report Issue: {issue_type.title()}"
+        if order_id:
+            subject += f" (Order: {order_id})"
+            
+        from models import Feedback
+        report = Feedback(
+            subject=subject,
+            message=description,
+            user_id=current_user.id
+        )
+        db.session.add(report)
+        db.session.commit()
+        
+        flash('Your issue has been reported successfully. Our admin team will look into it.', 'success')
         return redirect(url_for('report_issue'))
     return render_template('pages/report_issue.html')
 
@@ -533,6 +571,42 @@ def buyer_dashboard():
                          nearby_crops=nearby_crops,
                          total_spent=total_spent,
                          pending_ratings=pending_ratings)
+
+@app.route('/admin/support')
+@login_required
+@admin_required
+def admin_support():
+    from models import Feedback
+    status_filter = request.args.get('status', 'all')
+    page = request.args.get('page', 1, type=int)
+    
+    query = Feedback.query
+    if status_filter != 'all':
+        query = query.filter_by(status=status_filter)
+        
+    feedbacks = query.order_by(
+        db.case(
+            (Feedback.status == 'pending', 0),
+            else_=1
+        ),
+        Feedback.created_at.desc()
+    ).paginate(page=page, per_page=10, error_out=False)
+    
+    return render_template('admin/support.html', feedbacks=feedbacks, current_filter=status_filter)
+
+@app.route('/admin/support/<int:id>/resolve', methods=['POST'])
+@login_required
+@admin_required
+def admin_support_resolve(id):
+    from models import Feedback
+    from datetime import datetime
+    feedback = Feedback.query.get_or_404(id)
+    feedback.status = 'resolved'
+    feedback.responded_at = datetime.utcnow()
+    feedback.responded_by = current_user.id
+    db.session.commit()
+    flash('Issue marked as resolved.', 'success')
+    return redirect(url_for('admin_support'))
 
 @app.route('/admin/dashboard')
 @login_required
