@@ -7,11 +7,12 @@ from sqlalchemy import func
 from extensions import db
 from models import (
     ProductRating, SellerReputation, RatingAuditLog, 
-    Order, Crop, User
+    Order, Crop, User, RatingHelpfulVote, SellerResponse
 )
 from fraud_prevention_service import FraudPreventionService
 from rating_notification_service import rating_notification_service
-import bleach
+from utils import sanitize_text
+from flask import current_app
 import json
 import logging
 
@@ -21,11 +22,11 @@ logger = logging.getLogger(__name__)
 class RatingService:
     """Business logic for rating operations"""
     
-    # Configuration constants
-    RATING_SUBMISSION_WINDOW_DAYS = 90
-    RATING_EDIT_WINDOW_DAYS = 30
-    RATING_DELETE_WINDOW_DAYS = 30
-    RATING_MIN_ORDER_VALUE = 10
+    # Defaults for configuration constants in case they're not set in app.config
+    DEFAULT_RATING_SUBMISSION_WINDOW_DAYS = 90
+    DEFAULT_RATING_EDIT_WINDOW_DAYS = 30
+    DEFAULT_RATING_DELETE_WINDOW_DAYS = 30
+    DEFAULT_RATING_MIN_ORDER_VALUE = 10
     
     @staticmethod
     def can_rate_order(user_id, order_id):
@@ -48,7 +49,7 @@ class RatingService:
         if order.buyer_id != user_id:
             return False, "You can only rate your own orders"
         
-        # Requirement 9.3: Prevent sellers from rating their own products
+        # Prevent sellers from rating their own products
         is_allowed, error_msg = FraudPreventionService.prevent_seller_self_rating(user_id, order_id)
         if not is_allowed:
             return False, error_msg
@@ -61,7 +62,7 @@ class RatingService:
         if order.payment_status != 'paid':
             return False, "Order must be paid before rating"
         
-        # Requirement 9.1, 9.2: Check rating doesn't already exist for order
+        # Check rating doesn't already exist for order
         # (Database constraint also enforces this)
         existing_rating = ProductRating.query.filter_by(order_id=order_id).first()
         if existing_rating:
@@ -70,18 +71,20 @@ class RatingService:
         # Verify within 90-day submission window
         if order.updated_at:
             days_since_completion = (datetime.utcnow() - order.updated_at).days
-            if days_since_completion > RatingService.RATING_SUBMISSION_WINDOW_DAYS:
-                return False, f"Rating window expired. You can only rate orders within {RatingService.RATING_SUBMISSION_WINDOW_DAYS} days of completion"
+            window_days = current_app.config.get('RATING_SUBMISSION_WINDOW_DAYS', RatingService.DEFAULT_RATING_SUBMISSION_WINDOW_DAYS)
+            if days_since_completion > window_days:
+                return False, f"Rating window expired. You can only rate orders within {window_days} days of completion"
         
-        # Requirement 9.5: Check minimum order value requirement
+        # Check minimum order value requirement
+        min_order_value = current_app.config.get('RATING_MIN_ORDER_VALUE', RatingService.DEFAULT_RATING_MIN_ORDER_VALUE)
         is_valid, error_msg = FraudPreventionService.verify_minimum_order_value(
             order_id, 
-            RatingService.RATING_MIN_ORDER_VALUE
+            min_order_value
         )
         if not is_valid:
             return False, error_msg
         
-        # Requirement 11.3: Check rate limiting
+        # Check rate limiting
         is_allowed, error_msg = FraudPreventionService.check_rate_limit(user_id)
         if not is_allowed:
             return False, error_msg
@@ -123,12 +126,7 @@ class RatingService:
         sanitized_review = None
         if review_text:
             # Remove all HTML tags and clean the text
-            sanitized_review = bleach.clean(
-                review_text.strip(),
-                tags=[],
-                attributes={},
-                strip=True
-            )
+            sanitized_review = sanitize_text(review_text)
             
             # Validate length
             if len(sanitized_review) < 10:
@@ -162,7 +160,7 @@ class RatingService:
             })
         )
         
-        # Requirement 9.4: Detect suspicious patterns and flag for admin review
+        # Detect suspicious patterns and flag for admin review
         try:
             ip_address = request.remote_addr if request else None
             fraud_check = FraudPreventionService.detect_suspicious_patterns(
@@ -191,7 +189,7 @@ class RatingService:
         db.session.commit()
         
         # Send notification to seller about new rating
-        # Requirement 10.1: Notify seller within 10 minutes of new rating
+        # Notify seller within 10 minutes of new rating
         try:
             rating_notification_service.notify_seller_new_rating(new_rating.id)
         except Exception as notif_err:
@@ -232,18 +230,14 @@ class RatingService:
         
         # Check edit window (30 days)
         days_since_creation = (datetime.utcnow() - rating.created_at).days
-        if days_since_creation > RatingService.RATING_EDIT_WINDOW_DAYS:
-            raise ValueError(f"Edit window expired. You can only edit ratings within {RatingService.RATING_EDIT_WINDOW_DAYS} days of submission")
+        window_days = current_app.config.get('RATING_EDIT_WINDOW_DAYS', RatingService.DEFAULT_RATING_EDIT_WINDOW_DAYS)
+        if days_since_creation > window_days:
+            raise ValueError(f"Edit window expired. You can only edit ratings within {window_days} days of submission")
         
         # Sanitize new review text
         sanitized_review = None
         if new_review_text:
-            sanitized_review = bleach.clean(
-                new_review_text.strip(),
-                tags=[],
-                attributes={},
-                strip=True
-            )
+            sanitized_review = sanitize_text(new_review_text)
             
             # Validate length
             if len(sanitized_review) < 10:
@@ -309,8 +303,9 @@ class RatingService:
         
         # Check delete window (30 days)
         days_since_creation = (datetime.utcnow() - rating.created_at).days
-        if days_since_creation > RatingService.RATING_DELETE_WINDOW_DAYS:
-            raise ValueError(f"Delete window expired. You can only delete ratings within {RatingService.RATING_DELETE_WINDOW_DAYS} days of submission")
+        window_days = current_app.config.get('RATING_DELETE_WINDOW_DAYS', RatingService.DEFAULT_RATING_DELETE_WINDOW_DAYS)
+        if days_since_creation > window_days:
+            raise ValueError(f"Delete window expired. You can only delete ratings within {window_days} days of submission")
         
         # Store seller ID before deletion
         seller_id = rating.product.farmer_id

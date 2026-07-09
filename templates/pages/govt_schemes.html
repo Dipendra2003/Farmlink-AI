@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Government Schemes - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-bold text-uppercase mb-3" style="letter-spacing: 2px;">Kisan Yojana</span>
+        <h2 class="display-5 fw-bolder text-dark">Government Schemes for Farmers</h2>
+        <p class="lead text-muted">Stay updated with the latest subsidies and initiatives provided by the Government of India.</p>
+        <div class="mx-auto bg-success mt-3" style="width: 80px; height: 5px; border-radius: 5px;"></div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 hover-card">
+                <div class="card-body p-4">
+                    <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
+                        <i class="fas fa-rupee-sign text-success fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">PM Kisan Samman Nidhi</h5>
+                    <p class="text-muted small mb-4">Under this scheme, income support of ₹6,000 per year in three equal installments is provided to all land-holding farmer families.</p>
+                    <a href="https://pmkisan.gov.in/" target="_blank" class="btn btn-outline-success btn-sm rounded-pill w-100">Check Status</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 hover-card">
+                <div class="card-body p-4">
+                    <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
+                        <i class="fas fa-shield-alt text-warning fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">PM Fasal Bima Yojana</h5>
+                    <p class="text-muted small mb-4">Provides insurance coverage and financial support to farmers in the event of failure of any of the notified crops as a result of natural calamities, pests & diseases.</p>
+                    <a href="https://pmfby.gov.in/" target="_blank" class="btn btn-outline-warning btn-sm rounded-pill w-100">Calculate Premium</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 hover-card">
+                <div class="card-body p-4">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
+                        <i class="fas fa-tint text-primary fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-3">PM Krishi Sinchayee Yojana</h5>
+                    <p class="text-muted small mb-4">Focuses on improving water use efficiency 'More crop per drop' and expanding cultivable area under assured irrigation.</p>
+                    <a href="https://pmksy.gov.in/" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill w-100">Learn More</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

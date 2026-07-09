@@ -98,6 +98,22 @@ def help_center():
 def faq():
     return render_template('pages/faq.html')
 
+
+@app.route('/govt-schemes')
+def govt_schemes():
+    return render_template('pages/govt_schemes.html')
+
+@app.route('/return-policy')
+def return_policy():
+    return render_template('pages/return_policy.html')
+
+@app.route('/report-issue', methods=['GET', 'POST'])
+def report_issue():
+    if request.method == 'POST':
+        flash('Your issue has been reported successfully. Our team will look into it.', 'success')
+        return redirect(url_for('report_issue'))
+    return render_template('pages/report_issue.html')
+
 @app.route('/testing-mode')
 def testing_mode():
     return render_template('pages/testing_mode.html')

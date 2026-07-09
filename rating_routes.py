@@ -7,7 +7,7 @@ from models import ProductRating, RatingHelpfulVote, Order, Crop, User, SellerRe
 from rating_service import RatingService
 from datetime import datetime, timedelta
 import logging
-import bleach
+from utils import sanitize_text
 
 rating_bp = Blueprint('rating', __name__)
 logger = logging.getLogger(__name__)
@@ -167,7 +167,7 @@ def respond_to_rating(rating_id):
             form.rating_id.data = rating_id
 
         if form.validate_on_submit():
-            sanitized_response = bleach.clean(form.response_text.data.strip(), tags=[], attributes={}, strip=True)
+            sanitized_response = sanitize_text(form.response_text.data.strip())
             
             seller_response = SellerResponse(
                 rating_id=rating_id,

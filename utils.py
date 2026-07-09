@@ -8,7 +8,18 @@ from datetime import datetime, timedelta
 from pytz import timezone
 
 logger = logging.getLogger(__name__)
+import bleach
 
+def sanitize_text(text):
+    """Sanitize text to remove HTML tags and prevent XSS"""
+    if not text:
+        return None
+    return bleach.clean(
+        text.strip(),
+        tags=[],
+        attributes={},
+        strip=True
+    )
 # Cache spaCy NLP model at module level to avoid reloading on every call (~500ms-1s per load)
 _nlp_model = None
 

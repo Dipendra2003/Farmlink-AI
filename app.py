@@ -18,30 +18,12 @@ load_dotenv(override=False)  # Don't override existing env vars
 # Validate critical environment variables
 database_url_check = os.environ.get('DATABASE_URL')
 if not database_url_check:
-    error_msg = """
-    ================================================================================
-    ERROR: DATABASE_URL environment variable is not set!
-    
-    For Render deployment:
-    1. Go to your Render dashboard
-    2. Select your web service
-    3. Go to "Environment" tab
-    4. Add DATABASE_URL with your Supabase connection string
-    
-    Example: postgresql://postgres.xxx:password@aws-1-us-east-1.pooler.supabase.com:5432/postgres
-    
-    See RENDER_SETUP_INSTRUCTIONS.md for complete setup guide.
-    ================================================================================
-    """
-    print(error_msg, flush=True)
-    logging.error(error_msg)
+    logging.error("DATABASE_URL environment variable is not set!")
     import sys
     sys.exit(1)
 
 if not os.environ.get('SESSION_SECRET'):
-    warning_msg = "WARNING: SESSION_SECRET not set, using default (not secure for production)"
-    print(warning_msg, flush=True)
-    logging.warning(warning_msg)
+    logging.warning("SESSION_SECRET not set, using default (not secure for production)")
 
 # Import and setup structured logging
 from logging_config import setup_logging
@@ -228,7 +210,6 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 from custom_session import CustomSessionInterface
 app.session_interface = CustomSessionInterface()
 
-# Mail configuration is already set above - removed duplicate
 
 # Rating System Configuration
 app.config['RATING_EDIT_WINDOW_DAYS'] = 30
@@ -426,7 +407,4 @@ with app.app_context():
 
 # Application startup complete - only log in main process
 if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-    print("\n✅ FarmLink AI Application Started Successfully!")
-    print(f"   Environment: {os.environ.get('FLASK_ENV', 'development')}")
-    print(f"   Debug Mode: {'On' if os.environ.get('FLASK_DEBUG', '0') == '1' else 'Off'}")
-    print(f"   Database: Connected\n")
+    app.logger.info("FarmLink AI Application Started Successfully")

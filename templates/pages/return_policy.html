@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Return & Refund Policy - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-5">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success rounded-circle mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-undo-alt fa-2x"></i>
+                        </div>
+                        <h1 class="fw-bold mb-3">Return & Refund Policy</h1>
+                        <p class="text-muted lead">Last updated: July 2026</p>
+                    </div>
+
+                    <div class="content-section mb-5">
+                        <h4 class="text-success fw-bold mb-3"><i class="fas fa-leaf me-2"></i>1. Our Freshness Guarantee</h4>
+                        <p class="text-muted" style="line-height: 1.8;">
+                            At FarmLink AI, we connect you directly with farmers to ensure you get the freshest produce. Because agricultural products are perishable, our return and refund policy is tailored to address quality issues while being fair to our hardworking farmers.
+                        </p>
+                    </div>
+
+                    <div class="content-section mb-5">
+                        <h4 class="text-success fw-bold mb-3"><i class="fas fa-box-open me-2"></i>2. Conditions for Return</h4>
+                        <p class="text-muted" style="line-height: 1.8;">
+                            You may request a return or refund under the following conditions:
+                        </p>
+                        <ul class="text-muted" style="line-height: 1.8;">
+                            <li>The produce received is significantly damaged or spoiled upon delivery.</li>
+                            <li>The received item is completely different from what was ordered.</li>
+                            <li>The quantity delivered is significantly less than the ordered amount.</li>
+                        </ul>
+                    </div>
+
+                    <div class="content-section mb-5">
+                        <h4 class="text-success fw-bold mb-3"><i class="fas fa-clock me-2"></i>3. Timeframe for Complaints</h4>
+                        <p class="text-muted" style="line-height: 1.8;">
+                            Due to the perishable nature of the items, all issues must be reported within <strong>24 hours</strong> of delivery. Please include clear photos of the damaged or incorrect items to help us process your request quickly.
+                        </p>
+                    </div>
+
+                    <div class="content-section">
+                        <h4 class="text-success fw-bold mb-3"><i class="fas fa-hand-holding-usd me-2"></i>4. Refund Process</h4>
+                        <p class="text-muted" style="line-height: 1.8;">
+                            Once your complaint is verified, we will initiate a refund to your original payment method. The refund will reflect in your account within 3-5 business days. In some cases, we may offer a replacement instead of a refund, subject to mutual agreement between you and the farmer.
+                        </p>
+                    </div>
+
+                    <div class="bg-light p-4 rounded-4 mt-5 text-center">
+                        <h5 class="fw-bold mb-3">Need Help with an Order?</h5>
+                        <p class="text-muted mb-4">Our support team is here to help resolve any issues between buyers and farmers.</p>
+                        <a href="{{ url_for('report_issue') }}" class="btn btn-success px-4 py-2 rounded-pill shadow-sm">
+                            <i class="fas fa-headset me-2"></i>Contact Support
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

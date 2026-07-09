@@ -134,9 +134,9 @@
             {% for crop in crops.items %}
             <div class="col-lg-4 col-md-6">
                 <div class="card crop-card h-100 shadow-sm border-0 hover-card">
-                    <div class="position-relative">
+                    <div class="position-relative w-100">
                         <img src="{{ get_image_url(crop.image_url) if crop.image_url else url_for('static', filename='uploads/crops/default-crop.jpg') }}" 
-                             class="card-img-top" alt="{{ crop.name }}" style="height: 200px; object-fit: cover; object-position: center;">
+                             class="card-img-top w-100" alt="{{ crop.name }}" style="width: 100% !important; height: 200px !important; object-fit: cover; object-position: center; display: block;">
                         <div class="position-absolute top-0 end-0 m-2">
                             <span class="badge bg-success">{{ crop.category.title() }}</span>
                         </div>

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Report an Issue - FarmLink AI{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="card-header bg-danger text-white p-4 border-0">
+                    <h3 class="mb-0 fw-bold"><i class="fas fa-exclamation-triangle me-2"></i>Report an Issue</h3>
+                    <p class="mb-0 text-white-50 mt-1">If you have encountered any fraud, fake profile, or problem with your order, let us know.</p>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST" action="{{ url_for('report_issue') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Type of Issue</label>
+                            <select class="form-select" name="issue_type" required>
+                                <option value="" selected disabled>Select the issue type...</option>
+                                <option value="fraud">Fraud / Fake Seller</option>
+                                <option value="quality">Bad Quality Produce</option>
+                                <option value="payment">Payment Problem</option>
+                                <option value="delivery">Delivery Delay / Not Received</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Order ID (Optional)</label>
+                            <input type="text" class="form-control" name="order_id" placeholder="e.g. ORD-12345">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Description of the Issue</label>
+                            <textarea class="form-control" name="description" rows="5" placeholder="Please provide as much detail as possible so we can help you better..." required></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg rounded-pill fw-bold">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Report
+                            </button>
+                        </div>
+                        <p class="text-muted text-center small mt-3">
+                            Our grievance cell reviews all reports within 24 hours.
+                        </p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
