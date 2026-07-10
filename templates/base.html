@@ -63,10 +63,29 @@
             transition: all 0.3s ease;
             cursor: move;
             user-select: none;
+            touch-action: none; /* Prevent scrolling when dragging on touch devices */
             display: none;
             /* Hidden by default */
             opacity: 0;
             transform: translateY(20px) scale(0.8);
+        }
+
+        @media (max-width: 480px) {
+            .ai-quick-access {
+                width: 240px;
+                height: 240px;
+                padding: 15px;
+            }
+            .ai-quick-access .btn {
+                width: 50px;
+                height: 50px;
+            }
+            .ai-quick-access .ai-grid {
+                gap: 5px;
+            }
+            .ai-quick-access .ai-header h6 {
+                font-size: 0.9rem;
+            }
         }
 
         .ai-quick-access.show {
@@ -1018,7 +1037,7 @@
             </a>
             <a href="{{ url_for('voice_interface') }}" class="btn">
                 <i class="fas fa-microphone"></i>
-                <small>Voice</small>
+                <small>chat</small>
             </a>
             <a href="{{ url_for('pest_disease_analysis') }}" class="btn">
                 <i class="fas fa-bug"></i>
@@ -1706,45 +1725,65 @@
             let isDragging = false;
             let startX, startY, startLeft, startBottom;
 
-            aiPanel.addEventListener('mousedown', function (e) {
-                // Don't drag if clicking on buttons
-                if (e.target.closest('.btn')) return;
+            function dragStart(e) {
+                if (e.target.closest('.btn') || e.target.closest('.close-btn') || e.target.closest('.reset-position-btn')) return;
 
                 isDragging = true;
                 aiPanel.classList.add('dragging');
 
-                startX = e.clientX;
-                startY = e.clientY;
+                const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+
+                startX = clientX;
+                startY = clientY;
                 startLeft = parseInt(aiPanel.style.left) || 20;
                 startBottom = parseInt(aiPanel.style.bottom) || 20;
 
-                e.preventDefault();
-            });
+                if (e.type.includes('mouse')) {
+                    e.preventDefault();
+                }
+            }
 
-            document.addEventListener('mousemove', function (e) {
+            function drag(e) {
                 if (!isDragging) return;
 
-                const deltaX = e.clientX - startX;
-                const deltaY = startY - e.clientY; // Inverted for bottom positioning
+                const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
 
-                const newLeft = Math.max(0, Math.min(window.innerWidth - 280, startLeft + deltaX));
-                const newBottom = Math.max(0, Math.min(window.innerHeight - 280, startBottom + deltaY));
+                const deltaX = clientX - startX;
+                const deltaY = startY - clientY; // Inverted for bottom positioning
+
+                const newLeft = Math.max(0, Math.min(window.innerWidth - aiPanel.offsetWidth, startLeft + deltaX));
+                const newBottom = Math.max(0, Math.min(window.innerHeight - aiPanel.offsetHeight, startBottom + deltaY));
 
                 aiPanel.style.left = newLeft + 'px';
                 aiPanel.style.bottom = newBottom + 'px';
-            });
+                
+                if (e.type.includes('touch')) {
+                    e.preventDefault(); // Prevent scrolling while dragging
+                }
+            }
 
-            document.addEventListener('mouseup', function () {
+            function dragEnd() {
                 if (isDragging) {
                     isDragging = false;
                     aiPanel.classList.remove('dragging');
 
-                    // Save position
                     const left = parseInt(aiPanel.style.left);
                     const bottom = parseInt(aiPanel.style.bottom);
                     saveAIPanelPosition(left, bottom);
                 }
-            });
+            }
+
+            // Mouse events
+            aiPanel.addEventListener('mousedown', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+
+            // Touch events
+            aiPanel.addEventListener('touchstart', dragStart, { passive: false });
+            document.addEventListener('touchmove', drag, { passive: false });
+            document.addEventListener('touchend', dragEnd);
         }
 
         // Make AI Helper Widget Draggable
