@@ -38,16 +38,23 @@
                             
                             <div class="mb-4">
                             <label class="form-label fw-bold">Type of Request</label>
+                            <style>
+                                @media (max-width: 576px) {
+                                    .form-select, .form-select option, .form-select optgroup {
+                                        font-size: 0.9rem;
+                                    }
+                                }
+                            </style>
                             <select class="form-select" name="issue_type" required>
                                 <optgroup label="Feedback & Ideas">
-                                    <option value="suggestion">Feature Suggestion / Idea</option>
-                                    <option value="bug">Technical Bug / Website Error</option>
+                                    <option value="suggestion">Feature Suggestion</option>
+                                    <option value="bug">Technical Bug / Error</option>
                                 </optgroup>
                                 <optgroup label="Order & Seller Issues">
                                     <option value="fraud">Fraud / Fake Seller</option>
-                                    <option value="quality">Bad Quality Produce</option>
+                                    <option value="quality">Quality Issue (Bad Produce)</option>
                                     <option value="payment">Payment Problem</option>
-                                    <option value="delivery">Delivery Delay / Not Received</option>
+                                    <option value="delivery">Delivery Delay / Missing</option>
                                 </optgroup>
                                 <option value="other">Other</option>
                             </select>
