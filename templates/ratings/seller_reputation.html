@@ -5,12 +5,12 @@
 {% block extra_css %}
 <style>
     .reputation-hero {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-        color: white;
+        background: #ffffff;
         border-radius: 20px;
         padding: 50px;
         margin-bottom: 30px;
-        box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+        border: 1px solid rgba(25, 135, 84, 0.15);
         position: relative;
         overflow: hidden;
     }
@@ -18,56 +18,39 @@
     .reputation-hero::before {
         content: '';
         position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-        animation: pulse 15s ease-in-out infinite;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 6px;
+        background: linear-gradient(90deg, #198754 0%, #20c997 100%);
     }
 
-    @keyframes pulse {
 
-        0%,
-        100% {
-            transform: scale(1);
-            opacity: 0.5;
-        }
-
-        50% {
-            transform: scale(1.1);
-            opacity: 0.8;
-        }
-    }
 
     .reputation-score {
-        font-size: 5rem;
-        font-weight: 900;
+        font-size: 5.5rem;
+        font-weight: 800;
         line-height: 1;
-        text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
-        background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0.8) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #0f5132;
+        letter-spacing: -2px;
     }
 
     .reputation-stars {
-        font-size: 2.5rem;
-        margin: 20px 0;
-        filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.2));
+        font-size: 2.2rem;
+        margin: 15px 0;
+        color: #ffc107;
     }
 
     .reputation-badge {
         display: inline-block;
-        background: rgba(255, 255, 255, 0.25);
-        backdrop-filter: blur(10px);
-        padding: 12px 28px;
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+        padding: 10px 24px;
         border-radius: 30px;
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 700;
         margin-top: 15px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(25, 135, 84, 0.2);
     }
 
     .stats-card {
@@ -262,24 +245,32 @@
     .seller-info h3 {
         margin: 0;
         font-size: 2.2rem;
-        font-weight: 900;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        font-weight: 800;
+        color: #212529;
     }
 
     .seller-meta {
-        opacity: 0.95;
-        font-size: 1rem;
-        font-weight: 500;
+        font-size: 0.95rem;
+        font-weight: 600;
         display: flex;
         flex-wrap: wrap;
         gap: 15px;
-        margin-top: 10px;
+        margin-top: 12px;
     }
 
     .seller-meta-item {
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 8px;
+        color: #495057;
+        background: #f8f9fa;
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .seller-meta-item i {
+        color: #198754;
     }
 
     .products-section {
@@ -334,27 +325,27 @@
         gap: 30px;
         flex-wrap: wrap;
         margin-top: 30px;
-        padding: 30px;
-        background: rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(10px);
+        padding: 25px;
+        background: #f8f9fa;
         border-radius: 15px;
+        border: 1px solid #e9ecef;
     }
 
     .trust-badge-item {
         text-align: center;
-        color: white;
+        color: #495057;
     }
 
     .trust-badge-item i {
         font-size: 2rem;
         margin-bottom: 10px;
         display: block;
+        color: #198754;
     }
 
     .trust-badge-item span {
         font-size: 0.9rem;
         font-weight: 600;
-        opacity: 0.9;
     }
 
     .action-buttons {
@@ -386,8 +377,115 @@
     }
 
     .btn-gradient:hover {
-        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        background: linear-gradient(135deg, #20c997 0%, #198754 100%);
         color: white;
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+        .reputation-hero {
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .seller-profile {
+            flex-direction: column;
+            text-align: center;
+            gap: 15px;
+        }
+        
+        .seller-avatar {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+        }
+        
+        .seller-info h3 {
+            font-size: 1.8rem;
+            word-break: break-word;
+            text-align: center;
+        }
+        
+        .seller-meta {
+            justify-content: center;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        .seller-meta-item {
+            justify-content: center;
+            width: fit-content;
+            margin: 0 auto;
+        }
+        
+        .reputation-score {
+            font-size: 4rem;
+        }
+        
+        .reputation-stars {
+            font-size: 1.8rem;
+        }
+        
+        .trust-badges {
+            padding: 15px;
+            gap: 15px;
+        }
+        
+        .trust-badge-item {
+            flex: 1 1 40%;
+            margin-bottom: 5px;
+        }
+        
+        .stats-card, .distribution-card, .recent-ratings-card, .products-section {
+            padding: 20px 15px;
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+        }
+        
+        .distribution-label {
+            width: 70px;
+            font-size: 0.85rem;
+        }
+        
+        .distribution-bar {
+            margin: 0 10px;
+        }
+        
+        .distribution-count {
+            width: 35px;
+            font-size: 0.9rem;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .btn-custom {
+            width: 100%;
+            text-align: center;
+        }
+        
+        .rating-item {
+            padding: 15px;
+        }
+        
+        .rating-item .d-flex {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .rating-item .btn {
+            align-self: flex-start;
+        }
+        
+        /* Ensure the columns break properly on mobile */
+        .reputation-hero .row > div {
+            margin-bottom: 20px;
+        }
     }
 </style>
 {% endblock %}
@@ -468,9 +566,8 @@
                 </div>
             </div>
             <div class="col-md-6 text-center text-md-end mt-4 mt-md-0">
-                <h4 class="mb-3" style="font-weight: 700;">
-                    <i class="fas fa-comments"></i> {{ total_ratings }} Customer Review{{ 's' if total_ratings != 1 else
-                    '' }}
+                <h4 class="mb-3" style="font-weight: 700; color: #212529;">
+                    <i class="fas fa-comments text-success"></i> {{ total_ratings }} Customer Review{{ 's' if total_ratings != 1 else '' }}
                 </h4>
                 <div class="trust-badges">
                     <div class="trust-badge-item">
