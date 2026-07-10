@@ -128,9 +128,19 @@ def return_policy():
     return render_template('pages/return_policy.html')
 
 @app.route('/report-issue', methods=['GET', 'POST'])
-@login_required
 def report_issue():
+    from models import SystemSettings, User, Feedback
+    
+    # Check if guest feedback is allowed
+    setting = SystemSettings.query.filter_by(setting_key='allow_guest_feedback').first()
+    allow_guest = setting.get_value() if setting else True
+    
     if request.method == 'POST':
+        # If guest and guest not allowed
+        if not current_user.is_authenticated and not allow_guest:
+            flash('Login is required to submit a report.', 'danger')
+            return redirect(url_for('login', next=request.url))
+            
         issue_type = request.form.get('issue_type', 'Other')
         order_id = request.form.get('order_id', '').strip()
         description = request.form.get('description', '')
@@ -139,18 +149,31 @@ def report_issue():
         if order_id:
             subject += f" (Order: {order_id})"
             
-        from models import Feedback
-        report = Feedback(
-            subject=subject,
-            message=description,
-            user_id=current_user.id
-        )
-        db.session.add(report)
-        db.session.commit()
+        user_id = current_user.id if current_user.is_authenticated else None
         
-        flash('Your issue has been reported successfully. Our admin team will look into it.', 'success')
+        if not user_id:
+            guest_name = request.form.get('guest_name', 'Guest')
+            guest_email = request.form.get('guest_email', 'No Email')
+            description = f"Guest Name: {guest_name}\nGuest Email: {guest_email}\n\n{description}"
+            
+            admin_user = User.query.filter_by(role='admin').first()
+            if admin_user:
+                user_id = admin_user.id
+                
+        if user_id:
+            report = Feedback(
+                subject=subject,
+                message=description,
+                user_id=user_id
+            )
+            db.session.add(report)
+            db.session.commit()
+            flash('Your issue has been reported successfully. Our team will look into it.', 'success')
+            
         return redirect(url_for('report_issue'))
-    return render_template('pages/report_issue.html')
+        
+    return render_template('pages/report_issue.html', allow_guest=allow_guest)
+
 
 @app.route('/testing-mode')
 def testing_mode():
@@ -576,7 +599,7 @@ def buyer_dashboard():
 @login_required
 @admin_required
 def admin_support():
-    from models import Feedback
+    from models import Feedback, SystemSettings
     status_filter = request.args.get('status', 'all')
     page = request.args.get('page', 1, type=int)
     
@@ -592,7 +615,32 @@ def admin_support():
         Feedback.created_at.desc()
     ).paginate(page=page, per_page=10, error_out=False)
     
-    return render_template('admin/support.html', feedbacks=feedbacks, current_filter=status_filter)
+    setting = SystemSettings.query.filter_by(setting_key='allow_guest_feedback').first()
+    allow_guest = setting.get_value() if setting else True
+    
+    return render_template('admin/support.html', feedbacks=feedbacks, current_filter=status_filter, allow_guest=allow_guest)
+
+@app.route('/admin/support/toggle_guest', methods=['POST'])
+@login_required
+@admin_required
+def admin_support_toggle_guest():
+    from models import SystemSettings
+    setting = SystemSettings.query.filter_by(setting_key='allow_guest_feedback').first()
+    if not setting:
+        setting = SystemSettings(
+            setting_key='allow_guest_feedback',
+            setting_value='false',
+            setting_type='boolean',
+            description='Allow non-logged-in users to submit feedback'
+        )
+        db.session.add(setting)
+    else:
+        current_val = setting.get_value()
+        setting.setting_value = 'false' if current_val else 'true'
+        
+    db.session.commit()
+    flash('Guest feedback setting updated.', 'success')
+    return redirect(url_for('admin_support'))
 
 @app.route('/admin/support/<int:id>/resolve', methods=['POST'])
 @login_required
