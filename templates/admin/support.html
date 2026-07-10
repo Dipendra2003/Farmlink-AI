@@ -99,35 +99,6 @@
                                     {% endif %}
                                 </td>
                             </tr>
-
-                            <!-- Message Modal -->
-                            <div class="modal fade" id="msgModal{{ fb.id }}" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog">
-                                    <div class="modal-content rounded-4 border-0">
-                                        <div class="modal-header bg-light border-0">
-                                            <h5 class="modal-title fw-bold"><i class="fas fa-envelope-open-text me-2"></i>Report Details #{{ fb.id }}</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body p-4">
-                                            <div class="mb-3">
-                                                <small class="text-muted d-block mb-1">Subject</small>
-                                                <div class="fw-bold">{{ fb.subject }}</div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <small class="text-muted d-block mb-1">Reported By</small>
-                                                <div>{{ fb.user.full_name }} ({{ fb.user.email }})</div>
-                                            </div>
-                                            <div>
-                                                <small class="text-muted d-block mb-1">Full Message</small>
-                                                <div class="p-3 bg-light rounded-3" style="white-space: pre-wrap;">{{ fb.message }}</div>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer border-0">
-                                            <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                             {% endfor %}
                         {% else %}
                             <tr>
@@ -143,7 +114,8 @@
                     </tbody>
                 </table>
             </div>
-            
+
+
             <!-- Pagination -->
             {% if feedbacks.pages > 1 %}
             <div class="card-footer bg-white border-top-0 p-4">
@@ -173,4 +145,38 @@
         </div>
     </div>
 </div>
+
+<!-- Message Modals (Placed at the very end of the page to prevent z-index/flickering issues) -->
+{% if feedbacks.items %}
+    {% for fb in feedbacks.items %}
+    <div class="modal fade" id="msgModal{{ fb.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content rounded-4 border-0">
+                <div class="modal-header bg-light border-0">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-envelope-open-text me-2"></i>Report Details #{{ fb.id }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Subject</small>
+                        <div class="fw-bold">{{ fb.subject }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Reported By</small>
+                        <div>{{ fb.user.full_name }} ({{ fb.user.email }})</div>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block mb-1">Full Message</small>
+                        <div class="p-3 bg-light rounded-3" style="white-space: pre-wrap;">{{ fb.message }}</div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+
 {% endblock %}
