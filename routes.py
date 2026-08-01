@@ -184,19 +184,116 @@ def robots():
     lines = [
         "User-agent: *",
         "Allow: /",
+        "Disallow: /admin/",
+        "Disallow: /dashboard",
+        "Disallow: /farmer/",
+        "Disallow: /buyer/",
+        "Disallow: /cart",
+        "Disallow: /checkout",
+        "Disallow: /orders",
+        "Disallow: /payment/",
+        "Disallow: /kyc/",
+        "Disallow: /api/",
+        "Disallow: /login",
+        "Disallow: /register",
+        "Disallow: /logout",
+        "Disallow: /my-crops",
+        "Disallow: /learning-hub/my-*",
+        "Disallow: /testing-mode",
+        "",
         f"Sitemap: {url_for('sitemap', _external=True)}"
     ]
     response = make_response("\n".join(lines))
     response.headers["Content-Type"] = "text/plain"
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
+
+@app.route('/site.webmanifest')
+def web_manifest():
+    manifest = {
+        "name": "FarmLink AI - Agriculture Marketplace & AI Hub",
+        "short_name": "FarmLink AI",
+        "description": "AI-powered agricultural ecosystem connecting farmers, buyers, and agronomy experts.",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#ffffff",
+        "theme_color": "#2e7d32",
+        "icons": [
+            {
+                "src": url_for('static', filename='favicon.ico', _external=True),
+                "sizes": "64x64 32x32 24x24 16x16",
+                "type": "image/x-icon"
+            }
+        ]
+    }
+    response = make_response(jsonify(manifest))
+    response.headers["Content-Type"] = "application/manifest+json"
+    response.headers["Cache-Control"] = "public, max-age=604800"
     return response
 
 @app.route('/sitemap.xml')
 def sitemap():
-    # Only include available crops
-    crops = Crop.query.filter_by(status='available', approval_status='approved').order_by(Crop.updated_at.desc()).all()
-    template = render_template('sitemap.xml', crops=crops)
+    """XML Sitemap Index pointing to specialized sub-sitemaps"""
+    template = render_template('sitemaps/index.xml')
     response = make_response(template)
     response.headers["Content-Type"] = "application/xml"
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    return response
+
+@app.route('/sitemap/static.xml')
+def sitemap_static():
+    template = render_template('sitemaps/static.xml')
+    response = make_response(template)
+    response.headers["Content-Type"] = "application/xml"
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
+
+@app.route('/sitemap/products.xml')
+def sitemap_products():
+    crops = Crop.query.filter_by(status='available', approval_status='approved').order_by(Crop.updated_at.desc()).limit(2000).all()
+    template = render_template('sitemaps/products.xml', crops=crops)
+    response = make_response(template)
+    response.headers["Content-Type"] = "application/xml"
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    return response
+
+@app.route('/sitemap/articles.xml')
+def sitemap_articles():
+    articles = LearningArticle.query.filter_by(is_published=True, is_draft=False).order_by(LearningArticle.updated_at.desc()).limit(1000).all()
+    template = render_template('sitemaps/articles.xml', articles=articles)
+    response = make_response(template)
+    response.headers["Content-Type"] = "application/xml"
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    return response
+
+@app.route('/sitemap/forum.xml')
+def sitemap_forum():
+    posts = ExpertPost.query.filter_by(is_deleted=False).order_by(ExpertPost.updated_at.desc()).limit(2000).all()
+    template = render_template('sitemaps/forum.xml', posts=posts)
+    response = make_response(template)
+    response.headers["Content-Type"] = "application/xml"
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    return response
+
+@app.route('/sitemap/images.xml')
+def sitemap_images():
+    crops = Crop.query.filter_by(status='available', approval_status='approved').filter(Crop.image_url.isnot(None)).order_by(Crop.updated_at.desc()).limit(1000).all()
+    articles = LearningArticle.query.filter_by(is_published=True, is_draft=False).filter(LearningArticle.featured_image.isnot(None)).order_by(LearningArticle.updated_at.desc()).limit(500).all()
+    template = render_template('sitemaps/images.xml', crops=crops, articles=articles)
+    response = make_response(template)
+    response.headers["Content-Type"] = "application/xml"
+    response.headers["Cache-Control"] = "public, max-age=7200"
+    return response
+
+@app.route('/learning-hub/rss.xml')
+def learning_hub_rss():
+    """RSS 2.0 Feed for Learning Hub agronomy articles"""
+    from datetime import datetime
+    articles = LearningArticle.query.filter_by(is_published=True, is_draft=False).order_by(LearningArticle.created_at.desc()).limit(20).all()
+    template = render_template('sitemaps/rss_feed.xml', articles=articles, build_date=datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT'))
+    response = make_response(template)
+    response.headers["Content-Type"] = "application/rss+xml; charset=utf-8"
+    response.headers["Cache-Control"] = "public, max-age=3600"
     return response
 
 @app.route('/favicon.ico')

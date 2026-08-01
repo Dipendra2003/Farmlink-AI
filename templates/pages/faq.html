@@ -1,6 +1,31 @@
 {% extends "base.html" %}
 
-{% block title %}FAQ - FarmLink AI{% endblock %}
+{% block title %}Frequently Asked Questions (FAQ) | FarmLink AI{% endblock %}
+{% block meta_description %}Get answers to common questions about FarmLink AI account registration, secure agricultural escrow payments, ordering farm-fresh crops, shipping, and delivery.{% endblock %}
+{% block meta_keywords %}FarmLink AI FAQ, agricultural marketplace questions, farmer registration, buyer payment escrow, farm delivery tracking, agri AI support{% endblock %}
+
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_faq_schema([
+    ("How do I create an account?", "Click the 'Register' button, choose your role (farmer or buyer), fill in your details, and verify your email."),
+    ("How can I reset my password?", "Click 'Forgot Password' on the login page and follow the instructions sent to your email."),
+    ("Can I change my account type?", "Contact our support team to change your account type from farmer to buyer or vice versa."),
+    ("What payment methods are accepted?", "We accept credit/debit cards, bank transfers, and digital wallets."),
+    ("How do I cancel an order?", "You can cancel orders through your dashboard within 24 hours of placing them."),
+    ("Is my payment secure?", "Yes, we use industry-standard encryption and secure payment gateways."),
+    ("How long does delivery take?", "Standard delivery takes 3-5 business days. Express delivery is 1-2 business days."),
+    ("Can I track my delivery?", "Yes, you can track your delivery through your account dashboard."),
+    ("What if I'm not available for delivery?", "Our delivery partner will make up to 3 attempts and you can reschedule through your dashboard.")
+]) | safe }}
+</script>
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("FAQ", clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="container py-5">

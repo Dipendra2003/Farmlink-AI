@@ -1,6 +1,25 @@
 {% extends "base.html" %}
 
-{% block title %}Learning Hub - FarmLink AI{% endblock %}
+{% block title %}Agronomy & Agricultural Learning Hub | FarmLink AI{% endblock %}
+{% block meta_description %}Explore modern AI agricultural guides, scientific farming techniques, sustainable crop care tutorials, and expert agronomy articles on FarmLink AI Learning Hub.{% endblock %}
+{% block meta_keywords %}agronomy articles, modern farming methods, organic crop care, smart agriculture guide, farmer tutorials, pest management AI, agricultural knowledge hub{% endblock %}
+
+{% set seo_pag = get_seo_pagination_links(articles.page, articles.pages, 'learning_hub') if articles and articles.pages > 1 else {} %}
+{% block canonical_url %}{{ seo_pag.canonical_url or clean_canonical_url() }}{% endblock %}
+{% block pagination_links %}
+{% if seo_pag.prev_url %}<link rel="prev" href="{{ seo_pag.prev_url }}">{% endif %}
+{% if seo_pag.next_url %}<link rel="next" href="{{ seo_pag.next_url }}">{% endif %}
+{% endblock %}
+
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("Learning Hub", clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">

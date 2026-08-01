@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    {% for article in articles %}
+    <url>
+        <loc>{{ url_for('view_article', article_id=article.id, _external=True) }}</loc>
+        <lastmod>{{ (article.updated_at or article.created_at).strftime('%Y-%m-%d') if (article.updated_at or article.created_at) else '2026-08-01' }}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    {% endfor %}
+</urlset>

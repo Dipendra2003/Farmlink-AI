@@ -1,6 +1,26 @@
 {% extends "base.html" %}
 
-{% block title %}{{ post.title }} - Expert Forum{% endblock %}
+{% block title %}{{ post.title }} | FarmLink AI Expert Forum{% endblock %}
+
+{% block meta_description %}{{ truncate_meta_description(post.content or post.title, 155) }}{% endblock %}
+{% block meta_keywords %}{{ post.title }}, agronomy forum, agricultural advice, crop questions, farming solutions, expert community, FarmLink AI forum{% endblock %}
+{% block meta_author %}{{ post.author.username if post.author else 'FarmLink Community Member' }}{% endblock %}
+
+{% block og_type %}article{% endblock %}
+
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_qapage_schema(post, post.author.username if post.author else 'FarmLink Community Member', clean_canonical_url()) | safe }}
+</script>
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("Expert Forum", url_for('expert_forum', _external=True)),
+    (post.title, clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="container py-5">

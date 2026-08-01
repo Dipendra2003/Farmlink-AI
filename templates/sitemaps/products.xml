@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    {% for crop in crops %}
+    <url>
+        <loc>{{ url_for('view_crop', crop_id=crop.id, _external=True) }}</loc>
+        <lastmod>{{ (crop.updated_at or crop.created_at).strftime('%Y-%m-%d') if (crop.updated_at or crop.created_at) else '2026-08-01' }}</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.8</priority>
+    </url>
+    {% endfor %}
+</urlset>

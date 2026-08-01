@@ -1,6 +1,25 @@
 {% extends "base.html" %}
 
-{% block title %}Marketplace - FarmLink AI{% endblock %}
+{% block title %}Agricultural Marketplace - Buy Direct from Farmers | FarmLink AI{% endblock %}
+{% block meta_description %}Browse fresh agricultural crops, grains, vegetables, and fruits directly from verified farmers on FarmLink AI with direct escrow payments and zero commission middlemen.{% endblock %}
+{% block meta_keywords %}buy crops direct from farmers, online grain market India, farmer marketplace, fresh farm produce, agricultural commodity prices, direct farmer connect{% endblock %}
+
+{% set seo_pag = get_seo_pagination_links(crops.page, crops.pages, 'marketplace') if crops and crops.pages > 1 else {} %}
+{% block canonical_url %}{{ seo_pag.canonical_url or clean_canonical_url() }}{% endblock %}
+{% block pagination_links %}
+{% if seo_pag.prev_url %}<link rel="prev" href="{{ seo_pag.prev_url }}">{% endif %}
+{% if seo_pag.next_url %}<link rel="next" href="{{ seo_pag.next_url }}">{% endif %}
+{% endblock %}
+
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("Marketplace", clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="container py-4">

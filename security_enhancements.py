@@ -524,11 +524,11 @@ def add_security_headers(response):
     # Content Security Policy
     csp = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://code.jquery.com https://checkout.razorpay.com https://cdnjs.cloudflare.com; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://code.jquery.com https://checkout.razorpay.com https://cdnjs.cloudflare.com https://www.googletagmanager.com https://www.google-analytics.com; "
         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com https://use.fontawesome.com https://unpkg.com; "
         "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://use.fontawesome.com https://unpkg.com data:; "
-        "img-src 'self' data: blob: https:; "
-        "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com https://cdn.jsdelivr.net; "
+        "img-src 'self' data: blob: https: https://www.google-analytics.com https://www.googletagmanager.com; "
+        "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com https://cdn.jsdelivr.net https://www.google-analytics.com https://analytics.google.com https://stats.g.doubleclick.net; "
         "frame-src https://api.razorpay.com;"
     )
     response.headers['Content-Security-Policy'] = csp

@@ -120,8 +120,21 @@ PUBLIC_ROUTES = {
     'terms': '/terms',
     'faq': '/faq',
     'help_center': '/help',
+    'govt_schemes': '/govt-schemes',
+    'return_policy': '/return-policy',
+    'report_issue': '/report-issue',
+    'weather_info': '/weather-info',
+    'weather': '/weather',
+    'testing_mode': '/testing-mode',
     'static': '/static/',  # Static files
-    
+
+    # SEO & Crawler Endpoints
+    'sitemap': '/sitemap.xml',
+    'sitemap_index': '/sitemap/',
+    'robots': '/robots.txt',
+    'manifest': '/site.webmanifest',
+    'favicon': '/favicon.ico',
+
     # Authentication routes
     'login': '/login',
     'register': '/register',
@@ -130,10 +143,14 @@ PUBLIC_ROUTES = {
     'reset_password': '/reset-password/',
     'verify_email': '/verify-email/',
     'resend_verification': '/resend-verification/',
-    
-    # Public views
+
+    # Public views & Community Hubs (for SEO Crawling)
     'marketplace': '/marketplace',
-    'product_detail': '/marketplace/crop/'
+    'product_detail': '/marketplace/crop/',
+    'expert_forum': '/expert-forum',
+    'expert_forum_sub': '/expert-forum/',
+    'learning_hub': '/learning-hub',
+    'learning_hub_sub': '/learning-hub/'
 }
 
 def is_public_route():

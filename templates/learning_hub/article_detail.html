@@ -1,6 +1,27 @@
 {% extends "base.html" %}
 
-{% block title %}{{ article.title }} - Learning Hub{% endblock %}
+{% block title %}{{ article.title }} | FarmLink AI Learning Hub{% endblock %}
+
+{% block meta_description %}{{ truncate_meta_description(article.summary or article.content or article.title, 155) }}{% endblock %}
+{% block meta_keywords %}{{ article.title }}, {{ article.category }}, agronomy tutorial, farming techniques, agricultural education, FarmLink AI Learning Hub{% endblock %}
+{% block meta_author %}{{ article.author.username if article.author else 'FarmLink AI Expert' }}{% endblock %}
+
+{% block og_type %}article{% endblock %}
+{% block og_image %}{{ get_image_url(article.featured_image) if (article.featured_image and article.featured_image.startswith('http')) else (url_for('static', filename=article.featured_image, _external=True) if article.featured_image else url_for('static', filename='images/default-og.jpg', _external=True)) }}{% endblock %}
+
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_article_schema(article, article.author.username if article.author else 'FarmLink AI Expert', clean_canonical_url(), self.og_image() | trim) | safe }}
+</script>
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("Learning Hub", url_for('learning_hub', _external=True)),
+    (article.title, clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -24,8 +45,8 @@
 
                 <!-- Featured Image -->
                 {% if article.featured_image %}
-                <img src="{{ article.featured_image }}" class="card-img-top" alt="{{ article.title }}"
-                    style="max-height: 400px; object-fit: cover;" loading="lazy">
+                <img src="{{ article.featured_image }}" class="card-img-top" alt="{{ article.title }} - Agronomy guide on FarmLink AI" title="{{ article.title }}"
+                    width="800" height="400" style="max-height: 400px; object-fit: cover;" loading="eager" fetchpriority="high">
                 {% endif %}
 
                 <div class="card-body">

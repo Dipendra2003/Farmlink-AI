@@ -122,6 +122,10 @@ app.jinja_env.globals.update(
 )
 app.jinja_env.filters['parse_json'] = parse_json
 
+# Initialize enterprise SEO helpers and schema builders
+from seo_utils import init_seo_processor
+init_seo_processor(app)
+
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
 app.config['WTF_CSRF_SECRET_KEY'] = app.secret_key  # Use same secret key for CSRF
 app.config['RAZORPAY_KEY_ID'] = os.environ.get('RAZORPAY_KEY_ID')
@@ -159,7 +163,7 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
         "keepalives_idle": 60,
         "keepalives_interval": 10,
         "keepalives_count": 5
-    }
+    } if database_url and not database_url.startswith("sqlite") else {}
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False  # Disable modification tracking
 app.config["SQLALCHEMY_ECHO"] = False  # Disable SQL query logging for cleaner output

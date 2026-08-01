@@ -1,6 +1,25 @@
 {% extends "base.html" %}
 
-{% block title %}Expert Forum - FarmLink AI{% endblock %}
+{% block title %}Agricultural Expert Forum & Crop Care Discussion | FarmLink AI{% endblock %}
+{% block meta_description %}Join the FarmLink AI Expert Forum community to ask agronomy questions, share crop solutions, solve plant pest problems, and connect directly with verified agriculture specialists.{% endblock %}
+{% block meta_keywords %}agriculture forum, plant diagnostic help, crop doctor online, farming community discussion, agronomy questions answered, pest control advice, smart agriculture help{% endblock %}
+
+{% set seo_pag = get_seo_pagination_links(posts.page, posts.pages, 'expert_forum') if posts and posts.pages > 1 else {} %}
+{% block canonical_url %}{{ seo_pag.canonical_url or clean_canonical_url() }}{% endblock %}
+{% block pagination_links %}
+{% if seo_pag.prev_url %}<link rel="prev" href="{{ seo_pag.prev_url }}">{% endif %}
+{% if seo_pag.next_url %}<link rel="next" href="{{ seo_pag.next_url }}">{% endif %}
+{% endblock %}
+
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("Expert Forum", clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="container py-5">

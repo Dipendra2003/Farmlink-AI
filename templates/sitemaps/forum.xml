@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    {% for post in posts %}
+    <url>
+        <loc>{{ url_for('view_expert_post', post_id=post.id, _external=True) }}</loc>
+        <lastmod>{{ (post.updated_at or post.created_at).strftime('%Y-%m-%d') if (post.updated_at or post.created_at) else '2026-08-01' }}</lastmod>
+        <changefreq>daily</changefreq>
+        <priority>0.7</priority>
+    </url>
+    {% endfor %}
+</urlset>
