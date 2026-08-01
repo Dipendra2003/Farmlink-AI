@@ -6,7 +6,9 @@
 {% block meta_keywords %}{{ crop.name }}, buy {{ crop.name }} online, {{ crop.category }}, fresh agricultural crops, farmer direct prices, FarmLink AI marketplace{% endblock %}
 
 {% block og_type %}product{% endblock %}
-{% block og_image %}{{ get_image_url(crop.image_url) if (crop.image_url and crop.image_url.startswith('http')) else (url_for('static', filename=crop.image_url, _external=True) if crop.image_url else url_for('static', filename='images/default-og.jpg', _external=True)) }}{% endblock %}
+{% block og_image %}{{ get_image_url(crop.image_url) if (crop.image_url and crop.image_url.startswith('http')) else (url_for('static', filename=crop.image_url, _external=True) if crop.image_url else url_for('static', filename='img/og-banner.png', _external=True)) }}{% endblock %}
+{% block og_publish_date %}{{ crop.created_at.isoformat() if crop.created_at else '2026-01-01T00:00:00Z' }}{% endblock %}
+{% block og_modified_date %}{{ crop.updated_at.isoformat() if crop.updated_at else '2026-08-01T00:00:00Z' }}{% endblock %}
 
 {% block schema_markup %}
 {{ super() }}

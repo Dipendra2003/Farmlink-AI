@@ -7,7 +7,9 @@
 {% block meta_author %}{{ article.author.username if article.author else 'FarmLink AI Expert' }}{% endblock %}
 
 {% block og_type %}article{% endblock %}
-{% block og_image %}{{ get_image_url(article.featured_image) if (article.featured_image and article.featured_image.startswith('http')) else (url_for('static', filename=article.featured_image, _external=True) if article.featured_image else url_for('static', filename='images/default-og.jpg', _external=True)) }}{% endblock %}
+{% block og_image %}{{ get_image_url(article.featured_image) if (article.featured_image and article.featured_image.startswith('http')) else (url_for('static', filename=article.featured_image, _external=True) if article.featured_image else url_for('static', filename='img/og-banner.png', _external=True)) }}{% endblock %}
+{% block og_publish_date %}{{ article.created_at.isoformat() if article.created_at else '2026-01-01T00:00:00Z' }}{% endblock %}
+{% block og_modified_date %}{{ article.updated_at.isoformat() if (article.updated_at is defined and article.updated_at) else '2026-08-01T00:00:00Z' }}{% endblock %}
 
 {% block schema_markup %}
 {{ super() }}

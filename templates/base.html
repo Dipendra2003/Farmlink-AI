@@ -43,8 +43,10 @@
     <meta property="og:url" content="{% block og_url %}{{ self.canonical_url() }}{% endblock %}">
     <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
     <meta property="og:description" content="{% block og_description %}{{ self.meta_description() }}{% endblock %}">
-    <meta property="og:image" content="{% block og_image %}{{ og_image | default(url_for('static', filename='images/default-og.jpg', _external=True)) }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ og_image | default(url_for('static', filename='img/og-banner.png', _external=True)) }}{% endblock %}">
     <meta property="og:locale" content="en_US">
+    <meta property="article:published_time" content="{% block og_publish_date %}2026-01-01T00:00:00Z{% endblock %}">
+    <meta property="article:modified_time" content="{% block og_modified_date %}2026-08-01T00:00:00Z{% endblock %}">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
