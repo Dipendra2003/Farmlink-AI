@@ -323,6 +323,6 @@ def init_seo_processor(app):
             'generate_qapage_schema': generate_qapage_schema,
             'generate_faq_schema': generate_faq_schema,
             'get_seo_pagination_links': get_seo_pagination_links,
-            'GOOGLE_SITE_VERIFICATION': os.environ.get('GOOGLE_SITE_VERIFICATION', ''),
+            'GOOGLE_SITE_VERIFICATION': os.environ.get('GOOGLE_SITE_VERIFICATION', 'j_SFQieTDFMkB-XrDvcgebzyGmcFeg3Yue7LgZ00diM'),
             'GA_MEASURE_ID': os.environ.get('GA_MEASURE_ID', '')
         }
