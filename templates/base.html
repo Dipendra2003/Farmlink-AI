@@ -75,14 +75,15 @@
     <!-- Bootstrap 5 CSS with high fetch priority for Faster LCP -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" fetchpriority="high">
 
-    <!-- Font Awesome Icons - Multiple CDN sources for reliability -->
+    <!-- Font Awesome Icons - Asynchronous load to eliminate mobile render blocking -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
           integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" 
-          crossorigin="anonymous" referrerpolicy="no-referrer" 
-          onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css';" />
+          crossorigin="anonymous" referrerpolicy="no-referrer" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
 
-    <!-- Bootstrap Icons as additional fallback -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Bootstrap Icons as additional fallback (Async load) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"></noscript>
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -597,7 +598,7 @@
 
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top" role="navigation" aria-label="Main Desktop Navigation">
         <div class="container">
             <a class="navbar-brand fw-bold text-success" href="{{ url_for('index') }}">
                 <i class="fas fa-seedling me-2"></i>FarmLink AI
@@ -829,7 +830,7 @@
         </div>
 
         <div class="rightbar-body">
-            <nav class="rightbar-nav">
+            <nav class="rightbar-nav" role="navigation" aria-label="Mobile Navigation Menu">
                 <a class="rightbar-link" href="{{ url_for('index') }}">
                     <i class="fas fa-home me-2"></i>Home
                 </a>
@@ -1050,11 +1051,11 @@
     <!-- AI Quick Access Panel - Round Mind Shape -->
     {% if current_user.is_authenticated %}
     <div class="ai-quick-access" id="aiQuickAccess">
-        <button class="close-btn" onclick="toggleAIPanel()" title="Close">
+        <button type="button" class="close-btn" onclick="toggleAIPanel()" aria-label="Close AI Quick Access Panel" title="Close">
             <i class="fas fa-times"></i>
         </button>
 
-        <button class="reset-position-btn" onclick="resetAIPanelPosition()" title="Reset Position">
+        <button type="button" class="reset-position-btn" onclick="resetAIPanelPosition()" aria-label="Reset AI Panel Position" title="Reset Position">
             <i class="fas fa-redo-alt"></i>
         </button>
 
@@ -1109,14 +1110,14 @@
     </div>
 
     <!-- AI Helper Widget - Brain Design -->
-    <div class="ai-helper-widget" onclick="toggleAIPanel()"
+    <div class="ai-helper-widget" onclick="toggleAIPanel()" role="button" tabindex="0" aria-label="Open AI Quick Access Assistant Panel" aria-controls="aiQuickAccess" onkeydown="if(event.key === 'Enter' || event.key === ' ') { toggleAIPanel(); event.preventDefault(); }"
         title="🧠 Click to Open AI Quick Access | Right-click or Ctrl+Click to Drag">
-        <i class="fas fa-brain brain-icon"></i>
+        <i class="fas fa-brain brain-icon" aria-hidden="true"></i>
     </div>
     {% endif %}
 
     <!-- Footer -->
-    <footer class="footer-enhanced bg-success text-white mt-5 position-relative overflow-hidden">
+    <footer class="footer-enhanced bg-success text-white mt-5 position-relative overflow-hidden" role="contentinfo">
         
         <div class="container py-5 position-relative">
             <div class="row g-4">
@@ -1149,19 +1150,19 @@
                         
                         <!-- Social Links with Enhanced Design -->
                         <div class="social-links-enhanced d-flex gap-2 mb-3">
-                            <a href="https://www.linkedin.com/in/dipendra-kumar-b077b9286/" target="_blank" 
+                            <a href="https://www.linkedin.com/in/dipendra-kumar-b077b9286/" target="_blank" rel="noopener noreferrer" 
                                class="social-icon" title="LinkedIn" aria-label="LinkedIn">
                                 <i class="fab fa-linkedin-in"></i>
                             </a>
-                            <a href="https://www.instagram.com/dipendra.sah02?igsh=ajR2anVxeTVmcGZq" target="_blank" 
+                            <a href="https://www.instagram.com/dipendra.sah02?igsh=ajR2anVxeTVmcGZq" target="_blank" rel="noopener noreferrer" 
                                class="social-icon" title="Instagram" aria-label="Instagram">
                                 <i class="fab fa-instagram"></i>
                             </a>
-                            <a href="#" target="_blank" 
+                            <a href="#" target="_blank" rel="noopener noreferrer" 
                                class="social-icon" title="Portfolio" aria-label="Portfolio">
                                 <i class="fas fa-briefcase"></i>
                             </a>
-                            <a href="https://github.com/Dipendra2003" target="_blank" 
+                            <a href="https://github.com/Dipendra2003" target="_blank" rel="noopener noreferrer" 
                                class="social-icon" title="GitHub" aria-label="GitHub">
                                 <i class="fab fa-github"></i>
                             </a>
@@ -1659,12 +1660,12 @@
             integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" 
             crossorigin="anonymous"></script>
     <!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
     <!-- Custom JS -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
     <!-- Cart AJAX functionality (loaded globally for all pages) -->
     {% if current_user.is_authenticated %}
-    <script src="{{ url_for('static', filename='js/cart.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/cart.js') }}" defer></script>
     {% endif %}
 
     <script>
