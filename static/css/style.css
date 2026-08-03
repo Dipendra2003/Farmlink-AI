@@ -1412,22 +1412,6 @@ footer a:hover {
         margin-bottom: 60px;
         min-width: 200px;
     }
-
-    /* Mobile Performance & Battery Optimizations (Stop continuous repainting in PageSpeed tests) */
-    .ai-particles, .particle {
-        display: none !important;
-        animation: none !important;
-    }
-    .ai-demo-box::before, .ai-title-glow, .ai-helper-widget, .ai-helper-widget .brain-icon {
-        animation: none !important;
-    }
-    .ai-demo-box::before {
-        display: none !important;
-    }
-    .ai-quick-access {
-        backdrop-filter: none !important;
-        background: rgb(85, 88, 201) !important;
-    }
 }
 
 /* Small Mobile */
