@@ -21,7 +21,7 @@
 </script>
 {% if crops and crops.items %}
 <script type="application/ld+json">
-{{ generate_itemlist_schema(crops.items, "Agricultural Marketplace Products", clean_canonical_url(), endpoint='view_crop', param_name='crop_id') | safe }}
+{{ generate_itemlist_schema(crops.items, "Agricultural Marketplace Products", clean_canonical_url(), endpoint='product_detail', param_name='crop_id') | safe }}
 </script>
 {% endif %}
 {% endblock %}

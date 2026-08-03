@@ -3,7 +3,7 @@
     {% for crop in crops %}
     {% if crop.image_url and crop.image_url|trim %}
     <url>
-        <loc>{{ url_for('view_crop', crop_id=crop.id, _external=True) }}</loc>
+        <loc>{{ url_for('product_detail', crop_id=crop.id, _external=True) }}</loc>
         <image:image>
             <image:loc>{{ crop.image_url if crop.image_url.startswith('http') else url_for('static', filename=(crop.image_url.replace('/static/', '') if crop.image_url.startswith('/static/') else crop.image_url), _external=True) }}</image:loc>
             <image:title>{{ crop.name|e }}</image:title>
