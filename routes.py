@@ -241,6 +241,34 @@ def robots():
     response.headers["Cache-Control"] = "public, max-age=86400"
     return response
 
+@app.route('/llms.txt')
+def llms_txt():
+    content = """# FarmLink AI
+
+> FarmLink AI is an advanced enterprise agricultural marketplace and agronomy assistant connecting farmers directly with buyers and agricultural domain experts with zero middlemen.
+
+## Core Services & Capabilities
+- **Marketplace**: Browse direct-from-farm fresh produce and crops at `/marketplace`.
+- **AI Price Forecast**: Real-time crop market analytics and pricing trends at `/price-forecast`.
+- **AI Pest Detection**: Upload crop leaf images for rapid pest identification and remedy analysis at `/pest-analysis`.
+- **AI Crop Suggestions**: Machine learning agronomy model recommending optimal crops based on NPK values and climate at `/crop-suggestions`.
+- **Voice Assistant**: Multilingual voice interactive agricultural advisor at `/voice`.
+- **Knowledge Center**: Expert farming articles and tutorials at `/learning-hub`.
+- **Expert Forum**: Q&A platform connecting farmers with certified agronomy experts at `/expert-forum`.
+
+## For Autonomous AI Web Agents
+- **Item Discovery**: Products and articles follow standard schema.org structured data formats (Product, Article, ItemList, WebSite).
+- **Public API & Feeds**: Comprehensive XML sitemap is available at `/sitemap.xml`.
+
+## Contact & Support
+- Email: farmlink76@gmail.com
+- Help Center: `/help-center`
+"""
+    response = make_response(content.strip())
+    response.headers["Content-Type"] = "text/plain; charset=utf-8"
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
+
 @app.route('/site.webmanifest')
 def web_manifest():
     manifest = {

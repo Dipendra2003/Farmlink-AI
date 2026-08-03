@@ -85,12 +85,25 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"></noscript>
 
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts Optimized Loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+    
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <style>
+        /* WCAG AAA Contrast Enhancements for 100/100 Accessibility Score */
+        :root { --bs-success: #145e32 !important; --bs-success-rgb: 20, 94, 50 !important; }
+        .text-success, .navbar-brand { color: #11572d !important; }
+        .bg-success, .btn-success, .footer-enhanced { background-color: #145e32 !important; border-color: #145e32 !important; }
+        .btn-outline-success { color: #11572d !important; border-color: #11572d !important; }
+        .btn-outline-success:hover { background-color: #11572d !important; color: #ffffff !important; }
+        .badge.bg-warning { background-color: #ffb800 !important; color: #000000 !important; font-weight: 600 !important; }
+        .text-muted { color: #595959 !important; }
+
         /* AI Quick Access Panel - Round Mind Shape */
         .ai-quick-access {
             position: fixed;
@@ -1919,47 +1932,7 @@
 
     {% block extra_scripts %}{% endblock %}
 
-    <!-- Font Awesome Icon Loading Detection and Fix -->
-    <script>
-        // Check if Font Awesome is loaded properly
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                // Test if Font Awesome is loaded by checking computed styles
-                const testIcon = document.createElement('i');
-                testIcon.className = 'fas fa-check';
-                testIcon.style.display = 'none';
-                document.body.appendChild(testIcon);
-                
-                const computedStyle = window.getComputedStyle(testIcon);
-                const fontFamily = computedStyle.getPropertyValue('font-family');
-                
-                // If Font Awesome is not loaded (font-family won't contain 'Font Awesome')
-                if (!fontFamily.includes('Font Awesome')) {
-                    console.warn('Font Awesome not loaded, attempting to reload...');
-                    
-                    // Try loading from alternative CDN
-                    const link = document.createElement('link');
-                    link.rel = 'stylesheet';
-                    link.href = 'https://use.fontawesome.com/releases/v6.5.1/css/all.css';
-                    link.crossOrigin = 'anonymous';
-                    document.head.appendChild(link);
-                    
-                    // Also try unpkg as last resort
-                    setTimeout(function() {
-                        const link2 = document.createElement('link');
-                        link2.rel = 'stylesheet';
-                        link2.href = 'https://unpkg.com/@fortawesome/fontawesome-free@6.5.1/css/all.min.css';
-                        document.head.appendChild(link2);
-                    }, 1000);
-                } else {
-                    console.log('Font Awesome loaded successfully');
-                }
-                
-                document.body.removeChild(testIcon);
-            }, 500);
-        });
-    </script>
-
+    <!-- End Extra Scripts -->
     <!-- Cart Count and Preview Loading Script -->
     {% if current_user.is_authenticated %}
     <script>
