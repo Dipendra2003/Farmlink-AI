@@ -2,17 +2,22 @@
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <sitemap>
         <loc>{{ url_for('sitemap_static', _external=True) }}</loc>
+        <lastmod>{{ last_modified }}</lastmod>
     </sitemap>
     <sitemap>
         <loc>{{ url_for('sitemap_products', _external=True) }}</loc>
+        <lastmod>{{ last_modified }}</lastmod>
     </sitemap>
     <sitemap>
         <loc>{{ url_for('sitemap_articles', _external=True) }}</loc>
+        <lastmod>{{ last_modified }}</lastmod>
     </sitemap>
     <sitemap>
         <loc>{{ url_for('sitemap_forum', _external=True) }}</loc>
+        <lastmod>{{ last_modified }}</lastmod>
     </sitemap>
     <sitemap>
         <loc>{{ url_for('sitemap_images', _external=True) }}</loc>
+        <lastmod>{{ last_modified }}</lastmod>
     </sitemap>
 </sitemapindex>

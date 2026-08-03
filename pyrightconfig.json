@@ -1,0 +1,33 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "include": [
+    "."
+  ],
+  "exclude": [
+    "**/templates",
+    "**/static",
+    "**/.venv",
+    "**/__pycache__",
+    "**/__pyrefly_virtual__",
+    "**/inmemory",
+    "d:/__pyrefly_virtual__",
+    "d:\\__pyrefly_virtual__"
+  ],
+  "extraPaths": [
+    ".",
+    ".venv/Lib/site-packages"
+  ],
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none",
+  "reportGeneralTypeIssues": "none",
+  "reportOptionalMemberAccess": "none",
+  "reportOptionalSubscript": "none",
+  "reportOptionalIterable": "none",
+  "reportOptionalCall": "none",
+  "reportOptionalOperand": "none",
+  "reportAttributeAccessIssue": "none",
+  "reportArgumentType": "none",
+  "reportDeprecated": "none",
+  "reportUnreachable": "none"
+}

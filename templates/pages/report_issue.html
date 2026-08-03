@@ -1,7 +1,17 @@
 {% extends "base.html" %}
 
 {% block title %}Report an Issue - FarmLink AI{% endblock %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
 
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("Report an Issue", clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">

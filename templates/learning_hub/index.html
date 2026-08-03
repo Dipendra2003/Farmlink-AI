@@ -19,6 +19,11 @@
     ("Learning Hub", clean_canonical_url())
 ]) | safe }}
 </script>
+{% if articles and articles.items %}
+<script type="application/ld+json">
+{{ generate_itemlist_schema(articles.items, "Agronomy & Agricultural Articles", clean_canonical_url(), endpoint='view_article', param_name='article_id') | safe }}
+</script>
+{% endif %}
 {% endblock %}
 
 {% block content %}

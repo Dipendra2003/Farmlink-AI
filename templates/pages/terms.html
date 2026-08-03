@@ -1,7 +1,18 @@
 {% extends "base.html" %}
 
 {% block title %}Terms of Service - FarmLink AI{% endblock %}
+{% block meta_description %}FarmLink AI Terms of Service — rules, responsibilities, and conditions governing use of our AI agricultural marketplace for farmers and buyers.{% endblock %}
+{% block meta_keywords %}FarmLink AI terms of service, marketplace terms, farmer agreement, buyer terms, agricultural marketplace rules{% endblock %}
 
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("Terms of Service", clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 {% block content %}
 <div class="container py-5">
     <div class="row">

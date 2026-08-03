@@ -1,7 +1,21 @@
 {% extends "base.html" %}
 
 {% block title %}About Us - FarmLink AI{% endblock %}
+{% block meta_description %}Learn about FarmLink AI — India's AI-powered agricultural marketplace connecting farmers directly with buyers. Our mission, team, and vision for zero-middlemen farming.{% endblock %}
+{% block meta_keywords %}about FarmLink AI, agricultural marketplace India, AI farming platform, farmer direct connect, agri-tech startup{% endblock %}
 
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_webpage_schema('AboutPage', 'About FarmLink AI', 'Learn about FarmLink AI — India\'s AI-powered agricultural marketplace connecting farmers directly with buyers.', clean_canonical_url()) | safe }}
+</script>
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("About Us", clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 {% block content %}
 <!-- Hero Section -->
 <section class="hero-section text-white position-relative overflow-hidden" style="height: auto; padding: 80px 0 80px;">

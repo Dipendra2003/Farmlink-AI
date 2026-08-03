@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
     {% for crop in crops %}
+    {% if crop.image_url and crop.image_url|trim %}
     <url>
         <loc>{{ url_for('view_crop', crop_id=crop.id, _external=True) }}</loc>
         <image:image>
             <image:loc>{{ crop.image_url if crop.image_url.startswith('http') else url_for('static', filename=(crop.image_url.replace('/static/', '') if crop.image_url.startswith('/static/') else crop.image_url), _external=True) }}</image:loc>
-            <image:title>{{ crop.name }}</image:title>
-            <image:caption>{{ truncate_meta_description(crop.description or crop.name, 100) }}</image:caption>
+            <image:title>{{ crop.name|e }}</image:title>
+            <image:caption>{{ truncate_meta_description(crop.description or crop.name, 100)|e }}</image:caption>
         </image:image>
     </url>
+    {% endif %}
     {% endfor %}
     {% for article in articles %}
+    {% if article.featured_image and article.featured_image|trim %}
     <url>
         <loc>{{ url_for('view_article', article_id=article.id, _external=True) }}</loc>
         <image:image>
             <image:loc>{{ article.featured_image if article.featured_image.startswith('http') else url_for('static', filename=(article.featured_image.replace('/static/', '') if article.featured_image.startswith('/static/') else article.featured_image), _external=True) }}</image:loc>
-            <image:title>{{ article.title }}</image:title>
-            <image:caption>{{ truncate_meta_description(article.summary or article.content or article.title, 100) }}</image:caption>
+            <image:title>{{ article.title|e }}</image:title>
+            <image:caption>{{ truncate_meta_description(article.summary or article.content or article.title, 100)|e }}</image:caption>
         </image:image>
     </url>
+    {% endif %}
     {% endfor %}
 </urlset>

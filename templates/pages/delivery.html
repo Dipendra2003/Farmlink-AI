@@ -1,7 +1,18 @@
 {% extends "base.html" %}
 
 {% block title %}Delivery Information - FarmLink AI{% endblock %}
+{% block meta_description %}Learn about FarmLink AI delivery processes, logistics partners, tracking options, and packaging standards for fresh farm produce and agricultural supplies.{% endblock %}
+{% block meta_keywords %}FarmLink AI delivery, agricultural logistics, farm produce shipping, crop transport India, direct farm delivery{% endblock %}
 
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("Delivery Information", clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 {% block content %}
 <div class="container py-5">
     <div class="row">

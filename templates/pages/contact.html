@@ -1,7 +1,21 @@
 {% extends "base.html" %}
 
 {% block title %}Contact Us - FarmLink AI{% endblock %}
+{% block meta_description %}Get in touch with FarmLink AI support team. Contact us for marketplace help, farmer registration queries, buyer support, or partnership inquiries.{% endblock %}
+{% block meta_keywords %}contact FarmLink AI, farmer support, buyer help, agricultural marketplace support, farming platform contact{% endblock %}
 
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_webpage_schema('ContactPage', 'Contact FarmLink AI', 'Get in touch with FarmLink AI support team for marketplace help, farmer registration queries, and buyer support.', clean_canonical_url()) | safe }}
+</script>
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("Contact Us", clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 {% block content %}
 <div class="container py-5">
     <div class="row">

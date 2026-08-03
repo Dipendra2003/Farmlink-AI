@@ -223,7 +223,7 @@ def generate_qapage_schema(post, author_name, canonical_url):
             "upvoteCount": getattr(top_reply, 'upvotes', 0) or 0,
             "author": {
                 "@type": "Person",
-                "name": getattr(top_reply.author, 'username', 'Agri Expert') if getattr(top_reply.author, 'author', None) else "Agri Expert"
+                "name": getattr(top_reply.author, 'username', 'Agri Expert') if getattr(top_reply, 'author', None) else "Agri Expert"
             }
         }
         
@@ -308,6 +308,64 @@ def get_seo_pagination_links(page, total_pages, endpoint=None, **kwargs):
         
     return links
 
+def generate_itemlist_schema(items, list_name, list_url, endpoint=None, param_name='id', title_attr=None):
+    """
+    Generate ItemList schema for listing pages.
+    Enables Google carousel/rich results for collections of items.
+    items: list of dicts or SQLAlchemy model instances
+    """
+    item_elements = []
+    for idx, item in enumerate(items, start=1):
+        if isinstance(item, dict):
+            name = item.get('name', '')
+            url = item.get('url', '')
+        else:
+            name = getattr(item, title_attr, getattr(item, 'name', getattr(item, 'title', ''))) if title_attr else getattr(item, 'name', getattr(item, 'title', ''))
+            if endpoint and hasattr(item, 'id'):
+                try:
+                    url = url_for(endpoint, _external=True, **{param_name: item.id})
+                except Exception:
+                    url = list_url
+            else:
+                url = list_url
+                
+        entry = {
+            "@type": "ListItem",
+            "position": idx,
+            "name": name,
+            "url": url
+        }
+        item_elements.append(entry)
+    
+    schema = {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        "name": list_name,
+        "url": list_url,
+        "numberOfItems": len(item_elements),
+        "itemListElement": item_elements
+    }
+    return json.dumps(schema, separators=(',', ':'))
+
+def generate_webpage_schema(page_type, name, description, url):
+    """
+    Generate typed WebPage schema.
+    page_type: 'WebPage', 'CollectionPage', 'AboutPage', 'ContactPage', 'FAQPage', 'ItemPage'
+    """
+    schema = {
+        "@context": "https://schema.org",
+        "@type": page_type,
+        "name": name,
+        "description": truncate_meta_description(description, 200),
+        "url": url,
+        "isPartOf": {
+            "@type": "WebSite",
+            "name": "FarmLink AI",
+            "url": url_for('index', _external=True)
+        }
+    }
+    return json.dumps(schema, separators=(',', ':'))
+
 def init_seo_processor(app):
     """Register SEO helpers and environmental constants into global template context"""
     @app.context_processor
@@ -322,7 +380,10 @@ def init_seo_processor(app):
             'generate_article_schema': generate_article_schema,
             'generate_qapage_schema': generate_qapage_schema,
             'generate_faq_schema': generate_faq_schema,
+            'generate_itemlist_schema': generate_itemlist_schema,
+            'generate_webpage_schema': generate_webpage_schema,
             'get_seo_pagination_links': get_seo_pagination_links,
             'GOOGLE_SITE_VERIFICATION': os.environ.get('GOOGLE_SITE_VERIFICATION', 'j_SFQieTDFMkB-XrDvcgebzyGmcFeg3Yue7LgZ00diM'),
             'GA_MEASURE_ID': os.environ.get('GA_MEASURE_ID', '')
         }
+

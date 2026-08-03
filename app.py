@@ -409,6 +409,10 @@ with app.app_context():
     def not_found_error(error):
         return render_template('errors/404.html'), 404
 
+    @app.errorhandler(410)
+    def gone_error(error):
+        return render_template('errors/410.html'), 410
+
 # Application startup complete - only log in main process
 if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
     app.logger.info("FarmLink AI Application Started Successfully")

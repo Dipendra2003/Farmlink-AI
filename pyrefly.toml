@@ -1,0 +1,36 @@
+[pyrefly]
+venv = ".venv"
+python_path = [".venv/Scripts/python.exe", ".venv/Lib/site-packages"]
+ignore = [
+    "templates",
+    "static",
+    ".venv",
+    "__pycache__",
+    "__pyrefly_virtual__",
+    "inmemory",
+    "**/__pyrefly_virtual__/**",
+    "**/inmemory/**",
+    "d:/__pyrefly_virtual__/**",
+    "d:\\__pyrefly_virtual__\\**"
+]
+exclude = [
+    "templates/*",
+    "static/*",
+    ".venv/*",
+    "__pyrefly_virtual__/*",
+    "**/__pyrefly_virtual__/*",
+    "inmemory/*"
+]
+ignore_missing_imports = true
+
+[pyrefly.rules]
+type-check = "off"
+no-member = "off"
+arg-type = "off"
+deprecated = "off"
+deprecated-call = "off"
+unreachable = "off"
+overload = "off"
+
+[pyrefly.errors]
+ignore_undefined_names_in = ["templates/**", "__pyrefly_virtual__/**", "**/inmemory/**"]

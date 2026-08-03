@@ -1,7 +1,21 @@
 {% extends "base.html" %}
 
 {% block title %}Government Schemes - FarmLink AI{% endblock %}
+{% block meta_description %}Explore verified Indian government agriculture schemes, subsidies, financial aid, and policy support for farmers on FarmLink AI.{% endblock %}
+{% block meta_keywords %}government farming schemes India, PM-KISAN, agri subsidies, Kisan Credit Card, agricultural financial aid, farmer government support{% endblock %}
 
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_webpage_schema('CollectionPage', 'Government Agriculture Schemes', 'Explore verified Indian government agriculture schemes, subsidies, financial aid, and policy support for farmers.', clean_canonical_url()) | safe }}
+</script>
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("Government Schemes", clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 {% block content %}
 <div class="container py-5">
     <div class="text-center mb-5">

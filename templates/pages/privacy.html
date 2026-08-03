@@ -1,7 +1,18 @@
 {% extends "base.html" %}
 
 {% block title %}Privacy Policy - FarmLink AI{% endblock %}
+{% block meta_description %}FarmLink AI Privacy Policy — how we collect, use, and protect your personal data on our agricultural marketplace. Your privacy and data security is our priority.{% endblock %}
+{% block meta_keywords %}FarmLink AI privacy policy, data protection, agricultural marketplace privacy, farmer data security{% endblock %}
 
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("Privacy Policy", clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 {% block content %}
 <div class="container py-5">
     <div class="row">

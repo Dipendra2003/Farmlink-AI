@@ -1,7 +1,18 @@
 {% extends "base.html" %}
 
 {% block title %}Help Center - FarmLink AI{% endblock %}
+{% block meta_description %}Get help and support for FarmLink AI. Learn how to navigate our agriculture marketplace, manage crop listings, and solve common technical issues.{% endblock %}
+{% block meta_keywords %}FarmLink AI help, farming marketplace support, farmer user guide, agriculture platform assistance{% endblock %}
 
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("Help Center", clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 {% block content %}
 <div class="container py-5">
     <div class="row">

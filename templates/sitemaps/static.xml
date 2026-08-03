@@ -41,6 +41,26 @@
         <priority>0.7</priority>
     </url>
     <url>
+        <loc>{{ url_for('help_center', _external=True) }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>{{ url_for('delivery_info', _external=True) }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    <url>
+        <loc>{{ url_for('quality_assurance', _external=True) }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    <url>
+        <loc>{{ url_for('return_policy', _external=True) }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    <url>
         <loc>{{ url_for('terms', _external=True) }}</loc>
         <changefreq>yearly</changefreq>
         <priority>0.4</priority>

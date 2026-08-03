@@ -1,7 +1,18 @@
 {% extends "base.html" %}
 
 {% block title %}Return & Refund Policy - FarmLink AI{% endblock %}
+{% block meta_description %}Review FarmLink AI's comprehensive Return and Refund Policy for agricultural produce, ensuring quality guarantees and fair dispute resolution for farmers and buyers.{% endblock %}
+{% block meta_keywords %}FarmLink AI return policy, produce refund guarantee, farm direct refunds, crop dispute resolution, agriculture purchase protection{% endblock %}
 
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("Return & Refund Policy", clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 {% block content %}
 <div class="container py-5">
     <div class="row justify-content-center">

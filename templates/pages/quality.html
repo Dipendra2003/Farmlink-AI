@@ -1,7 +1,18 @@
 {% extends "base.html" %}
 
 {% block title %}Quality Assurance - FarmLink AI{% endblock %}
+{% block meta_description %}Discover how FarmLink AI ensures top quality for farm produce through rigorous grading, AI-driven verification, and transparent farming practices.{% endblock %}
+{% block meta_keywords %}agri quality assurance, produce grading, verified crops, farm quality check, FarmLink AI standards{% endblock %}
 
+{% block schema_markup %}
+{{ super() }}
+<script type="application/ld+json">
+{{ generate_breadcrumb_schema([
+    ("Home", url_for('index', _external=True)),
+    ("Quality Assurance", clean_canonical_url())
+]) | safe }}
+</script>
+{% endblock %}
 {% block content %}
 <div class="container py-5">
     <div class="row">

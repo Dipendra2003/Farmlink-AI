@@ -130,9 +130,14 @@ PUBLIC_ROUTES = {
 
     # SEO & Crawler Endpoints
     'sitemap': '/sitemap.xml',
-    'sitemap_index': '/sitemap/',
+    'sitemap_static': '/sitemap/static.xml',
+    'sitemap_products': '/sitemap/products.xml',
+    'sitemap_articles': '/sitemap/articles.xml',
+    'sitemap_forum': '/sitemap/forum.xml',
+    'sitemap_images': '/sitemap/images.xml',
+    'learning_hub_rss': '/learning-hub/rss.xml',
     'robots': '/robots.txt',
-    'manifest': '/site.webmanifest',
+    'web_manifest': '/site.webmanifest',
     'favicon': '/favicon.ico',
 
     # Authentication routes
