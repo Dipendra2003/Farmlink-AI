@@ -1038,16 +1038,16 @@
                 <li class="breadcrumb-item ms-auto">
                     <div class="d-flex gap-2">
                         <a href="{{ url_for('voice_interface') }}" class="btn btn-sm btn-outline-success"
-                            title="Voice Assistant">
-                            <i class="fas fa-microphone"></i>
+                            title="Voice Assistant" aria-label="Voice Assistant">
+                            <i class="fas fa-microphone" aria-hidden="true"></i>
                         </a>
                         <a href="{{ url_for('marketplace') }}" class="btn btn-sm btn-outline-primary"
-                            title="Marketplace">
-                            <i class="fas fa-store"></i>
+                            title="Marketplace" aria-label="Marketplace">
+                            <i class="fas fa-store" aria-hidden="true"></i>
                         </a>
                         <a href="{{ url_for('expert_forum') }}" class="btn btn-sm btn-outline-info"
-                            title="Expert Forum">
-                            <i class="fas fa-users"></i>
+                            title="Expert Forum" aria-label="Expert Forum">
+                            <i class="fas fa-users" aria-hidden="true"></i>
                         </a>
                     </div>
                 </li>
@@ -1110,14 +1110,14 @@
 
         <!-- Quick Actions -->
         <div class="quick-actions">
-            <a href="{{ url_for('marketplace') }}" class="btn" title="Market">
-                <i class="fas fa-store"></i>
+            <a href="{{ url_for('marketplace') }}" class="btn" title="Market" aria-label="Marketplace">
+                <i class="fas fa-store" aria-hidden="true"></i>
             </a>
-            <a href="{{ url_for('my_crops') }}" class="btn" title="Crops">
-                <i class="fas fa-wheat-awn"></i>
+            <a href="{{ url_for('my_crops') }}" class="btn" title="Crops" aria-label="My Crops">
+                <i class="fas fa-wheat-awn" aria-hidden="true"></i>
             </a>
-            <a href="{{ url_for('dashboard') }}" class="btn" title="Dashboard">
-                <i class="fas fa-tachometer-alt"></i>
+            <a href="{{ url_for('dashboard') }}" class="btn" title="Dashboard" aria-label="Dashboard">
+                <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
             </a>
         </div>
     </div>
@@ -2021,6 +2021,43 @@
 
     <!-- Page-specific scripts -->
     {% block scripts %}{% endblock %}
+
+    <!-- WebMCP (Web Model Context Protocol) Declarative & Imperative AI Tool Registration for 3/3 Agentic Readiness -->
+    <div style="display: none;" aria-hidden="true">
+        <form action="{{ url_for('marketplace') }}" method="GET" toolname="search_marketplace" tooldescription="Search the FarmLink AI direct agricultural marketplace for crops, vegetables, and farming supplies without middlemen.">
+            <input type="text" name="search" toolparamdescription="The name of the crop, produce, or vegetable to search for (e.g., Wheat, Apples, Rice)." aria-label="Search Marketplace Query">
+        </form>
+        <form action="{{ url_for('crop_suggestions') }}" method="GET" toolname="get_crop_suggestions" tooldescription="Get AI agronomy crop recommendations based on soil NPK levels, rainfall, and regional weather conditions.">
+            <input type="text" name="region" toolparamdescription="The geographical farming region or state in India (e.g., Punjab, Maharashtra)." aria-label="Farming Region">
+        </form>
+    </div>
+
+    <script>
+        // Imperative WebMCP Tool Registration (Lighthouse 13.3+ AI Agent Standard)
+        window.addEventListener('DOMContentLoaded', function() {
+            if (window.navigator && window.navigator.modelContext && typeof window.navigator.modelContext.registerTool === 'function') {
+                try {
+                    window.navigator.modelContext.registerTool({
+                        name: 'search_agricultural_marketplace',
+                        description: 'Search directly for fresh produce and farming supplies directly from verified farmers.',
+                        inputSchema: {
+                            type: 'object',
+                            properties: {
+                                query: { type: 'string', description: 'Crop name or vegetable to find' }
+                            },
+                            required: ['query']
+                        },
+                        execute: async (args) => {
+                            window.location.href = '{{ url_for("marketplace", _external=False) }}?search=' + encodeURIComponent(args.query || '');
+                            return { status: 'navigating', destination: '{{ url_for("marketplace", _external=False) }}' };
+                        }
+                    });
+                } catch (e) {
+                    console.debug('WebMCP notice:', e);
+                }
+            }
+        });
+    </script>
 </body>
 
 </html>

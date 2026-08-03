@@ -571,14 +571,20 @@
 {% block content %}
 <!-- Hero Section -->
 <section class="hero-section bg-success text-white py-5 position-relative">
-    <!-- Testing Mode Badge -->
-    <div class="position-absolute top-0 end-0 m-3" style="z-index: 10;">
-        <a href="{{ url_for('testing_mode') }}" class="badge bg-warning text-dark fs-6 px-3 py-2 shadow-lg testing-mode-badge text-decoration-none">
-            <i class="fas fa-flask me-2"></i>TESTING MODE
+    <!-- Testing Mode Badge (Desktop) -->
+    <div class="position-absolute top-0 end-0 m-3 d-none d-md-block" style="z-index: 10;">
+        <a href="{{ url_for('testing_mode') }}" class="badge bg-warning text-dark fs-6 px-3 py-2 shadow-lg testing-mode-badge text-decoration-none" aria-label="Access Testing Mode">
+            <i class="fas fa-flask me-2" aria-hidden="true"></i>TESTING MODE
         </a>
     </div>
     
     <div class="container">
+        <!-- Testing Mode Badge (Mobile Inline to prevent CLS) -->
+        <div class="d-md-none mb-3">
+            <a href="{{ url_for('testing_mode') }}" class="badge bg-warning text-dark fs-6 px-3 py-2 shadow testing-mode-badge text-decoration-none" aria-label="Access Testing Mode">
+                <i class="fas fa-flask me-2" aria-hidden="true"></i>TESTING MODE
+            </a>
+        </div>
         <div class="row align-items-center min-vh-50">
             <div class="col-lg-6">
                 <h1 class="display-4 fw-bold mb-4">
