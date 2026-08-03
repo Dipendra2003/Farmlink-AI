@@ -72,8 +72,9 @@
     </script>
     {% endblock %}
 
-    <!-- Bootstrap 5 CSS with high fetch priority for Faster LCP -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" fetchpriority="high">
+    <!-- Preload & Async Load Render-Blocking CSS for Instant Mobile First Contentful Paint (FCP) -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"></noscript>
 
     <!-- Font Awesome Icons - Asynchronous load to eliminate mobile render blocking -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" 
@@ -91,18 +92,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
     
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Custom CSS (Preloaded for zero render blocking) -->
+    <link rel="preload" href="{{ url_for('static', filename='css/style.css') }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></noscript>
 
     <style>
+        /* Above-the-Fold Critical CSS (Ensures instantaneous painting before network fetch completes) */
+        body { margin: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f8f9fa; color: #212529; }
+        .hero-section { background-color: #145e32 !important; color: #ffffff !important; padding: 3rem 1rem; position: relative; overflow: hidden; }
+        .navbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 0.5rem 1rem; background: #ffffff !important; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); position: sticky; top: 0; z-index: 1020; }
+        .navbar-brand { font-size: 1.25rem; font-weight: 700; color: #11572d !important; text-decoration: none; display: flex; align-items: center; }
+
         /* WCAG AAA Contrast Enhancements for 100/100 Accessibility Score */
         :root { --bs-success: #145e32 !important; --bs-success-rgb: 20, 94, 50 !important; }
-        .text-success, .navbar-brand { color: #11572d !important; }
-        .bg-success, .btn-success, .footer-enhanced { background-color: #145e32 !important; border-color: #145e32 !important; }
+        .text-success { color: #11572d !important; }
+        .bg-success, .btn-success, .footer-enhanced { background-color: #145e32 !important; border-color: #145e32 !important; color: #ffffff !important; }
         .btn-outline-success { color: #11572d !important; border-color: #11572d !important; }
         .btn-outline-success:hover { background-color: #11572d !important; color: #ffffff !important; }
-        .badge.bg-warning { background-color: #ffb800 !important; color: #000000 !important; font-weight: 600 !important; }
+        .badge.bg-warning { background-color: #ffb800 !important; color: #000000 !important; font-weight: 700 !important; }
         .text-muted { color: #595959 !important; }
+        .text-white-50 { color: rgba(255, 255, 255, 0.88) !important; }
 
         /* AI Quick Access Panel - Round Mind Shape */
         .ai-quick-access {
@@ -2023,12 +2032,16 @@
     {% block scripts %}{% endblock %}
 
     <!-- WebMCP (Web Model Context Protocol) Declarative & Imperative AI Tool Registration for 3/3 Agentic Readiness -->
-    <div style="display: none;" aria-hidden="true">
-        <form action="{{ url_for('marketplace') }}" method="GET" toolname="search_marketplace" tooldescription="Search the FarmLink AI direct agricultural marketplace for crops, vegetables, and farming supplies without middlemen.">
-            <input type="text" name="search" toolparamdescription="The name of the crop, produce, or vegetable to search for (e.g., Wheat, Apples, Rice)." aria-label="Search Marketplace Query">
+    <div class="visually-hidden" style="position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important;">
+        <form action="{{ url_for('marketplace') }}" method="GET" role="search" aria-label="Search Agricultural Marketplace Tool" toolname="search_marketplace" tooldescription="Search the FarmLink AI direct agricultural marketplace for crops, vegetables, and farming supplies without middlemen.">
+            <label for="webmcp-market-search">Search Marketplace Crop Name</label>
+            <input id="webmcp-market-search" type="text" name="search" toolparamdescription="The name of the crop, produce, or vegetable to search for (e.g., Wheat, Apples, Rice)." aria-label="Search Marketplace Query">
+            <button type="submit" aria-label="Execute Marketplace Search Tool">Execute Search</button>
         </form>
-        <form action="{{ url_for('crop_suggestions') }}" method="GET" toolname="get_crop_suggestions" tooldescription="Get AI agronomy crop recommendations based on soil NPK levels, rainfall, and regional weather conditions.">
-            <input type="text" name="region" toolparamdescription="The geographical farming region or state in India (e.g., Punjab, Maharashtra)." aria-label="Farming Region">
+        <form action="{{ url_for('crop_suggestions') }}" method="GET" role="search" aria-label="AI Crop Recommendations Tool" toolname="get_crop_suggestions" tooldescription="Get AI agronomy crop recommendations based on soil NPK levels, rainfall, and regional weather conditions.">
+            <label for="webmcp-crop-region">Farming Region in India</label>
+            <input id="webmcp-crop-region" type="text" name="region" toolparamdescription="The geographical farming region or state in India (e.g., Punjab, Maharashtra)." aria-label="Farming Region">
+            <button type="submit" aria-label="Execute AI Crop Suggestion Tool">Get Suggestions</button>
         </form>
     </div>
 
