@@ -59,7 +59,7 @@ apscheduler>=3.10.0
 twilio>=8.10.0
 
 # Price Forecast Dependencies - Lightweight versions
-requests==2.31.0
+requests==2.33.0
 python-dateutil==2.8.2
 numpy>=1.26.0
 pandas>=2.1.0
