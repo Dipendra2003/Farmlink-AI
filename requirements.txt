@@ -35,7 +35,7 @@ bleach==6.1.0
 
 # File Processing & Image Handling
 Pillow>=10.0.0
-werkzeug==3.0.1
+werkzeug==3.1.6
 
 # File Security & Virus Scanning
 pyclamd==0.4.0
