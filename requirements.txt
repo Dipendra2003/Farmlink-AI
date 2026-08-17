@@ -31,7 +31,7 @@ psycopg[binary]>=3.1.0
 cryptography>=41.0.0
 pyotp==2.9.0
 qrcode==7.4.2
-bleach==6.1.0
+bleach==6.4.0
 
 # File Processing & Image Handling
 Pillow>=10.0.0
