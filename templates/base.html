@@ -19,8 +19,9 @@
 
     <title>{% block title %}{{ og_title | default('FarmLink AI - AI Agriculture & Direct Farmer Marketplace') }}{% endblock %}</title>
 
-    <!-- Google Site Verification & Analytics Placeholders -->
+    <!-- Search Engine Site Verification & Analytics Placeholders -->
     <meta name="google-site-verification" content="{{ GOOGLE_SITE_VERIFICATION | default('j_SFQieTDFMkB-XrDvcgebzyGmcFeg3Yue7LgZ00diM') }}" />
+    <meta name="msvalidate.01" content="{{ BING_SITE_VERIFICATION | default('E1BAD886229A439FD412BF9691091E96') }}" />
     {% if GA_MEASURE_ID %}
     <script async src="https://www.googletagmanager.com/gtag/js?id={{ GA_MEASURE_ID }}"></script>
     <script>

@@ -361,6 +361,24 @@ def favicon():
     from flask import send_from_directory
     return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
+@app.route('/BingSiteAuth.xml')
+def bing_site_auth():
+    import os
+    from flask import send_from_directory, make_response
+    for directory in [app.root_path, os.path.join(app.root_path, 'static')]:
+        if os.path.exists(os.path.join(directory, 'BingSiteAuth.xml')):
+            response = send_from_directory(directory, 'BingSiteAuth.xml', mimetype='application/xml')
+            response.headers["Cache-Control"] = "public, max-age=86400"
+            return response
+    content = """<?xml version="1.0"?>
+<users>
+	<user>E1BAD886229A439FD412BF9691091E96</user>
+</users>"""
+    response = make_response(content)
+    response.headers["Content-Type"] = "application/xml"
+    response.headers["Cache-Control"] = "public, max-age=86400"
+    return response
+
 # Home Page
 @app.route('/')
 def index():
