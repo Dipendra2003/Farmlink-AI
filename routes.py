@@ -278,8 +278,18 @@ def web_manifest():
         "icons": [
             {
                 "src": url_for('static', filename='favicon.ico', _external=True),
-                "sizes": "64x64 32x32 24x24 16x16",
+                "sizes": "256x256 128x128 64x64 48x48 32x32 16x16",
                 "type": "image/x-icon"
+            },
+            {
+                "src": url_for('static', filename='android-chrome-192x192.png', _external=True),
+                "sizes": "192x192",
+                "type": "image/png"
+            },
+            {
+                "src": url_for('static', filename='android-chrome-512x512.png', _external=True),
+                "sizes": "512x512",
+                "type": "image/png"
             }
         ]
     }
